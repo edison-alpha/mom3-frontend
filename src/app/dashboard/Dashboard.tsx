@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { MaterialSymbolsVerifiedRoundedIcon } from "@/components/icons/material-symbols-verified-rounded";
+import { Icon } from "@iconify/react";
 import {
   ArrowDown,
   ChevronDown,
@@ -53,7 +53,13 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-base font-black">@ubayy</span>
-                <MaterialSymbolsVerifiedRoundedIcon className="h-5 w-5 text-[#ccff00]" />
+                <Icon
+                  icon="material-symbols:verified-rounded"
+                  aria-hidden="true"
+                  width={20}
+                  height={20}
+                  className="text-[#ccff00]"
+                />
               </div>
             </div>
           </div>

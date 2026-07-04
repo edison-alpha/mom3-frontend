@@ -91,7 +91,9 @@ export default function EarnSection() {
                     <Icon
                       icon="ph:caret-right-bold"
                       aria-hidden="true"
-                      className="h-3 w-3 text-[#6b6680]"
+                      width={12}
+                      height={12}
+                      className="text-[#6b6680]"
                     />
                   </span>
                 </li>

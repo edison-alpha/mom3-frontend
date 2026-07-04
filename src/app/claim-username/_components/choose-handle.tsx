@@ -1,5 +1,6 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import {
   Check,
@@ -9,7 +10,6 @@ import {
   Type as TypeIcon,
   type LucideIcon,
 } from 'lucide-react';
-import { MaterialSymbolsVerifiedRoundedIcon } from '@/components/icons/material-symbols-verified-rounded';
 
 interface ChooseHandleProps {
   handleValue: string;
@@ -63,7 +63,13 @@ export default function ChooseHandle({
           <div className="w-20 h-20 bg-gradient-to-br from-[#3B33BD] to-[#2E279A] rounded-full flex items-center justify-center relative">
             <span className="text-4xl">👾</span>
             <div className="absolute -top-1 -right-1">
-              <MaterialSymbolsVerifiedRoundedIcon className="w-5 h-5 text-[#ccff00]" />
+              <Icon
+                icon="material-symbols:verified-rounded"
+                aria-hidden="true"
+                width={20}
+                height={20}
+                className="text-[#ccff00]"
+              />
             </div>
           </div>
         </div>

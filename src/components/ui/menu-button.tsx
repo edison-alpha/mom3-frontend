@@ -1,5 +1,7 @@
 "use client";
 
+import { Icon } from "@iconify/react";
+import Link from "next/link";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -55,4 +57,132 @@ const MenuButtonItem = React.forwardRef<
 ));
 MenuButtonItem.displayName = "MenuButtonItem";
 
-export { MenuButton, MenuButtonItem };
+type FloatingMenuItem = {
+  icon: string;
+  label: string;
+  href?: string;
+  active?: boolean;
+  onClick?: React.MouseEventHandler<HTMLButtonElement>;
+};
+
+interface FloatingMenuButtonProps extends React.HTMLAttributes<HTMLElement> {
+  items?: FloatingMenuItem[];
+  activeHref?: string;
+  profileHref?: string;
+  profileLabel?: string;
+  onProfileClick?: React.MouseEventHandler<HTMLButtonElement>;
+}
+
+const defaultFloatingMenuItems: FloatingMenuItem[] = [
+  {
+    icon: "solar:home-2-bold",
+    label: "Home",
+    href: "/dashboard",
+  },
+  {
+    icon: "material-symbols:history-2",
+    label: "History",
+    href: "#history",
+  },
+  {
+    icon: "icon-park-outline:search",
+    label: "Search",
+    href: "#search",
+  },
+];
+
+const FloatingMenuButton = React.forwardRef<HTMLElement, FloatingMenuButtonProps>(
+  (
+    {
+      className,
+      items = defaultFloatingMenuItems,
+      activeHref,
+      profileHref,
+      profileLabel = "Profile",
+      onProfileClick,
+      ...props
+    },
+    ref
+  ) => {
+    const profileClassName =
+      "flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#3B33BD] via-[#5A52D4] to-[#7E78EA] shadow-[0_8px_24px_-8px_rgba(59,51,189,0.65)] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black";
+
+    return (
+      <nav
+        ref={ref}
+        aria-label="Primary"
+        data-slot="floating-menu-button"
+        className={cn(
+          "fixed inset-x-0 bottom-5 z-50 flex justify-center px-5 sm:bottom-6",
+          className
+        )}
+        {...props}
+      >
+        <div className="flex items-center gap-3 rounded-full border border-white/10 bg-[#1C1C1E]/90 p-1.5 shadow-[0_16px_44px_-18px_rgba(0,0,0,0.85)] backdrop-blur-xl">
+          <div className="flex h-14 items-center gap-1 rounded-full bg-black/25 px-1">
+            {items.map((item) => {
+              const isActive = item.active ?? item.href === activeHref;
+              const itemClassName = cn(
+                "flex h-12 w-12 items-center justify-center rounded-full text-[#9A9AA2] transition-colors hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-[#ccff00]/60 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                isActive && "bg-white text-[#3B33BD] hover:bg-white hover:text-[#3B33BD]"
+              );
+              const icon = (
+                <Icon
+                  icon={item.icon}
+                  aria-hidden="true"
+                  width={22}
+                  height={22}
+                />
+              );
+
+              if (item.href) {
+                return (
+                  <Link
+                    key={`${item.label}-${item.href}`}
+                    href={item.href}
+                    aria-label={item.label}
+                    aria-current={isActive ? "page" : undefined}
+                    className={itemClassName}
+                  >
+                    {icon}
+                  </Link>
+                );
+              }
+
+              return (
+                <button
+                  key={item.label}
+                  type="button"
+                  aria-label={item.label}
+                  aria-current={isActive ? "page" : undefined}
+                  onClick={item.onClick}
+                  className={itemClassName}
+                >
+                  {icon}
+                </button>
+              );
+            })}
+          </div>
+
+          {profileHref ? (
+            <Link
+              href={profileHref}
+              aria-label={profileLabel}
+              className={profileClassName}
+            />
+          ) : (
+            <button
+              type="button"
+              aria-label={profileLabel}
+              onClick={onProfileClick}
+              className={profileClassName}
+            />
+          )}
+        </div>
+      </nav>
+    );
+  }
+);
+FloatingMenuButton.displayName = "FloatingMenuButton";
+
+export { MenuButton, MenuButtonItem, FloatingMenuButton };

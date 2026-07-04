@@ -1,8 +1,8 @@
 'use client';
 
+import { Icon } from '@iconify/react';
 import { motion } from 'framer-motion';
 import { ExternalLink, Share2 } from 'lucide-react';
-import { MaterialSymbolsVerifiedRoundedIcon } from '@/components/icons/material-symbols-verified-rounded';
 
 interface CompleteViewProps {
   handleValue: string;
@@ -71,7 +71,13 @@ export default function CompleteView({
             transition={{ delay: 0.3, type: 'spring', stiffness: 200 }}
             className="absolute -bottom-1 -right-1"
           >
-            <MaterialSymbolsVerifiedRoundedIcon className="w-8 h-8 text-[#ccff00]" />
+            <Icon
+              icon="material-symbols:verified-rounded"
+              aria-hidden="true"
+              width={32}
+              height={32}
+              className="text-[#ccff00]"
+            />
           </motion.div>
         </motion.div>
 

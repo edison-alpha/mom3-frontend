@@ -168,7 +168,7 @@ export default function ChooseHandle({
         disabled={!isValid}
         className={`mt-auto w-full py-4 rounded-2xl text-lg font-bold transition-all mb-2 ${
           isValid
-            ? 'bg-[#ccff00] text-[#0a0a0a] shadow-[0_0_20px_rgba(204,255,0,0.3)]'
+            ? 'bg-[#3B33BD] text-white shadow-[0_0_20px_rgba(59,51,189,0.3)]'
             : 'bg-[#2A2A3E] text-[#9A9AA2] cursor-not-allowed'
         }`}
       >

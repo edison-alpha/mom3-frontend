@@ -115,7 +115,7 @@ export default function ConfirmHandle({
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onConfirm}
-        className="mt-auto w-full py-4 bg-[#ccff00] text-[#0a0a0a] rounded-2xl text-lg font-bold mb-3 shadow-[0_0_20px_rgba(204,255,0,0.3)]"
+        className="mt-auto w-full py-4 bg-[#3B33BD] text-white rounded-2xl text-lg font-bold mb-3 shadow-[0_0_20px_rgba(59,51,189,0.3)]"
       >
         Confirm & Claim
       </motion.button>

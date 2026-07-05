@@ -23,24 +23,24 @@ type Panel = {
 
 const PANELS: Panel[] = [
   {
-    label: "Post",
-    heading: ["Find new faves,", "every day."],
-    subtitle: "Join a huge community sharing their holy goals.",
-    body: "Find new products to obsess over in beauty, fitness, and more — from hundreds of brands.",
-    cta: "Sign Up Me",
+    label: "Assets",
+    heading: ["Know every asset,", "in one place."],
+    subtitle: "Your balances, positions, and activity stay easy to scan.",
+    body: "Track tokens, chains, and position health without jumping between apps.",
+    cta: "Start Now",
   },
   {
-    label: "Access",
-    heading: ["Unlock access,", "instantly."],
-    subtitle: "Be first in line for every drop you care about.",
-    body: "Get early access to launches, members-only perks, and exclusive content from the brands you follow.",
-    cta: "Get Access",
+    label: "Markets",
+    heading: ["Find lending,", "without noise."],
+    subtitle: "Compare yield, borrow rates, and risk before moving funds.",
+    body: "mom3 surfaces stable lending markets and explains what makes each position worth reviewing.",
+    cta: "Explore Markets",
   },
   {
-    label: "Earn",
-    heading: ["Earn rewards,", "every post."],
-    subtitle: "Your engagement finally pays you back.",
-    body: "Turn likes, posts, and shares into coins, collectibles, and real rewards from the brands you love.",
+    label: "Rebalance",
+    heading: ["Let AI suggest,", "you stay in control."],
+    subtitle: "Get clear strategy suggestions before you execute.",
+    body: "Review APY, risk, fees, health score, and execution route in one simple flow.",
     cta: "Start Earning",
   },
 ];
@@ -241,9 +241,9 @@ export default function FindFavesSection() {
                   </p>
                   <PrimarySwipeButton
                     asChild
-                    className="mt-6 h-12 px-7 text-base md:h-14 md:px-9 md:text-lg"
+                    className="mt-6 h-12 px-7 text-base text-[#ccff00] md:h-14 md:px-9 md:text-lg"
                   >
-                    <Link href="/claim-username">{panel.cta}</Link>
+                    <Link href="/onboarding">{panel.cta}</Link>
                   </PrimarySwipeButton>
                 </div>
               </div>

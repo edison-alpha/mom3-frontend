@@ -10,23 +10,23 @@ type FooterColumn = {
 
 const COLUMNS: FooterColumn[] = [
   {
-    title: "Fans",
+    title: "Wallet",
     links: [
-      "Start Earning",
-      "Boost Your Content",
-      "Give Back $MOM from brand",
-      "Blog",
+      "Track Assets",
+      "Send Funds",
+      "Convert Tokens",
+      "Activity History",
       "Help Center",
     ],
   },
   {
-    title: "Brands",
+    title: "DeFi",
     links: [
-      "Start Earning",
-      "Boost Your Content",
-      "Give Back $MOM from brand",
-      "Blog",
-      "Help Center",
+      "Lending Markets",
+      "Borrow Positions",
+      "AI Rebalancing",
+      "Risk Review",
+      "Strategy Details",
     ],
   },
 ];
@@ -39,28 +39,28 @@ export default function CtaFooter() {
         <div className="flex flex-col items-center text-center">
           <Image
             src="/brand-logo.png"
-            alt="Oni"
+            alt="mom3"
             width={56}
             height={56}
             className="h-12 w-12 object-contain md:h-14 md:w-14"
           />
 
           <h2 className="font-display text-stroke-bold mt-8 text-5xl font-black uppercase leading-[0.95] tracking-tight text-white md:mt-10 md:text-6xl lg:text-7xl">
-            <span className="block">Turn your</span>
-            <span className="block">Recs into</span>
-            <span className="block">Rewards</span>
+            <span className="block">Put your</span>
+            <span className="block">assets to</span>
+            <span className="block">work</span>
           </h2>
 
           <p className="mt-6 text-xs text-white/70 md:text-sm">
-            Start Earning Your Moments Your Signup
+            Start with a wallet, then let mom3 guide your next strategy.
           </p>
 
           <div className="mt-6">
             <PrimarySwipeButton
               asChild
-              className="h-12 px-7 text-base md:h-14 md:px-9 md:text-lg"
+              className="h-12 px-7 text-base text-[#ccff00] md:h-14 md:px-9 md:text-lg"
             >
-              <Link href="/claim-username">Signup Me</Link>
+              <Link href="/onboarding">Get Started</Link>
             </PrimarySwipeButton>
           </div>
         </div>
@@ -115,7 +115,7 @@ export default function CtaFooter() {
         <div className="mt-12 flex items-center justify-between md:mt-20 md:px-8 lg:px-16">
           <Image
             src="/brand-logo.png"
-            alt="Oni"
+            alt="mom3"
             width={40}
             height={40}
             className="h-9 w-9 object-contain md:h-10 md:w-10"

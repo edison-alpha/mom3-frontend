@@ -1,9 +1,9 @@
 import LandingDetail from "./_components/LandingDetail";
 
 export const metadata = {
-  title: "Push Your Brand Engagement, Earn Benefits",
+  title: "mom3 | AI Wallet for Yield, Lending, and Rebalancing",
   description:
-    "Earn coins, win collectibles, and get close to the brands you love.",
+    "Manage assets, discover lending markets, and rebalance your portfolio with mom3.",
 };
 
 export default function LandingDetailPage() {

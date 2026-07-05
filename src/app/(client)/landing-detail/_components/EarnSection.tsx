@@ -1,15 +1,72 @@
+"use client";
+
 import { Icon } from "@iconify/react";
 import Image from "next/image";
+import * as React from "react";
 
 import PhoneMock from "./PhoneMock";
 
-const TRIPS = [
-  { label: "Trip to Bali", sub: "$3,500 to goal", amount: "3,700.21" },
-  { label: "Trip to Bali", sub: "$3,500 to goal", amount: "3,700.21" },
-  { label: "Trip to Bali", sub: "$3,500 to goal", amount: "3,700.21" },
+const OPPORTUNITIES = [
+  {
+    label: "USDC on Aave",
+    sub: "Low risk lending",
+    amount: "5.15%",
+    icon: "simple-icons:aave",
+    iconClassName: "text-[#B650F2]",
+  },
+  {
+    label: "USDT on Morpho",
+    sub: "Stablecoin supply",
+    amount: "4.88%",
+    icon: "simple-icons:morpho",
+    iconClassName: "text-[#2E5BFF]",
+  },
+  {
+    label: "USDe strategy",
+    sub: "AI monitored yield",
+    amount: "8.40%",
+    icon: "token-branded:ethena",
+    iconClassName: "",
+  },
+  {
+    label: "USDC on Uniswap",
+    sub: "LP yield market",
+    amount: "6.44%",
+    icon: "simple-icons:uniswap",
+    iconClassName: "text-[#FF007A]",
+  },
+  {
+    label: "PT-sUSDe on Pendle",
+    sub: "Fixed yield route",
+    amount: "11.20%",
+    icon: "simple-icons:pendle",
+    iconClassName: "text-[#21D3AE]",
+  },
+  {
+    label: "ETH borrow on Base",
+    sub: "Collateral credit",
+    amount: "2.14%",
+    icon: "token-branded:base",
+    iconClassName: "",
+  },
 ];
 
 export default function EarnSection() {
+  const [activeIndex, setActiveIndex] = React.useState(0);
+
+  React.useEffect(() => {
+    const interval = window.setInterval(() => {
+      setActiveIndex((index) => (index + 1) % OPPORTUNITIES.length);
+    }, 3200);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const visibleOpportunities = Array.from({ length: 3 }, (_, offset) => {
+    const index = (activeIndex + offset) % OPPORTUNITIES.length;
+    return OPPORTUNITIES[index];
+  });
+
   return (
     <section
       id="earn"
@@ -17,13 +74,13 @@ export default function EarnSection() {
     >
       <div className="mx-auto max-w-[592px] lg:max-w-[1040px] xl:max-w-[1120px]">
         <p className="text-center text-[11px] font-semibold uppercase tracking-[0.3em] text-ink lg:text-[12px]">
-          What where all about
+          What mom3 helps you do
         </p>
 
         <h2 className="font-display mt-4 text-center text-4xl font-bold uppercase leading-[0.95] tracking-tight text-ink md:text-6xl lg:mt-5 lg:text-7xl">
-          <span className="block">Earn coin.</span>
-          <span className="block">Win collectibles.</span>
-          <span className="block">Get close to.</span>
+          <span className="block">Track assets.</span>
+          <span className="block">Find yield.</span>
+          <span className="block">Rebalance fast.</span>
         </h2>
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2 md:mt-12 lg:mt-16 lg:gap-5">
@@ -32,7 +89,7 @@ export default function EarnSection() {
             {/* Brand mark */}
             <Image
               src="/brand-logo.png"
-              alt="Oni"
+              alt="mom3"
               width={48}
               height={48}
               className="absolute left-6 top-6 z-10 h-7 w-7 object-contain brightness-0 invert md:left-8 md:top-8 lg:h-9 lg:w-9"
@@ -42,8 +99,8 @@ export default function EarnSection() {
             {/* Heading — centered vertically, left half on desktop */}
             <div className="absolute inset-y-0 left-0 flex items-center px-6 sm:w-[52%] sm:px-10 lg:px-14 xl:px-16">
               <h3 className="font-display text-2xl font-bold leading-[1.05] tracking-tight text-white/55 sm:text-[34px] lg:text-[44px] xl:text-[50px]">
-                Get <span className="text-white">paid</span> and send money
-                anywhere
+                Move <span className="text-[#ccff00]">capital</span> with clear
+                context
               </h3>
             </div>
 
@@ -61,22 +118,31 @@ export default function EarnSection() {
           <article className="min-h-[280px] rounded-[32px] bg-ink p-6 text-white sm:min-h-[300px] lg:min-h-[380px] lg:rounded-[40px] lg:p-8">
             <p className="text-center text-sm leading-snug text-white/70 sm:px-2 lg:text-base lg:px-4">
               <span className="font-semibold text-white">
-                Spend from one balance.
+                Compare real opportunities.
               </span>{" "}
-              Use your Avvio Visa card at 150M+ merchants. Apple Pay ready.
+              See lending, yield, and borrow positions before you take action.
             </p>
 
             <ul className="mt-5 space-y-2.5 lg:mt-7 lg:space-y-3">
-              {TRIPS.map((t, idx) => (
+              {visibleOpportunities.map((t, idx) => (
                 <li
-                  key={idx}
-                  className="flex items-center justify-between rounded-full bg-white px-3 py-2 pr-4 text-ink lg:px-4 lg:py-2.5 lg:pr-5"
+                  key={`${t.label}-${activeIndex}`}
+                  className={`flex items-center justify-between rounded-full px-3 py-2 pr-4 text-ink transition-all duration-700 ease-out lg:px-4 lg:py-2.5 lg:pr-5 ${
+                    idx === 0
+                      ? "translate-x-0 scale-[1.015] bg-[#ccff00] shadow-[0_12px_26px_-18px_rgba(204,255,0,0.9)]"
+                      : "translate-x-0 scale-100 bg-white"
+                  }`}
                 >
                   <span className="flex items-center gap-3 lg:gap-3.5">
-                    <span
-                      aria-hidden="true"
-                      className="block h-7 w-7 rounded-full border-[2.5px] border-[#2d2eff] lg:h-8 lg:w-8"
-                    />
+                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#F3F1F8] lg:h-8 lg:w-8">
+                      <Icon
+                        icon={t.icon}
+                        aria-hidden="true"
+                        width={18}
+                        height={18}
+                        className={t.iconClassName}
+                      />
+                    </span>
                     <span className="leading-tight">
                       <span className="block text-sm font-semibold lg:text-[15px]">
                         {t.label}
@@ -107,19 +173,19 @@ export default function EarnSection() {
               <p className="font-display text-xl font-bold leading-tight tracking-tight sm:text-2xl lg:text-[32px] xl:text-[36px]">
                 Your money,
                 <br />
-                your control.
+                <span className="text-[#ccff00]">your strategy.</span>
                 <br />
-                No one else.
+                AI guided.
               </p>
             </article>
 
             <article className="rounded-[32px] bg-ink p-6 text-white lg:rounded-[40px] lg:p-8">
               <p className="text-center text-sm leading-snug lg:text-base">
                 <span className="font-semibold">
-                  Every transaction is securely signed by Turnkey,
+                  Every action stays non-custodial,
                 </span>{" "}
                 <span className="text-white/70">
-                  with real time alerts for all activity
+                  with AI health checks before you execute
                 </span>
               </p>
             </article>

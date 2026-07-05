@@ -12,29 +12,29 @@ export default function Hero() {
     <section className="relative bg-[#E6E1F0] px-5 pt-2 pb-12 md:px-10 md:pt-3 md:pb-20">
       <div className="mx-auto mt-20 max-w-6xl text-center md:mt-28">
         <h1 className="font-display text-stroke-bold text-5xl font-black leading-[0.95] tracking-tight text-[#0A0A0A] md:text-6xl lg:text-[88px]">
-          <span className="block">Push Your Brand</span>
-          <span className="block">Engagement Earn</span>
-          <span className="block">Benefits</span>
+          <span className="block">One wallet.</span>
+          <span className="block">Smarter yield.</span>
+          <span className="block">Less guessing.</span>
         </h1>
 
         <p className="mt-10 text-xs font-bold uppercase tracking-[0.2em] text-[#3B33BD] md:mt-12 md:text-sm">
-          Where brand love you back
+          AI powered DeFi for everyday assets
         </p>
 
         <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-[#0A0A0A] md:text-base">
-          Post about your favorite product.
+          Deposit once.
           <br />
-          Engage with your love brand.
+          Lend, borrow, and earn across trusted markets.
           <br />
-          And earn reward.
+          Let mom3 suggest when to rebalance.
         </p>
 
         <div className="mt-7 flex justify-center">
           <PrimarySwipeButton
             asChild
-            className="h-12 px-7 text-base md:h-14 md:px-9 md:text-lg"
+            className="h-12 px-7 text-base text-[#ccff00] md:h-14 md:px-9 md:text-lg"
           >
-            <Link href="/claim-username">Earn Now</Link>
+            <Link href="/onboarding">Start Earning</Link>
           </PrimarySwipeButton>
         </div>
 
@@ -68,12 +68,12 @@ export default function Hero() {
           className="max-w-[300px] md:max-w-[340px]"
           screenClassName="bg-[#0A0A0A]"
           dark
-          label="Oni app preview"
+          label="mom3 app preview"
         >
           <div className="flex h-full w-full items-center justify-center p-10">
             <Image
               src="/brand-logo.png"
-              alt="Oni brand logo"
+              alt="mom3 logo"
               width={160}
               height={160}
               className="h-auto w-1/3 max-w-[90px] object-contain"

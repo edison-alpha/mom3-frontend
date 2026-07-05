@@ -25,9 +25,9 @@ export default function StepIndicator({ currentStep }: StepIndicatorProps) {
                   initial={false}
                   animate={
                     isActive
-                      ? { scale: 1, backgroundColor: '#ccff00', color: '#0a0a0a' }
+                      ? { scale: 1, backgroundColor: '#ccff00', color: '#3B33BD' }
                       : isCompleted
-                      ? { scale: 1, backgroundColor: '#ccff00', color: '#0a0a0a' }
+                      ? { scale: 1, backgroundColor: '#ccff00', color: '#3B33BD' }
                       : { scale: 1, backgroundColor: '#1C1C1E', color: '#9A9AA2' }
                   }
                   className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold border border-[#2A2A3E]"

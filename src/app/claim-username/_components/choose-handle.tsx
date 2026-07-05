@@ -107,7 +107,7 @@ export default function ChooseHandle({
               className="absolute right-4 top-1/2 -translate-y-1/2"
             >
               <div className="w-6 h-6 rounded-full bg-[#ccff00] flex items-center justify-center">
-                <Check className="w-3.5 h-3.5 text-[#0a0a0a]" aria-hidden="true" />
+                <Check className="w-3.5 h-3.5 text-[#3B33BD]" aria-hidden="true" />
               </div>
             </motion.div>
           )}
@@ -168,7 +168,7 @@ export default function ChooseHandle({
         disabled={!isValid}
         className={`mt-auto w-full py-4 rounded-2xl text-lg font-bold transition-all mb-2 ${
           isValid
-            ? 'bg-[#3B33BD] text-white shadow-[0_0_20px_rgba(59,51,189,0.3)]'
+            ? 'bg-[#3B33BD] text-[#ccff00] shadow-[0_0_20px_rgba(59,51,189,0.3)]'
             : 'bg-[#2A2A3E] text-[#9A9AA2] cursor-not-allowed'
         }`}
       >

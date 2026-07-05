@@ -100,14 +100,6 @@ export default function Dashboard() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setActiveModeIndex((index) => (index + 1) % portfolioModes.length);
-    }, 3800);
-
-    return () => window.clearInterval(interval);
-  }, []);
-
   const activeMode = portfolioModes[activeModeIndex];
 
   return (
@@ -254,7 +246,7 @@ export default function Dashboard() {
             <div>
               <h2 className="text-base font-semibold text-white">Strategy mode</h2>
               <p className="mt-0.5 text-xs font-medium text-[#9A9AA2]">
-                Auto rotates, tap to lock your vibe.
+                Pick how aggressive mom3 should be.
               </p>
             </div>
             <span className="rounded-full bg-[#3B33BD]/20 px-3 py-1 text-xs font-black text-[#ccff00]">

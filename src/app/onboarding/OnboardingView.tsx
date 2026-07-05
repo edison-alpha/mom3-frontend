@@ -48,17 +48,17 @@ export default function OnboardingView() {
         <section className="relative z-10 mt-7 -translate-y-8 space-y-3">
           <Link
             href="/claim-username"
-            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl bg-white text-base font-black text-black shadow-[0_16px_42px_-24px_rgba(14,18,58,0.7)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"
+            className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-white text-base font-black text-black shadow-[0_16px_42px_-24px_rgba(14,18,58,0.7)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"
           >
-            <Icon icon="simple-icons:apple" className="h-5 w-5" aria-hidden="true" />
+            <Icon icon="simple-icons:apple" className="h-6 w-6" aria-hidden="true" />
             Sign in with Apple
           </Link>
 
           <Link
             href="/claim-username"
-            className="flex h-12 w-full items-center justify-center gap-2.5 rounded-2xl border border-white/12 bg-[#12111A] text-base font-black text-white shadow-[0_16px_42px_-24px_rgba(14,18,58,0.8)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"
+            className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] border border-white/12 bg-[#12111A] text-base font-black text-white shadow-[0_16px_42px_-24px_rgba(14,18,58,0.8)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"
           >
-            <Icon icon="flat-color-icons:google" className="h-5 w-5" aria-hidden="true" />
+            <Icon icon="flat-color-icons:google" className="h-6 w-6" aria-hidden="true" />
             Sign in with Google
           </Link>
         </section>

@@ -173,7 +173,7 @@ export default function FindFavesSection() {
               className={cn(
                 "h-9 rounded-[14px] px-5 text-sm font-extrabold tracking-tight ring-0 transition-colors duration-300 md:h-10 md:px-6 md:text-[15px]",
                 active === idx
-                  ? "bg-[#0A0A0A] text-white shadow-[inset_0_1px_0_0_rgba(255,255,255,0.22),inset_0_-4px_8px_0_rgba(255,255,255,0.28),inset_0_5px_10px_0_rgba(0,0,0,0.55),0_4px_10px_-2px_rgba(0,0,0,0.45),0_2px_4px_0_rgba(0,0,0,0.25)]"
+                  ? "bg-[#3B33BD] text-[#ccff00] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.2),inset_0_-4px_8px_0_rgba(255,255,255,0.16),inset_0_5px_10px_0_rgba(0,0,0,0.35),0_6px_16px_-8px_rgba(59,51,189,0.8)]"
                   : "bg-[#D9D5E0] text-[#0A0A0A] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.6),inset_0_-2px_4px_0_rgba(0,0,0,0.08),0_1px_2px_0_rgba(0,0,0,0.08)] hover:bg-[#D9D5E0]/80"
               )}
             >

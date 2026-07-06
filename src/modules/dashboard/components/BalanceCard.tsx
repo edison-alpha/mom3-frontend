@@ -110,7 +110,7 @@ export function BalanceCard({
               using mom3
             </>
           ) : isBalanceLoading ? (
-            "Fetching your Arbitrum Universal Account balance."
+            "Fetching your Universal Account balance."
           ) : hasAssets ? (
             "Your portfolio is growing today."
           ) : (

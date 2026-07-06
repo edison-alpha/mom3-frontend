@@ -114,7 +114,7 @@ const assets: Asset[] = [
     name: "Ethereum",
     amount: "0.42 ETH",
     value: "$1,046.80",
-    chain: "Arbitrum",
+    chain: "EVM",
     icon: "cryptocurrency-color:eth",
     allocation: "41.9%",
     change: "+1.72%",

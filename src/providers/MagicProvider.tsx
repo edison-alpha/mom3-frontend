@@ -35,12 +35,44 @@ export const magicQueryKeys = {
 };
 
 const DEFAULT_CHAIN_ID = Number(
-  process.env.NEXT_PUBLIC_MAGIC_CHAIN_ID || process.env.NEXT_PUBLIC_BASE_CHAIN_ID || 42161,
+  process.env.NEXT_PUBLIC_PARTICLE_7702_CHAIN_ID ||
+    process.env.NEXT_PUBLIC_MAGIC_CHAIN_ID ||
+    process.env.NEXT_PUBLIC_BASE_CHAIN_ID ||
+    42161,
 );
-const DEFAULT_RPC_URL =
-  process.env.NEXT_PUBLIC_MAGIC_RPC_URL ||
-  process.env.NEXT_PUBLIC_BASE_RPC_URL ||
-  "https://arb1.arbitrum.io/rpc";
+
+const MAGIC_CHAIN_CONFIGS = [
+  {
+    chainId: 42161,
+    rpcUrl: process.env.NEXT_PUBLIC_ARB_RPC_URL || "https://arb1.arbitrum.io/rpc",
+  },
+  {
+    chainId: 8453,
+    rpcUrl: process.env.NEXT_PUBLIC_BASE_RPC_URL || "https://mainnet.base.org",
+  },
+  {
+    chainId: 10,
+    rpcUrl: process.env.NEXT_PUBLIC_OPTIMISM_RPC_URL || "https://mainnet.optimism.io",
+  },
+  {
+    chainId: 137,
+    rpcUrl: process.env.NEXT_PUBLIC_POLYGON_RPC_URL || "https://polygon-rpc.com",
+  },
+  {
+    chainId: 56,
+    rpcUrl: process.env.NEXT_PUBLIC_BSC_RPC_URL || "https://bsc-dataseed.binance.org",
+  },
+].map((chain) => ({
+  ...chain,
+  default: chain.chainId === DEFAULT_CHAIN_ID,
+}));
+
+if (!MAGIC_CHAIN_CONFIGS.some((chain) => chain.default)) {
+  MAGIC_CHAIN_CONFIGS[0] = {
+    ...MAGIC_CHAIN_CONFIGS[0],
+    default: true,
+  };
+}
 
 function createMagicInstance() {
   const apiKey = process.env.NEXT_PUBLIC_MAGIC_API_KEY;
@@ -52,13 +84,7 @@ function createMagicInstance() {
   return new MagicBase(apiKey, {
     extensions: [
       new OAuthExtension(),
-      new EVMExtension([
-        {
-          chainId: DEFAULT_CHAIN_ID,
-          default: true,
-          rpcUrl: DEFAULT_RPC_URL,
-        },
-      ]),
+      new EVMExtension(MAGIC_CHAIN_CONFIGS),
     ],
   }) as Mom3Magic;
 }

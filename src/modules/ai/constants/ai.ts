@@ -22,7 +22,7 @@ export const recommendations: RecommendationItem[] = [
     chips: [
       { icon: "cryptocurrency-color:usdc", label: "USDC" },
       { icon: "token-branded:ethena", label: "Ethena" },
-      { icon: "token-branded:arbitrum", label: "Arbitrum" },
+      { icon: "solar:global-bold", label: "EVM" },
     ],
   },
   {

@@ -117,9 +117,9 @@ export default function ProfileView() {
       address: ownerAddress,
     },
     {
-      icon: "token-branded:arbitrum",
+      icon: "solar:global-bold",
       label: "EVM account",
-      description: "Arbitrum smart account",
+      description: "Universal EVM smart account",
       address: accountInfo.evmSmartAccount,
     },
     {

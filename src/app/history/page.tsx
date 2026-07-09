@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import HistoryView from "@/modules/history/HistoryView";
 
 export const metadata: Metadata = {
@@ -15,5 +16,9 @@ export const viewport: Viewport = {
 };
 
 export default function HistoryPage() {
-  return <HistoryView />;
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+      <HistoryView />
+    </Suspense>
+  );
 }

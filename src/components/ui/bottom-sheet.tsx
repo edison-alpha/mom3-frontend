@@ -1,7 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
@@ -30,6 +30,7 @@ export function BottomSheet({
   closeLabel = "Close",
 }: BottomSheetProps) {
   const titleId = React.useId();
+  const shouldReduceMotion = useReducedMotion();
 
   React.useEffect(() => {
     if (!open) return;
@@ -66,7 +67,20 @@ export function BottomSheet({
         )}
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
-        transition={{ type: "spring", damping: 30, stiffness: 320 }}
+        drag="y"
+        dragDirectionLock
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={{ top: 0, bottom: 0.85 }}
+        onDragEnd={(_, info) => {
+          if (info.offset.y > 120 || info.velocity.y > 700) {
+            onOpenChange(false);
+          }
+        }}
+        transition={
+          shouldReduceMotion
+            ? { duration: 0 }
+            : { type: "spring", damping: 30, stiffness: 320 }
+        }
       >
         <div className="mx-auto h-1.5 w-12 rounded-full bg-white/20" />
 

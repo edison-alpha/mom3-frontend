@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import * as React from "react";
 
 export function ScanModal({
@@ -26,14 +27,16 @@ export function ScanModal({
           <h2 id="scan-wallet-title" className="text-base font-black text-white">
             Scan wallet QR
           </h2>
-          <button
+          <Button
             type="button"
             onClick={onClose}
+            color="transparent"
+            size="icon"
+            rounded="full"
+            startIcon="lucide:x"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-black/30 text-[#9A9AA2] transition-colors hover:text-white focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
             aria-label="Close scanner"
-          >
-            <AppIcon icon="lucide:x" aria-hidden="true" width={20} height={20} />
-          </button>
+          />
         </div>
         <div className="mt-5 flex aspect-square items-center justify-center rounded-[28px] border border-[#3B33BD]/50 bg-black">
           <div className="relative h-48 w-48 rounded-[24px] border-2 border-[#ccff00]">
@@ -44,13 +47,13 @@ export function ScanModal({
             <div className="absolute inset-x-6 top-1/2 h-0.5 bg-[#ccff00] shadow-[0_0_18px_rgba(204,255,0,0.8)]" />
           </div>
         </div>
-        <button
+        <Button
           type="button"
           onClick={onScan}
+          color="primary"
+          label="Use scanned wallet"
           className="mt-5 flex h-12 w-full items-center justify-center rounded-full bg-[#3B33BD] text-base font-black text-[#ccff00] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-        >
-          Use scanned wallet
-        </button>
+        />
       </div>
     </div>
   );

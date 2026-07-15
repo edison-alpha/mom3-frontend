@@ -1,4 +1,5 @@
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 
 import type { RecommendationItem } from "../types/ai.types";
 
@@ -10,9 +11,12 @@ export function RecommendationCard({
   onSelect: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onSelect}
+      variant="plain"
+      size="lg"
+      rounded="lg"
       className="group w-full rounded-[22px] border border-[#3B33BD]/80 bg-[radial-gradient(circle_at_0%_0%,rgba(59,51,189,0.42),rgba(8,9,36,0.94)_42%,rgba(5,6,19,0.98)_100%)] p-3 text-left shadow-[0_14px_36px_-24px_rgba(59,51,189,0.9)] transition-transform active:scale-[0.99] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
     >
       <div className="flex gap-3">
@@ -71,6 +75,6 @@ export function RecommendationCard({
           />
         </span>
       </div>
-    </button>
+    </Button>
   );
 }

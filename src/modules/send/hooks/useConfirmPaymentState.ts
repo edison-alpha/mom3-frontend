@@ -16,13 +16,17 @@ import {
   findPreferredToken,
   getAmountValidationMessage,
   getSendErrorMessage,
+  isRetryableParticleTransactionError,
   isRecipientValidForToken,
+  isTransactionQuoteExpired,
   isUserRejectedError,
   matchesAsset,
   normalizeAssetQuery,
   resolveRecipient,
   normalizePrimaryAssetTokens,
+  ZERO_ADDRESS,
 } from "@/modules/send/utils/send.utils";
+import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 
 export function useConfirmPaymentState() {
   const searchParams = useSearchParams();
@@ -39,7 +43,6 @@ export function useConfirmPaymentState() {
     isLoading,
     error: accountError,
     ensureDelegated,
-    isDelegated,
     refreshAccount,
     signAndSend,
   } = useUniversalAccount();
@@ -48,6 +51,8 @@ export function useConfirmPaymentState() {
   const [sendPreview, setSendPreview] = React.useState<SendPreview | null>(null);
   const [transactionId, setTransactionId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const submitInFlightRef = React.useRef(false);
 
   const tokenRows = React.useMemo(
     () => normalizePrimaryAssetTokens(primaryAssets),
@@ -85,27 +90,23 @@ export function useConfirmPaymentState() {
     if (!isRecipientValidForToken(recipient, selectedToken)) {
       setError(
         selectedToken.chainId === CHAIN_ID.SOLANA_MAINNET
-          ? "Alamat tujuan harus alamat Solana untuk token tujuan Solana."
-          : "Alamat tujuan harus alamat EVM untuk token tujuan EVM.",
+          ? "Enter a valid Solana address for this asset."
+          : "Enter a valid EVM address for this asset.",
       );
       return;
     }
 
     if (amountValidationMessage || !Number.isFinite(numericAmount) || numericAmount <= 0) {
-      setError(amountValidationMessage ?? "Masukkan jumlah yang valid.");
+      setError(amountValidationMessage ?? "Enter a valid amount.");
       return;
     }
 
     setError(null);
-    setSendStatus(isDelegated ? "preparing" : "delegating");
+    setNotice(null);
+    setSendStatus("preparing");
 
     try {
-      if (!isDelegated) {
-        await ensureDelegated();
-      }
-
-      setSendStatus("preparing");
-      const transaction = await universalAccount.createTransferTransaction({
+      const particleTransaction = await universalAccount.createTransferTransaction({
         token: {
           chainId: selectedToken.chainId,
           address: selectedToken.tokenAddress,
@@ -113,6 +114,11 @@ export function useConfirmPaymentState() {
         amount: amount.trim(),
         receiver: recipient.address,
       });
+      const transaction = prepareSponsoredTransaction(particleTransaction);
+
+      if (!transaction.transactionId || !transaction.rootHash || transaction.userOps.length === 0) {
+        throw new Error("Particle returned an incomplete transfer quote.");
+      }
 
       setSendPreview({
         transaction,
@@ -134,8 +140,6 @@ export function useConfirmPaymentState() {
     amount,
     numericAmount,
     amountValidationMessage,
-    isDelegated,
-    ensureDelegated,
   ]);
 
   React.useEffect(() => {
@@ -144,23 +148,62 @@ export function useConfirmPaymentState() {
   }, [recipient, selectedToken, sendPreview, sendStatus, prepareTransaction]);
 
   const handleConfirmSend = async () => {
+    // Particle transaction records are single-use. Prevent a double click or
+    // a second render event from submitting the same transactionId twice.
+    if (submitInFlightRef.current) return;
+
     if (!sendPreview) {
       await prepareTransaction();
       return;
     }
 
+    if (isTransactionQuoteExpired(sendPreview.transaction)) {
+      setSendPreview(null);
+      await prepareTransaction();
+      setNotice("The quote expired. Review the refreshed transaction details and confirm again.");
+      return;
+    }
+
+    submitInFlightRef.current = true;
     setError(null);
-    setSendStatus("signing");
+    setNotice(null);
 
     try {
-      const result = await signAndSend(sendPreview.transaction as any);
+      const isNativeEvmAsset =
+        sendPreview.token.chainId !== CHAIN_ID.SOLANA_MAINNET &&
+        sendPreview.token.tokenAddress.toLowerCase() === ZERO_ADDRESS;
+
+      if (isNativeEvmAsset) {
+        setSendStatus("delegating");
+        const didDelegate = await ensureDelegated(sendPreview.token.chainId);
+
+        if (didDelegate) {
+          setSendPreview(null);
+          await prepareTransaction();
+          setNotice(
+            "EIP-7702 upgrade completed. Review the refreshed quote and confirm again.",
+          );
+          return;
+        }
+      }
+
+      setSendStatus("signing");
+      // Particle injects signatures into the transaction object before submit.
+      // Keep React state immutable so a retry never resubmits a mutated quote.
+      const transactionForSubmit = structuredClone(sendPreview.transaction);
+      const result = await signAndSend(transactionForSubmit);
       setTransactionId(result.transactionId ?? sendPreview.transaction.transactionId);
       await refreshAccount();
     } catch (cause) {
-      if (!isUserRejectedError(cause)) {
+      if (isRetryableParticleTransactionError(cause)) {
+        setSendPreview(null);
+        await prepareTransaction();
+        setError(getSendErrorMessage(cause));
+      } else {
         setError(getSendErrorMessage(cause));
       }
     } finally {
+      submitInFlightRef.current = false;
       setSendStatus("idle");
     }
   };
@@ -172,6 +215,22 @@ export function useConfirmPaymentState() {
     if (chain) params.set("chain", chain);
     if (amount) params.set("amount", amount);
     router.push(`/send?${params.toString()}`);
+  };
+
+  const handleSendAgain = () => {
+    const params = new URLSearchParams();
+    if (recipient?.address) params.set("to", recipient.address);
+    if (selectedToken?.symbol) params.set("asset", selectedToken.symbol);
+    if (selectedToken?.chainName) params.set("chain", selectedToken.chainName);
+    router.push(`/send?${params.toString()}`);
+  };
+
+  const handleSuccessBack = () => router.push("/dashboard");
+
+  const handleRetry = async () => {
+    setError(null);
+    setNotice(null);
+    if (!sendPreview) await prepareTransaction();
   };
 
   const isReady = Boolean(recipient && selectedToken && !isLoading && !amountValidationMessage);
@@ -188,6 +247,7 @@ export function useConfirmPaymentState() {
     sendPreview,
     transactionId,
     error,
+    notice,
     accountError,
     isLoading,
     isReady,
@@ -197,6 +257,9 @@ export function useConfirmPaymentState() {
     amountValidationMessage,
     handleConfirmSend,
     handleBack,
+    handleSendAgain,
+    handleSuccessBack,
+    handleRetry,
     refreshAccount,
   };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
@@ -67,31 +68,27 @@ export default function OnboardingView() {
         </section>
 
         <section className="relative z-10 mt-7 -translate-y-14 space-y-3">
-          <button
+          <Button
             type="button"
-            disabled
+            isDisabled
+            label="Apple coming soon"
+            startIcon="simple-icons:apple"
+            rounded="lg"
             className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-white text-base font-black text-black shadow-[0_16px_42px_-24px_rgba(14,18,58,0.7)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"
-          >
-            <AppIcon icon="simple-icons:apple" className="h-6 w-6" aria-hidden="true" />
-            Apple coming soon
-          </button>
+          />
 
-          <button
+          <Button
             type="button"
             onClick={() => {
               void loginWithGoogle();
             }}
-            disabled={!isReady || isLoading}
-            aria-busy={isLoading}
+            isDisabled={!isReady}
+            isLoading={isLoading}
+            label={isLoading ? "Connecting wallet" : "Sign in with Google"}
+            startIcon="flat-color-icons:google"
+            rounded="lg"
             className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] border border-white/12 bg-[#12111A] text-base font-black text-white shadow-[0_16px_42px_-24px_rgba(14,18,58,0.8)] transition-transform hover:bg-[#191824] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white disabled:cursor-not-allowed disabled:opacity-70"
-          >
-            {isLoading ? (
-              <AppIcon icon="lucide:loader-circle" className="h-5 w-5 animate-spin" aria-hidden="true" />
-            ) : (
-              <AppIcon icon="flat-color-icons:google" className="h-6 w-6" aria-hidden="true" />
-            )}
-            {isLoading ? "Connecting wallet" : "Sign in with Google"}
-          </button>
+          />
 
           {error ? (
             <p role="alert" className="rounded-2xl bg-black/25 px-4 py-3 text-sm font-semibold text-white">

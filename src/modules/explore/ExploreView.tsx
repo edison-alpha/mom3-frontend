@@ -1,177 +1,105 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import * as React from "react";
+import { CoinIcon, DefiIcon, DexIcon } from "react-web3-icons/dynamic";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { MobileBottomBar, MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
-import { MiniChart, TimeRangeControl, type TimeRange } from "@/components/ui/mini-chart";
 import { cn } from "@/lib/utils";
+import { ExploreMarketSectionsSkeleton } from "@/modules/explore/components/ExploreSkeleton";
+import { useExploreYields, type ExploreYieldPool } from "@/modules/explore/hooks/useExploreYields";
 
-type MarketItem = {
-  asset: string;
-  protocol: string;
-  primary: string;
-  secondary: string;
-  icon: string;
-  color: string;
-  positive?: boolean;
-  category: "Lend" | "Borrow" | "Risk";
-  tvl: string;
-  utilization: string;
-  risk: "Low" | "Medium" | "High";
-  description: string;
-  chartData: Record<TimeRange, number[]>;
-};
-
+type MarketItem = ExploreYieldPool;
 type MarketCategoryFilter = "All" | MarketItem["category"];
 
-const marketChartSeries: Record<string, Record<TimeRange, number[]>> = {
-  stable: {
-    "1D": [0, 0.05, 0.08, 0.12, 0.1, 0.16, 0.18],
-    "1W": [0, 0.2, 0.5, 0.42, 0.72, 0.84, 1.02],
-    "1M": [0, 0.8, 1.4, 2.1, 2.8, 3.2, 3.9],
-    "1Y": [0, 4, 7.8, 10.4, 13.2, 15.6, 19.8],
-  },
-  volatile: {
-    "1D": [0, -0.2, 0.5, -0.1, 0.9, 0.4, 1.3],
-    "1W": [0, 1.6, -0.9, 2.8, 2.1, 4.2, 3.4],
-    "1M": [0, 3.4, 1.2, 6.8, 4.4, 8.6, 7.2],
-    "1Y": [0, 12, -4, 18, 34, 26, 48],
-  },
-  warning: {
-    "1D": [0, -0.6, -0.2, -1.2, -0.8, -1.5, -1.1],
-    "1W": [0, -1.8, -0.6, -3.6, -2.4, -4.8, -4.1],
-    "1M": [0, -4.2, -1.6, -7.8, -5.8, -10.2, -8.4],
-    "1Y": [0, 6, -8, 3, -15, -4, -21],
-  },
+const DEFI_PROTOCOL_SLUGS = [
+  "aave", "balancer", "compound", "convex", "eigenlayer", "ethena", "etherfi",
+  "frax", "gmx", "lido", "liquity", "makerdao", "morpho", "pendle",
+  "rocketpool", "spark", "synthetix", "venus", "yearn",
+] as const;
+
+const DEX_PROTOCOL_SLUGS = [
+  "aerodrome", "camelot", "curve", "dydx", "pancakeswap", "sushiswap",
+  "uniswap", "velodrome",
+] as const;
+
+const TOKEN_NAMES: Record<string, string> = {
+  ARB: "Arbitrum",
+  BTC: "Bitcoin",
+  DAI: "Dai",
+  ETH: "Ethereum",
+  USDC: "USD Coin",
+  USDT: "Tether USD",
+  WBTC: "Wrapped Bitcoin",
+  WETH: "Wrapped Ether",
 };
 
-const lendingPools: MarketItem[] = [
-  {
-    asset: "USDC",
-    protocol: "Aave v3",
-    primary: "5.15% APY",
-    secondary: "Low risk",
-    icon: "cryptocurrency-color:usdc",
-    color: "bg-[#2775CA]",
-    positive: true,
-    category: "Lend",
-    tvl: "$184.2M",
-    utilization: "68%",
-    risk: "Low",
-    description: "Stable USDC lending market with deep liquidity and predictable yield.",
-    chartData: marketChartSeries.stable,
-  },
-  {
-    asset: "ETH",
-    protocol: "Compound",
-    primary: "3.42% APY",
-    secondary: "Blue-chip",
-    icon: "cryptocurrency-color:eth",
-    color: "bg-[#627EEA]",
-    positive: true,
-    category: "Lend",
-    tvl: "$96.4M",
-    utilization: "54%",
-    risk: "Low",
-    description: "Blue-chip ETH lending market with lower APY and broad protocol support.",
-    chartData: marketChartSeries.volatile,
-  },
-  {
-    asset: "USDT",
-    protocol: "Morpho",
-    primary: "4.88% APY",
-    secondary: "Stablecoin",
-    icon: "cryptocurrency-color:usdt",
-    color: "bg-[#26A17B]",
-    positive: true,
-    category: "Lend",
-    tvl: "$72.8M",
-    utilization: "61%",
-    risk: "Low",
-    description: "Conservative stablecoin lending route with steady utilization.",
-    chartData: marketChartSeries.stable,
-  },
-];
+const TOKEN_SYMBOLS = Object.keys(TOKEN_NAMES).sort((left, right) => right.length - left.length);
 
-const borrowMarkets: MarketItem[] = [
-  {
-    asset: "USDC",
-    protocol: "Base Market",
-    primary: "6.20% APR",
-    secondary: "80% LTV",
-    icon: "cryptocurrency-color:usdc",
-    color: "bg-[#2775CA]",
-    category: "Borrow",
-    tvl: "$42.1M",
-    utilization: "80%",
-    risk: "Medium",
-    description: "Borrow USDC against supported collateral. Watch utilization before entering.",
-    chartData: marketChartSeries.volatile,
-  },
-  {
-    asset: "cbETH",
-    protocol: "Aave v3",
-    primary: "2.14% APR",
-    secondary: "70% LTV",
-    icon: "cryptocurrency-color:eth",
-    color: "bg-[#3B33BD]",
-    category: "Borrow",
-    tvl: "$38.6M",
-    utilization: "70%",
-    risk: "Medium",
-    description: "Borrow market for cbETH collateral with moderate rate movement.",
-    chartData: marketChartSeries.volatile,
-  },
-  {
-    asset: "MOM",
-    protocol: "mom3 Vault",
-    primary: "9.80% APR",
-    secondary: "Beta",
-    icon: "solar:stars-bold",
-    color: "bg-[#ccff00]",
-    category: "Borrow",
-    tvl: "$4.8M",
-    utilization: "46%",
-    risk: "High",
-    description: "Beta borrow market with higher rate uncertainty and smaller liquidity.",
-    chartData: marketChartSeries.warning,
-  },
-];
+function assetTokens(asset: string) {
+  const normalized = asset.toUpperCase();
+  const parts = normalized.split(/[-/+:_\s]+/).map((part) => part.replace(/\.E$/, ""));
+  const matched = parts.flatMap((part) => {
+    const exact = TOKEN_SYMBOLS.find((symbol) => part === symbol);
+    if (exact) return [exact];
+    const embedded = TOKEN_SYMBOLS.find((symbol) => part.endsWith(symbol));
+    return embedded ? [embedded] : [];
+  });
+  return [...new Set(matched)].slice(0, 2);
+}
 
-const riskWatch: MarketItem[] = [
-  {
-    asset: "Pendle",
-    protocol: "Yield Market",
-    primary: "High util.",
-    secondary: "89% used",
-    icon: "token-branded:pendle",
-    color: "bg-[#242620]",
-    category: "Risk",
-    tvl: "$12.6M",
-    utilization: "89%",
-    risk: "High",
-    description: "High utilization can make exits slower and rates less predictable.",
-    chartData: marketChartSeries.warning,
-  },
-  {
-    asset: "Ethena",
-    protocol: "USDe Loop",
-    primary: "Medium risk",
-    secondary: "Review",
-    icon: "token-branded:ethena",
-    color: "bg-[#20211f]",
-    category: "Risk",
-    tvl: "$28.9M",
-    utilization: "73%",
-    risk: "Medium",
-    description: "Yield loop is active but should be reviewed before adding more size.",
-    chartData: marketChartSeries.warning,
-  },
-];
+function coinIconSymbol(symbol: string) {
+  if (symbol === "WETH") return "ETH";
+  if (symbol === "WBTC") return "BTC";
+  return symbol;
+}
+
+function AssetLogo({ asset }: { asset: string }) {
+  const tokens = assetTokens(asset);
+  if (!tokens.length) {
+    return <span className="text-sm font-black uppercase text-white">{asset.slice(0, 2)}</span>;
+  }
+
+  return (
+    <span className="flex items-center">
+      {tokens.map((symbol, index) => (
+        <span key={symbol} className={cn("relative flex items-center", index > 0 && "-ml-2")} style={{ zIndex: tokens.length - index }}>
+          <CoinIcon
+            symbol={coinIconSymbol(symbol)}
+            variant="colored"
+            size={tokens.length > 1 ? 28 : 36}
+            fallback={<span className="text-xs font-black text-white">{symbol.slice(0, 1)}</span>}
+          />
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function assetLabel(asset: string) {
+  const tokens = assetTokens(asset);
+  if (tokens.length === 1) return { name: TOKEN_NAMES[tokens[0]], symbol: tokens[0] };
+  if (tokens.length > 1) return { name: tokens.join(" / "), symbol: "" };
+  return { name: asset, symbol: "" };
+}
+
+function ProtocolLogo({ protocol }: { protocol: string }) {
+  const normalized = protocol.toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const fallback = (
+    <span className="text-[9px] font-black uppercase leading-none text-white">
+      {protocol.slice(0, 1)}
+    </span>
+  );
+  const defiSlug = DEFI_PROTOCOL_SLUGS.find((slug) => normalized.includes(slug));
+  if (defiSlug) return <DefiIcon name={defiSlug} variant="colored" size={14} fallback={fallback} />;
+  const dexSlug = DEX_PROTOCOL_SLUGS.find((slug) => normalized.includes(slug));
+  if (dexSlug) return <DexIcon name={dexSlug} variant="colored" size={14} fallback={fallback} />;
+  return fallback;
+}
 
 const categoryFilters: Array<{
   id: MarketCategoryFilter;
@@ -179,25 +107,15 @@ const categoryFilters: Array<{
   icon: string;
 }> = [
   { id: "All", label: "Semua", icon: "lucide:layers-3" },
-  { id: "Lend", label: "Lend", icon: "solar:wallet-money-bold" },
-  { id: "Borrow", label: "Borrow", icon: "solar:hand-money-bold" },
+  { id: "Yield", label: "Yield", icon: "solar:wallet-money-bold" },
   { id: "Risk", label: "Risk", icon: "solar:shield-warning-bold" },
 ];
 
 const marketCategoryStyles: Record<
   MarketItem["category"],
-  {
-    container: string;
-    row: string;
-    sectionIcon: string;
-  }
+  { container: string; row: string; sectionIcon: string }
 > = {
-  Lend: {
-    container: "bg-[#1C1C1E]",
-    row: "hover:bg-[#202024] focus-visible:ring-[#ccff00]/70",
-    sectionIcon: "text-[#ccff00]",
-  },
-  Borrow: {
+  Yield: {
     container: "bg-[#1C1C1E]",
     row: "hover:bg-[#202024] focus-visible:ring-[#ccff00]/70",
     sectionIcon: "text-[#ccff00]",
@@ -211,17 +129,17 @@ const marketCategoryStyles: Record<
 
 const exploreFeatureCards = [
   {
-    title: "Lend stablecoins",
-    subtitle: "Earn up to 5.15% APY",
+    title: "Earn stablecoin yield",
+    subtitle: "Live Aave V3 APY across chains",
     icon: "solar:wallet-money-bold",
     className: "bg-[#1C1C1E]",
     iconClassName: "bg-[#2A2A3E] text-[#ccff00]",
     actionClassName: "bg-[#2A2A3E] text-[#ccff00]",
   },
   {
-    title: "Borrow against ETH",
-    subtitle: "Collateralized credit from 2.14% APR",
-    icon: "solar:hand-money-bold",
+    title: "Optimize liquidity yield",
+    subtitle: "Live opportunities on Arbitrum, Base, and Solana",
+    icon: "solar:graph-up-bold",
     className: "bg-[#1C1C1E]",
     iconClassName: "bg-[#2A2A3E] text-[#ccff00]",
     actionClassName: "bg-[#2A2A3E] text-[#ccff00]",
@@ -234,7 +152,7 @@ function matchesMarket(item: MarketItem, query: string) {
     item.asset.toLowerCase().includes(normalized) ||
     item.protocol.toLowerCase().includes(normalized) ||
     item.primary.toLowerCase().includes(normalized) ||
-    item.secondary.toLowerCase().includes(normalized)
+    item.chain.toLowerCase().includes(normalized)
   );
 }
 
@@ -245,6 +163,28 @@ function slugify(value: string) {
     .replace(/^-|-$/g, "");
 }
 
+function marketDetailHref(item: MarketItem) {
+  const params = new URLSearchParams({
+    asset: item.asset,
+    protocol: item.protocol,
+    chain: item.chain,
+    chainId: String(item.chainId),
+    apy: String(item.apy),
+    tvl: item.tvl,
+    utilization: item.utilization,
+    risk: item.risk,
+    category: item.category,
+    description: item.description,
+    icon: item.icon,
+    color: item.color,
+    change1d: String(item.apyChange1d ?? 0),
+    change7d: String(item.apyChange7d ?? 0),
+    change30d: String(item.apyChange30d ?? 0),
+  });
+  if (item.marketId) params.set("marketId", item.marketId);
+  return `/explore/${slugify(item.id)}?${params.toString()}`;
+}
+
 function MarketList({
   title,
   items,
@@ -252,7 +192,7 @@ function MarketList({
   title: string;
   items: MarketItem[];
 }) {
-  const category = items[0]?.category ?? "Lend";
+  const category = items[0]?.category ?? "Yield";
   const styles = marketCategoryStyles[category];
 
   return (
@@ -262,163 +202,57 @@ function MarketList({
       transition={{ duration: 0.3 }}
       className="mt-6"
     >
-      <h2 className="flex items-center gap-1 text-base font-semibold text-white">
-        {title}
-        <AppIcon
-          icon="lucide:chevron-right"
-          aria-hidden="true"
-          width={17}
-          height={17}
-          className={styles.sectionIcon}
-        />
-      </h2>
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="flex items-center gap-1 text-base font-semibold text-white">
+          {title}
+          <AppIcon icon="lucide:chevron-right" aria-hidden="true" width={17} height={17} className={styles.sectionIcon} />
+        </h2>
+        <span className="rounded-full bg-[#1C1C1E] px-2.5 py-1 text-xs font-bold text-[#A7A7B7]">
+          {items.length} market{items.length === 1 ? "" : "s"}
+        </span>
+      </div>
       <div className={cn("mt-3 overflow-hidden rounded-[28px] p-3", styles.container)}>
-        {items.map((item, index) => (
+        {items.map((item, index) => {
+          const asset = assetLabel(item.asset);
+          return (
           <motion.div
-            key={`${title}-${item.asset}`}
+            key={`${title}-${item.id}`}
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05 }}
           >
             <Link
-              href={`/explore/${slugify(`${item.category}-${item.asset}-${item.protocol}`)}`}
+              href={marketDetailHref(item)}
               className={cn(
                 "flex min-h-[68px] w-full items-center gap-3 rounded-[20px] px-2 text-left transition-colors focus-visible:ring-2",
                 styles.row,
               )}
             >
-              <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${item.color}`}>
-                <AppIcon
-                  icon={item.icon}
-                  aria-hidden="true"
-                  width={24}
-                  height={24}
-                  className={item.color === "bg-[#ccff00]" ? "text-black" : "text-white"}
-                />
+              <span className="relative flex h-12 w-12 shrink-0 items-center justify-center" aria-hidden="true">
+                <AssetLogo asset={item.asset} />
+                <span className="absolute -bottom-0.5 -right-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#111217]">
+                  <ProtocolLogo protocol={item.protocol} />
+                </span>
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-base font-bold text-white">
-                  {item.asset}
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="truncate text-base font-bold text-white">{asset.name}</span>
+                  {asset.symbol ? <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-black text-[#C8C8CE]">{asset.symbol}</span> : null}
                 </span>
-                <span className="mt-0.5 block text-sm font-medium text-[#8E8E93]">
-                  {item.protocol}
+                <span className="mt-0.5 block truncate text-sm font-medium text-[#8E8E93]">
+                  {item.protocol} · {item.chain}
                 </span>
               </span>
               <span className="text-right">
-                <span className="block text-sm font-bold text-white">
-                  {item.primary}
-                </span>
-                <span
-                  className={`mt-0.5 block text-xs font-black ${
-                    item.positive ? "text-[#ccff00]" : "text-[#A7A7A7]"
-                  }`}
-                >
+                <span className="block text-sm font-bold text-white">{item.primary}</span>
+                <span className={`mt-0.5 block text-xs font-black ${item.positive ? "text-[#ccff00]" : "text-[#A7A7A7]"}`}>
                   {item.secondary}
                 </span>
               </span>
             </Link>
           </motion.div>
-        ))}
-      </div>
-    </motion.section>
-  );
-}
-
-function MarketDetail({
-  market,
-  range,
-  onRangeChange,
-}: {
-  market: MarketItem;
-  range: TimeRange;
-  onRangeChange: (range: TimeRange) => void;
-}) {
-  const tone =
-    market.risk === "High" ? "red" : market.risk === "Medium" ? "yellow" : "green";
-
-  return (
-    <motion.section
-      key={`${market.category}-${market.asset}-${market.protocol}`}
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
-      className="mt-5 rounded-[28px] border border-white/10 bg-[#111217] p-4"
-    >
-      <div className="flex items-start gap-3">
-        <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${market.color}`}>
-          <AppIcon
-            icon={market.icon}
-            aria-hidden="true"
-            width={28}
-            height={28}
-            className={market.color === "bg-[#ccff00]" ? "text-black" : "text-white"}
-          />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <h2 className="truncate text-lg font-black text-white">
-                {market.asset} on {market.protocol}
-              </h2>
-              <p className="mt-1 text-sm font-medium leading-snug text-[#A7A7B7]">
-                {market.description}
-              </p>
-            </div>
-            <span
-              className={cn(
-                "shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-black",
-                market.risk === "Low" && "border-[#ccff00]/25 bg-[#ccff00]/10 text-[#ccff00]",
-                market.risk === "Medium" && "border-[#FFD166]/25 bg-[#FFD166]/10 text-[#FFD166]",
-                market.risk === "High" && "border-[#FF6B6B]/25 bg-[#FF6B6B]/10 text-[#FF6B6B]",
-              )}
-            >
-              {market.risk}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div className="mt-4 grid grid-cols-3 overflow-hidden rounded-[18px] border border-white/10">
-        {[
-          ["Rate", market.primary],
-          ["TVL", market.tvl],
-          ["Util.", market.utilization],
-        ].map(([label, value], index) => (
-          <div
-            key={label}
-            className={cn("p-3", index < 2 && "border-r border-white/10")}
-          >
-            <p className="text-xs font-medium text-[#A7A7B7]">{label}</p>
-            <p className="mt-1 text-sm font-black text-white">{value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-4">
-        <TimeRangeControl value={range} onChange={onRangeChange} />
-        <MiniChart
-          values={market.chartData[range]}
-          label={`${market.category} market trend`}
-          tone={tone}
-          range={range}
-          className="mt-3"
-        />
-      </div>
-
-      <div className="mt-4 flex gap-2">
-        <Link
-          href={market.category === "Borrow" ? "/assets" : "/ai/strategy"}
-          className="flex h-11 flex-1 items-center justify-center rounded-full bg-[#ccff00] text-sm font-black text-black transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/70"
-        >
-          {market.category === "Borrow" ? "Review collateral" : "View strategy"}
-        </Link>
-        <Link
-          href="/ai"
-          aria-label="Ask agent about market"
-          className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-[#ccff00] transition-colors hover:bg-white/[0.08] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-        >
-          <AppIcon icon="solar:stars-bold" aria-hidden="true" width={20} height={20} />
-        </Link>
+          );
+        })}
       </div>
     </motion.section>
   );
@@ -427,55 +261,68 @@ function MarketDetail({
 export default function ExploreView() {
   const [query, setQuery] = React.useState("");
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
-  const [categoryFilter, setCategoryFilter] =
-    React.useState<MarketCategoryFilter>("All");
+  const [categoryFilter, setCategoryFilter] = React.useState<MarketCategoryFilter>("All");
+  const { yieldPools, riskPools, isLoading, error } = useExploreYields();
 
-  const showLending = categoryFilter === "All" || categoryFilter === "Lend";
-  const showBorrow = categoryFilter === "All" || categoryFilter === "Borrow";
+  const showYield = categoryFilter === "All" || categoryFilter === "Yield";
   const showRisk = categoryFilter === "All" || categoryFilter === "Risk";
 
-  const filteredLending = React.useMemo(
-    () =>
-      showLending
-        ? query.trim()
-          ? lendingPools.filter((item) => matchesMarket(item, query))
-          : lendingPools
-        : [],
-    [query, showLending]
-  );
-  const filteredBorrow = React.useMemo(
-    () =>
-      showBorrow
-        ? query.trim()
-          ? borrowMarkets.filter((item) => matchesMarket(item, query))
-          : borrowMarkets
-        : [],
-    [query, showBorrow]
+  const filteredYield = React.useMemo(
+    () => (showYield ? (query.trim() ? yieldPools.filter((item) => matchesMarket(item, query)) : yieldPools) : []),
+    [yieldPools, query, showYield],
   );
   const filteredRisk = React.useMemo(
-    () =>
-      showRisk
-        ? query.trim()
-          ? riskWatch.filter((item) => matchesMarket(item, query))
-          : riskWatch
-        : [],
-    [query, showRisk]
+    () => (showRisk ? (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools) : []),
+    [riskPools, query, showRisk],
   );
 
-  const hasResults = filteredLending.length > 0 || filteredBorrow.length > 0 || filteredRisk.length > 0;
+  const bestYield = React.useMemo(
+    () => [...filteredYield].sort((left, right) => right.apy - left.apy).slice(0, 3),
+    [filteredYield],
+  );
+
+  const protocolGroups = React.useMemo(() => {
+    const groups = new Map<string, MarketItem[]>();
+
+    filteredYield.forEach((market) => {
+      const protocol = market.protocol.trim() || "Other";
+      const existing = groups.get(protocol) ?? [];
+      existing.push(market);
+      groups.set(protocol, existing);
+    });
+
+    const priority = ["aave", "morpho", "compound"];
+    return Array.from(groups.entries())
+      .map(([protocol, items]) => ({
+        protocol,
+        items: [...items].sort((left, right) => right.apy - left.apy),
+      }))
+      .sort((left, right) => {
+        const leftIndex = priority.findIndex((name) => left.protocol.toLowerCase().includes(name));
+        const rightIndex = priority.findIndex((name) => right.protocol.toLowerCase().includes(name));
+        if (leftIndex >= 0 || rightIndex >= 0) {
+          return (leftIndex < 0 ? priority.length : leftIndex) - (rightIndex < 0 ? priority.length : rightIndex);
+        }
+        return left.protocol.localeCompare(right.protocol);
+      });
+  }, [filteredYield]);
+
+  const hasResults = filteredYield.length > 0 || filteredRisk.length > 0;
   const selectedCategoryLabel =
     categoryFilters.find((item) => item.id === categoryFilter)?.label ?? "Semua";
   const headerAction = (
-    <button
+    <Button
       type="button"
       onClick={() => setFilterSheetOpen(true)}
+      color="dark"
+      size="icon"
+      rounded="full"
+      startIcon="lucide:sliders-horizontal"
       className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1E] text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
       aria-label="Open explore filters"
       aria-expanded={filterSheetOpen}
       aria-haspopup="dialog"
-    >
-      <AppIcon icon="lucide:sliders-horizontal" aria-hidden="true" width={18} height={18} />
-    </button>
+    />
   );
 
   return (
@@ -489,23 +336,17 @@ export default function ExploreView() {
             className="w-full max-w-md"
           >
             <label htmlFor="explore-search" className="sr-only">
-              Search lending markets
+              Search yield opportunities
             </label>
             <div className="flex h-14 w-full items-center gap-3 rounded-full bg-[#1C1C1E]/90 px-5 shadow-[0_16px_34px_-18px_rgba(0,0,0,0.95)] backdrop-blur-md">
-              <AppIcon
-                icon="icon-park-outline:search"
-                aria-hidden="true"
-                width={24}
-                height={24}
-                className="text-[#85858d]"
-              />
+              <AppIcon icon="icon-park-outline:search" aria-hidden="true" width={24} height={24} className="text-[#85858d]" />
               <input
                 id="explore-search"
                 type="search"
                 autoComplete="off"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search lending markets"
+                placeholder="Search yield opportunities"
                 className="min-w-0 flex-1 bg-transparent text-base font-bold text-white placeholder:text-[#9A9AA2] focus:outline-none"
               />
             </div>
@@ -513,17 +354,8 @@ export default function ExploreView() {
         </MobileBottomBar>
       }
     >
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.25 }}
-        >
-          <MobilePageHeader
-            title="Explore"
-            backHref="/dashboard"
-            backLabel="Back to dashboard"
-            action={headerAction}
-          />
+        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+          <MobilePageHeader title="Explore" backHref="/dashboard" backLabel="Back to dashboard" action={headerAction} />
         </motion.div>
 
         <motion.section
@@ -542,27 +374,15 @@ export default function ExploreView() {
                 className={cn("min-w-[82%] rounded-[24px] p-4", item.className)}
               >
                 <div className="flex items-start justify-between">
-                  <span
-                    className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-2xl",
-                      item.iconClassName,
-                    )}
-                  >
+                  <span className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", item.iconClassName)}>
                     <AppIcon icon={item.icon} aria-hidden="true" width={25} height={25} />
                   </span>
-                  <span
-                    className={cn(
-                      "flex h-10 w-10 items-center justify-center rounded-full",
-                      item.actionClassName,
-                    )}
-                  >
+                  <span className={cn("flex h-10 w-10 items-center justify-center rounded-full", item.actionClassName)}>
                     <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={22} height={22} />
                   </span>
                 </div>
                 <h2 className="mt-5 text-base font-bold text-white">{item.title}</h2>
-                <p className="mt-2 text-sm font-medium text-[#8E8E93]">
-                  {item.subtitle}
-                </p>
+                <p className="mt-2 text-sm font-medium text-[#8E8E93]">{item.subtitle}</p>
               </motion.article>
             ))}
           </div>
@@ -572,26 +392,46 @@ export default function ExploreView() {
           </div>
         </motion.section>
 
-        {hasResults ? (
+        {isLoading ? (
           <>
-            {filteredLending.length > 0 ? (
-              <MarketList
-                title="Best lend rates"
-                items={filteredLending}
-              />
+            <ExploreMarketSectionsSkeleton />
+            <div className="hidden">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25 }}
+            className="mt-8 flex flex-col items-center justify-center rounded-[28px] bg-[#151714] px-6 py-12 text-center"
+          >
+            <AppIcon icon="lucide:loader-circle" aria-hidden="true" width={36} height={36} className="animate-spin text-[#9A9AA2]" />
+            <p className="mt-4 text-base font-bold text-white">Loading live yields</p>
+            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Fetching on-chain Aave + DefiLlama across chains…</p>
+          </motion.div>
+            </div>
+          </>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.25 }}
+            className="mt-8 flex flex-col items-center justify-center rounded-[28px] bg-[#151714] px-6 py-12 text-center"
+          >
+            <AppIcon icon="solar:danger-triangle-bold" aria-hidden="true" width={36} height={36} className="text-[#FF7B7B]" />
+            <p className="mt-4 text-base font-bold text-white">Yields unavailable</p>
+            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">{error}</p>
+          </motion.div>
+        ) : hasResults ? (
+          <>
+            {bestYield.length > 0 ? (
+              <MarketList title="Best Yield" items={bestYield} />
             ) : null}
-            {filteredBorrow.length > 0 ? (
+            {protocolGroups.map((group) => (
               <MarketList
-                title="Borrow markets"
-                items={filteredBorrow}
+                key={group.protocol}
+                title={group.protocol}
+                items={group.items}
               />
-            ) : null}
-            {filteredRisk.length > 0 ? (
-              <MarketList
-                title="Risk watch"
-                items={filteredRisk}
-              />
-            ) : null}
+            ))}
+            {filteredRisk.length > 0 ? <MarketList title="Risk watch" items={filteredRisk} /> : null}
           </>
         ) : (
           <motion.div
@@ -600,17 +440,9 @@ export default function ExploreView() {
             transition={{ duration: 0.25 }}
             className="mt-8 flex flex-col items-center justify-center rounded-[28px] bg-[#151714] px-6 py-12 text-center"
           >
-            <AppIcon
-              icon="icon-park-outline:search"
-              aria-hidden="true"
-              width={40}
-              height={40}
-              className="text-[#9A9AA2]"
-            />
+            <AppIcon icon="icon-park-outline:search" aria-hidden="true" width={40} height={40} className="text-[#9A9AA2]" />
             <p className="mt-4 text-base font-bold text-white">No markets found</p>
-            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">
-              Try searching by asset, protocol, rate, or risk.
-            </p>
+            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Try searching by asset, protocol, or chain.</p>
           </motion.div>
         )}
 
@@ -624,48 +456,34 @@ export default function ExploreView() {
         >
           {categoryFilters.map((filter) => {
             const isActive = filter.id === categoryFilter;
-
             return (
-              <button
+              <Button
                 key={filter.id}
                 type="button"
                 onClick={() => {
                   setCategoryFilter(filter.id);
                   setFilterSheetOpen(false);
                 }}
+                variant="plain"
+                size="lg"
+                rounded="lg"
+                label={filter.label}
                 className={cn(
                   "flex min-h-[52px] w-full items-center justify-between gap-3 rounded-2xl px-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
-                  isActive
-                    ? "bg-[#3B33BD] text-[#ccff00]"
-                    : "bg-black/25 text-white hover:bg-white/[0.04]",
+                  isActive ? "bg-[#3B33BD] text-[#ccff00]" : "bg-black/25 text-white hover:bg-white/[0.04]",
                 )}
               >
                 <span className="min-w-0 flex items-center gap-3">
-                  <AppIcon
-                    icon={filter.icon}
-                    aria-hidden="true"
-                    width={19}
-                    height={19}
-                    className="shrink-0"
-                  />
+                  <AppIcon icon={filter.icon} aria-hidden="true" width={19} height={19} className="shrink-0" />
                   <span className="truncate text-sm font-bold">{filter.label}</span>
                 </span>
                 {isActive ? (
-                  <AppIcon
-                    icon="material-symbols:check-rounded"
-                    aria-hidden="true"
-                    width={20}
-                    height={20}
-                    className="shrink-0"
-                  />
+                  <AppIcon icon="material-symbols:check-rounded" aria-hidden="true" width={20} height={20} className="shrink-0" />
                 ) : null}
-              </button>
+              </Button>
             );
           })}
-
-          <p className="pt-2 text-center text-xs font-bold text-[#8E8E93]">
-            Aktif: {selectedCategoryLabel}
-          </p>
+          <p className="pt-2 text-center text-xs font-bold text-[#8E8E93]">Aktif: {selectedCategoryLabel}</p>
         </BottomSheet>
     </MobileShell>
   );

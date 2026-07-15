@@ -25,8 +25,7 @@ export type QuickActionLink = {
 export type OpportunityCard = {
   title: string;
   subtitle: string;
-  audienceLabel: string;
-  icon: "yield" | "borrow";
+  icon: "yield";
 };
 
 export type EarnLink = {

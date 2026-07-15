@@ -14,6 +14,7 @@ import {
 } from "recharts";
 
 import { cn } from "@/lib/utils";
+import { formatUsdValue } from "@/lib/format";
 
 export type TimeRange = "1D" | "1W" | "1M" | "1Y";
 export type ChartView = "line" | "bar";
@@ -28,6 +29,7 @@ type MiniChartProps = {
   defaultView?: ChartView;
   compact?: boolean;
   className?: string;
+  valueFormat?: "percent" | "usd";
 };
 
 const toneClassName = {
@@ -52,6 +54,10 @@ function formatDelta(values: number[]) {
   return `${delta >= 0 ? "+" : "-"}${Math.abs(delta).toFixed(2)}%`;
 }
 
+function formatChartValue(value: number, format: "percent" | "usd") {
+  return format === "usd" ? formatUsdValue(value) : `${value.toFixed(2)}%`;
+}
+
 const rangeLabels: Record<TimeRange, string[]> = {
   "1D": ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "Now"],
   "1W": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -67,6 +73,7 @@ export function MiniChart({
   defaultView = "line",
   compact = false,
   className,
+  valueFormat = "percent",
 }: MiniChartProps) {
   const [view, setView] = React.useState<ChartView>(defaultView);
   const data = React.useMemo(
@@ -86,7 +93,7 @@ export function MiniChart({
         <div>
           <p className="text-[11px] font-bold uppercase text-[#8F8F99]">{label}</p>
           <p className={cn("mt-0.5 font-black", compact ? "text-base" : "text-lg", toneClassName[tone])}>
-            {formatDelta(values)}
+            {valueFormat === "usd" ? formatChartValue(values.at(-1) ?? 0, valueFormat) : formatDelta(values)}
           </p>
         </div>
 
@@ -130,7 +137,7 @@ export function MiniChart({
                   borderRadius: 14,
                   color: "#fff",
                 }}
-                formatter={(value) => [`${Number(value).toFixed(2)}%`, "Change"]}
+                formatter={(value) => [formatChartValue(Number(value), valueFormat), valueFormat === "usd" ? "TVL" : "APY"]}
                 labelFormatter={(value) => `${range} • ${value}`}
               />
               <Line
@@ -161,7 +168,7 @@ export function MiniChart({
                   borderRadius: 14,
                   color: "#fff",
                 }}
-                formatter={(value) => [`${Number(value).toFixed(2)}%`, "Change"]}
+                formatter={(value) => [formatChartValue(Number(value), valueFormat), valueFormat === "usd" ? "TVL" : "APY"]}
                 labelFormatter={(value) => `${range} • ${value}`}
               />
               <Bar dataKey="value" fill={color} radius={[8, 8, 3, 3]} />

@@ -8,6 +8,7 @@ import {
   profileStats,
 } from "@/modules/profile/constants/profile.constants";
 import { ProfileActionList } from "@/modules/profile/components/ProfileActionList";
+import { ProfileEip7702Sheet } from "@/modules/profile/components/ProfileEip7702Sheet";
 import { ProfileHeroCard } from "@/modules/profile/components/ProfileHeroCard";
 import { ProfileIdentityList } from "@/modules/profile/components/ProfileIdentityList";
 import { ProfileLogoutButton } from "@/modules/profile/components/ProfileLogoutButton";
@@ -64,6 +65,8 @@ export default function ProfileView() {
       <ProfileIdentityList
         rows={profile.identityRows}
         onOpenUniversalAccount={profile.openUniversalAccountSheet}
+        onOpenEip7702={profile.onOpenEip7702}
+        delegatedChainIds={profile.delegatedChainIds}
       />
 
       <ProfileActionList rows={profileActionRows} />
@@ -86,6 +89,16 @@ export default function ProfileView() {
         error={profile.universalAccountError}
         copiedAddress={profile.copiedAddress}
         onCopyAddress={profile.copyAddress}
+      />
+
+      <ProfileEip7702Sheet
+        open={profile.eip7702Open}
+        onOpenChange={profile.onEip7702OpenChange}
+        deployments={profile.eip7702Deployments}
+        isLoading={profile.eip7702Deployments.length === 0 && profile.isUniversalAccountLoading}
+        activeChainId={profile.delegatingChainId}
+        error={profile.delegateErrorMessage}
+        onDelegate={profile.onDelegate}
       />
     </MobileShell>
   );

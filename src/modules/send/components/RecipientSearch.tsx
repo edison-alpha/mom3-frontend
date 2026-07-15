@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import * as React from "react";
 
@@ -46,19 +47,21 @@ export function RecipientSearch({
               onSearchSubmit();
             }
           }}
-          placeholder="Tag mom3 atau alamat wallet"
+          placeholder="mom3 tag or wallet address"
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? "recipient-search-error" : undefined}
           className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-[#8E8E93] focus:outline-none"
         />
-        <button
+        <Button
           type="button"
           onClick={onScanOpen}
+          color="plain"
+          size="icon"
+          rounded="lg"
+          startIcon="lucide:scan-line"
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#3B33BD] transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
           aria-label="Scan address"
-        >
-          <AppIcon icon="lucide:scan-line" aria-hidden="true" width={23} height={23} />
-        </button>
+        />
       </div>
       {error ? (
         <p id="recipient-search-error" className="mt-2 text-xs font-semibold text-red-200">

@@ -53,6 +53,7 @@ export function UniversalAccountProvider({ children }: UniversalAccountProviderP
         ...emptyAccountInfo,
         ownerAddress: ownerAddress || "",
       },
+      eip7702Deployments: snapshotQuery.data?.eip7702Deployments ?? [],
       primaryAssets: snapshotQuery.data?.primaryAssets ?? null,
       isDelegated: snapshotQuery.data?.isDelegated ?? false,
       isLoading:
@@ -66,7 +67,7 @@ export function UniversalAccountProvider({ children }: UniversalAccountProviderP
         ensureDelegatedMutation.error?.message ||
         null,
       refreshAccount,
-      ensureDelegated: ensureDelegatedMutation.mutateAsync,
+      ensureDelegated: (chainId = 42161) => ensureDelegatedMutation.mutateAsync(chainId),
       signAndSend,
     }),
     [

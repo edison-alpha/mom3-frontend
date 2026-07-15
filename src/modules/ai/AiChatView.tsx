@@ -1,71 +1,126 @@
 "use client";
 
-import { MobileBottomBar, MobileHeader, MobileShell } from "@/components/ui/mobile-shell";
-import { recommendations } from "./constants/ai";
-import { AgentAvatar } from "./components/AgentAvatar";
-import { ChatBubble } from "./components/ChatBubble";
-import { ChatComposer } from "./components/ChatComposer";
+import Image from "next/image";
+import * as React from "react";
+
+import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
+import { MobileHeader, MobileShell } from "@/components/ui/mobile-shell";
 import { ChatEmptyState } from "./components/ChatEmptyState";
-import { RecommendationList } from "./components/RecommendationList";
 import { StrategyResponse } from "./components/StrategyResponse";
-import { ThinkingMessage } from "./components/ThinkingMessage";
-import { useAiChat } from "./hooks/useAiChat";
+import type { AiStrategy } from "./types/ai.types";
+
+function SearchingStrategyOverlay() {
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center bg-black/85 px-6 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="strategy-search-title"
+      aria-describedby="strategy-search-description"
+    >
+      <div className="w-full max-w-xs text-center" aria-live="polite" aria-busy="true">
+        <div className="relative mx-auto flex h-40 w-40 items-center justify-center">
+          <span className="absolute inset-0 rounded-full border border-[#3B33BD]/50 motion-safe:animate-ping motion-reduce:hidden" />
+          <span className="absolute inset-4 rounded-full bg-[#3B33BD]/20 blur-xl motion-safe:animate-pulse" />
+          <Image
+            src="/caracter.png"
+            alt=""
+            width={128}
+            height={69}
+            priority
+            className="relative h-auto w-32 motion-safe:animate-pulse"
+          />
+        </div>
+        <h2 id="strategy-search-title" className="mt-6 text-xl font-black text-white">
+          Searching strategies
+        </h2>
+        <p id="strategy-search-description" className="mt-2 text-sm font-medium leading-relaxed text-[#A7A7B7]">
+          mom3 is comparing live APY, liquidity, and risk across supported protocols.
+        </p>
+        <div className="mx-auto mt-6 flex w-fit items-center gap-2 rounded-full border border-[#ccff00]/20 bg-[#ccff00]/10 px-3 py-2 text-xs font-black text-[#ccff00]">
+          <AppIcon icon="solar:radar-2-bold" aria-hidden="true" width={16} height={16} />
+          Live market analysis
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function AiChatView() {
-  const { input, isThinking, messages, setInput, sendMessage, showRecommendations } =
-    useAiChat();
+  const [strategy, setStrategy] = React.useState<AiStrategy | null>(null);
+  const [isSearching, setIsSearching] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const searchStrategies = React.useCallback(async () => {
+    if (isSearching) return;
+
+    setIsSearching(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/ai/strategy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ risk_tolerance: "moderate" }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Unable to search strategies.");
+      setStrategy(payload as AiStrategy);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to search strategies.");
+    } finally {
+      setIsSearching(false);
+    }
+  }, [isSearching]);
 
   return (
-    <MobileShell
-      contentClassName="pb-32 pt-20"
-      bottomSlot={
-        <MobileBottomBar>
-          <ChatComposer
-            input={input}
-            isSubmitting={isThinking}
-            onInputChange={setInput}
-            onSubmit={sendMessage}
-          />
-        </MobileBottomBar>
-      }
-    >
-      <MobileHeader
-        title="mom3 /agent"
-        backHref="/dashboard"
-        backLabel="Back to dashboard"
-      />
-      {showRecommendations ? (
-        <RecommendationList items={recommendations} onSelect={sendMessage} />
+    <MobileShell contentClassName="pb-10 pt-20">
+      <MobileHeader title="mom3 /agent" backHref="/dashboard" backLabel="Back to dashboard" />
+
+      {!strategy && !error ? (
+        <section className="flex min-h-[calc(100dvh-8rem)] items-center justify-center pb-10">
+          <ChatEmptyState onGetStrategy={() => void searchStrategies()} />
+        </section>
       ) : null}
 
-      <section className="mt-6 space-y-4 pb-4">
-        {messages.length === 0 && !isThinking ? <ChatEmptyState /> : null}
+      {error ? (
+        <section className="mt-8 rounded-[24px] border border-red-400/20 bg-red-400/5 p-5 text-center" role="alert">
+          <AppIcon icon="solar:danger-triangle-bold" aria-hidden="true" width={28} height={28} className="mx-auto text-[#FF7B7B]" />
+          <h2 className="mt-3 text-base font-black text-white">Strategy search failed</h2>
+          <p className="mt-2 text-sm font-medium leading-relaxed text-[#A7A7B7]">{error}</p>
+          <Button
+            type="button"
+            color="primary"
+            rounded="full"
+            label="Try again"
+            className="mt-5"
+            onClick={() => void searchStrategies()}
+          />
+        </section>
+      ) : null}
 
-        {messages.map((message) => {
-          const isUser = message.role === "user";
-
-          if (message.kind === "strategy") {
-            return (
-              <div key={message.id} className="flex gap-3">
-                <AgentAvatar className="mt-7 shadow-[0_0_0_4px_rgba(204,255,0,0.1)]" />
-                <div className="min-w-0 flex-1">
-                  <StrategyResponse />
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <ChatBubble
-              key={message.id}
-              content={message.content}
-              isUser={isUser}
+      {strategy ? (
+        <section className="mt-4 pb-6">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.1em] text-[#ccff00]">Analysis complete</p>
+              <h1 className="mt-0.5 text-lg font-black text-white">Recommended strategies</h1>
+            </div>
+            <Button
+              type="button"
+              color="dark"
+              size="compact"
+              rounded="full"
+              label="Refresh"
+              startIcon="lucide:refresh-cw"
+              onClick={() => void searchStrategies()}
             />
-          );
-        })}
+          </div>
+          <StrategyResponse strategy={strategy} />
+        </section>
+      ) : null}
 
-        {isThinking ? <ThinkingMessage /> : null}
-      </section>
+      {isSearching ? <SearchingStrategyOverlay /> : null}
     </MobileShell>
   );
 }

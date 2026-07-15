@@ -6,7 +6,7 @@ import { createAiReply } from "../utils/api";
 import { initialMessages } from "../constants/ai";
 import type { ChatMessage } from "../types/ai.types";
 
-export function useAiChat() {
+export function useAiChat(chainId?: number) {
   const [messages, setMessages] = React.useState<ChatMessage[]>(initialMessages);
   const [input, setInput] = React.useState("");
   const [isThinking, setIsThinking] = React.useState(false);
@@ -28,6 +28,7 @@ export function useAiChat() {
         id: Date.now(),
         role: "user",
         content: trimmed,
+        chainId,
       };
 
       setMessages((current) => [...current, userMessage]);
@@ -35,13 +36,13 @@ export function useAiChat() {
       setIsThinking(true);
 
       try {
-        const reply = await createAiReply(trimmed);
+        const reply = await createAiReply(trimmed, messages, chainId);
         setMessages((current) => [...current, reply]);
       } finally {
         setIsThinking(false);
       }
     },
-    [isThinking],
+    [isThinking, messages, chainId],
   );
 
   return {

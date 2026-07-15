@@ -87,10 +87,10 @@ export default function AssetDetailView({ asset }: { asset: AssetDetail }) {
 
         <div className="mt-4 grid grid-cols-2 gap-3">
           <Link
-            href="/convert"
+            href="/send"
             className="flex h-12 items-center justify-center rounded-full bg-[#ccff00] text-sm font-black text-[#3B33BD] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/70"
           >
-            Convert
+            Send asset
           </Link>
           <Link
             href={`/send?asset=${encodeURIComponent(asset.symbol)}&chain=${encodeURIComponent(asset.chain)}`}

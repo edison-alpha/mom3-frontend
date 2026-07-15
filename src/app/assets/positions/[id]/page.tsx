@@ -1,21 +1,17 @@
-import { notFound } from "next/navigation";
-
-import { positionDetails } from "@/lib/portfolio-data";
 import PositionDetailView from "@/modules/position-detail/PositionDetailView";
 
-export function generateStaticParams() {
-  return positionDetails.map((position) => ({ id: position.slug }));
-}
+export const dynamic = "force-dynamic";
 
+// The slug is informational. The chain is read from the `chainId` search param so
+// the live on-chain Aave position is fetched for the right network; defaults to
+// Arbitrum (42161) when omitted.
 export default async function PositionDetailPage({
-  params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ chainId?: string }>;
 }) {
-  const { id } = await params;
-  const position = positionDetails.find((item) => item.slug === id);
-
-  if (!position) notFound();
-
-  return <PositionDetailView position={position} />;
+  const { chainId } = await searchParams;
+  const parsed = chainId ? Number(chainId) : Number.NaN;
+  return <PositionDetailView chainId={Number.isFinite(parsed) ? parsed : undefined} />;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 
 import { TokenRowItem } from "@/modules/send/components/TokenRowItem";
 import { cn } from "@/lib/utils";
@@ -88,13 +89,15 @@ export function TokenSelector({
             <p className="mt-1 text-xs font-medium text-[#9A9AA2]">
               Refresh after deposit or wallet sync finishes.
             </p>
-            <button
+            <Button
               type="button"
               onClick={onRefreshAccount}
+              color="transparent"
+              size="compact"
+              rounded="full"
+              label="Refresh balances"
               className="mx-auto mt-3 flex h-10 items-center justify-center rounded-full bg-white/5 px-4 text-xs font-black text-white transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-            >
-              Refresh balances
-            </button>
+            />
           </div>
         )}
       </div>
@@ -119,9 +122,11 @@ export function TokenSelector({
           aria-describedby={amountValidationMessage ? "send-amount-error" : undefined}
           className="min-w-0 flex-1 bg-transparent text-3xl font-black text-white placeholder:text-[#66666D] focus:outline-none"
         />
-        <button
+        <Button
           type="button"
           onClick={onMaxAmount}
+          color="transparent"
+          size="compact"
           disabled={!selectedToken || selectedToken.balance <= 0}
           className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#3B33BD]/20 px-3 text-xs font-black text-[#8F89FF] transition-colors hover:bg-[#3B33BD]/30 focus-visible:ring-2 focus-visible:ring-[#3B33BD] disabled:cursor-not-allowed disabled:opacity-50"
           aria-label={
@@ -129,9 +134,8 @@ export function TokenSelector({
               ? `Use local ${selectedToken.symbol} balance on ${selectedToken.chainName}`
               : "No local balance for selected receive token"
           }
-        >
-          Max
-        </button>
+          label="Max"
+        />
       </div>
 
       {selectedToken ? (
@@ -158,13 +162,15 @@ export function TokenSelector({
         <div className="mt-3 rounded-2xl bg-red-500/10 px-4 py-3">
           <p className="text-sm font-semibold text-red-100">Real balance belum bisa dimuat.</p>
           <p className="mt-1 text-xs font-medium text-red-100/75">{accountError}</p>
-          <button
+          <Button
             type="button"
             onClick={onRefreshAccount}
+            color="danger"
+            size="compact"
+            rounded="full"
+            label="Retry"
             className="mt-3 flex h-10 items-center justify-center rounded-full bg-red-500/15 px-4 text-xs font-black text-red-50 transition-colors hover:bg-red-500/20 focus-visible:ring-2 focus-visible:ring-red-200"
-          >
-            Retry
-          </button>
+          />
         </div>
       ) : null}
 

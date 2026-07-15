@@ -14,7 +14,7 @@ export function createUniversalAccount(ownerAddress: string) {
   const projectAppUuid = process.env.NEXT_PUBLIC_PARTICLE_APP_ID;
 
   if (!projectId || !projectClientKey || !projectAppUuid) {
-    throw new Error("Particle env belum lengkap.");
+    throw new Error("Particle configuration is incomplete.");
   }
 
   return new UniversalAccount({
@@ -24,14 +24,16 @@ export function createUniversalAccount(ownerAddress: string) {
     smartAccountOptions: {
       useEIP7702: true,
       name: "UNIVERSAL",
-      version:
-        process.env.NEXT_PUBLIC_UNIVERSAL_ACCOUNT_VERSION ||
-        UNIVERSAL_ACCOUNT_VERSION,
+      // Keep the account contract version coupled to the installed Particle
+      // SDK. An environment override can silently point quotes at an older UA.
+      version: UNIVERSAL_ACCOUNT_VERSION,
       ownerAddress,
     },
     tradeConfig: {
       slippageBps: 100,
-      universalGas: false,
+      // Keep Primary Asset selection automatic. Particle documents
+      // usePrimaryTokens for swap input restriction; applying it globally to
+      // transfers can make an ETH-only user fail simply because USDT is absent.
     },
   });
 }
@@ -46,6 +48,16 @@ export async function loadUniversalAccountSnapshot(
     universalAccount.getEIP7702Deployments(),
   ]);
 
+  const eip7702Deployments = (deployments as Array<{
+    chainId?: number;
+    delegationAddress?: string;
+    isDelegated?: boolean;
+  }>).map((deployment) => ({
+    chainId: Number(deployment.chainId || 0),
+    delegationAddress: String(deployment.delegationAddress || "0x"),
+    isDelegated: deployment.isDelegated === true,
+  })).filter((deployment) => deployment.chainId > 0);
+
   const targetChain = deployments.find(
     (deployment: { chainId?: number }) => deployment.chainId === DEFAULT_CHAIN_ID,
   );
@@ -57,6 +69,7 @@ export async function loadUniversalAccountSnapshot(
       solanaSmartAccount: options.solanaSmartAccountAddress || "",
     },
     isDelegated: Boolean((targetChain as { isDelegated?: boolean } | undefined)?.isDelegated),
+    eip7702Deployments,
     primaryAssets: assets,
   };
 }

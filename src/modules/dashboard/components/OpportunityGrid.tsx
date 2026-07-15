@@ -1,8 +1,7 @@
-import { Coins, Sprout } from "lucide-react";
+import { Sprout } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { opportunityCards } from "../constants/dashboard";
-import { AvatarStack } from "./AvatarStack";
 
 export function OpportunityGrid() {
   return (
@@ -15,11 +14,7 @@ export function OpportunityGrid() {
         >
           <div className="flex items-center gap-2">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#2A2A3E] text-[#ccff00] transition-transform duration-500 hover:rotate-6">
-              {card.icon === "yield" ? (
-                <Sprout className="h-4 w-4" aria-hidden="true" />
-              ) : (
-                <Coins className="h-4 w-4" aria-hidden="true" />
-              )}
+              <Sprout className="h-4 w-4" aria-hidden="true" />
             </span>
             <p className="text-sm font-semibold leading-tight text-white">
               {card.title}
@@ -29,11 +24,10 @@ export function OpportunityGrid() {
             {card.subtitle}
           </p>
           <p className="mt-1 text-xs font-medium leading-snug text-[#9A9AA2]">
-            {card.icon === "yield"
-              ? "With optimal yield"
-              : "With flexible rates"}
+            {card.title === "AI Yield Strategy"
+              ? "Matched to your risk profile"
+              : "Compare live APYs across protocols"}
           </p>
-          <AvatarStack label={card.audienceLabel} />
         </motion.div>
       ))}
     </section>

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     template: "%s | mom3",
   },
   description:
-    "Manage assets, discover lending markets, and rebalance your portfolio with mom3.",
+    "Discover yield opportunities and let AI optimize your portfolio with mom3.",
   manifest: "/manifest.json?v=3",
   appleWebApp: {
     capable: true,

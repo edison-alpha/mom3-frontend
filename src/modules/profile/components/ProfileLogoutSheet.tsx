@@ -1,6 +1,7 @@
 "use client";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Button } from "@/components/ui/button";
 
 type ProfileLogoutSheetProps = {
   open: boolean;
@@ -22,20 +23,24 @@ export function ProfileLogoutSheet({
       closeLabel="Close logout confirmation"
       contentClassName="space-y-3"
     >
-      <button
+          <Button
         type="button"
         onClick={onConfirm}
+        color="primary"
+        size="lg"
+        rounded="full"
+        label="Log out"
         className="flex h-12 w-full items-center justify-center rounded-full bg-[#3B33BD] text-base font-bold text-white transition-colors hover:bg-[#4940d1] focus-visible:ring-2 focus-visible:ring-[#ccff00]"
-      >
-        Log out
-      </button>
-      <button
+      />
+          <Button
         type="button"
         onClick={() => onOpenChange(false)}
+        color="dark"
+        size="lg"
+        rounded="full"
+        label="Cancel"
         className="flex h-12 w-full items-center justify-center rounded-full border border-white/10 bg-[#1C1C1E] text-base font-bold text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-      >
-        Cancel
-      </button>
+      />
     </BottomSheet>
   );
 }

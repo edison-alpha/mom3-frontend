@@ -1,10 +1,12 @@
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, Eye, EyeOff, RefreshCw } from "lucide-react";
 
 import { quickActionLinks } from "../constants/dashboard";
 import type { QuickActionLink } from "../types/dashboard.types";
 import { cn } from "@/lib/utils";
+import { Typography } from "@/components/ui/typography";
 
 type BalanceCardProps = {
   balanceDisplay: string;
@@ -55,9 +57,12 @@ export function BalanceCard({
       <div className="relative z-10">
         <div className="flex items-center justify-center gap-2 text-sm font-semibold text-white/75">
           <span>Total Balance</span>
-          <button
+          <Button
             type="button"
             onClick={onToggleBalance}
+            color="plain"
+            size="icon-xs"
+            rounded="full"
             className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[#ccff00]/80 transition-colors hover:bg-black/10 focus-visible:ring-2 focus-visible:ring-[#3B33BD]/30"
             aria-label={balanceHidden ? "Show balance" : "Hide balance"}
           >
@@ -66,16 +71,23 @@ export function BalanceCard({
             ) : (
               <Eye className="h-4 w-4" aria-hidden="true" />
             )}
-          </button>
+          </Button>
         </div>
 
-        <p className="mt-0.5 text-4xl font-bold tracking-tight text-white">
+        <Typography
+          key={balanceDisplay}
+          variant="numeric"
+          as="p"
+          align="center"
+          className="balance-value-transition mt-0.5 text-white"
+          aria-live="polite"
+        >
           {!mounted || balanceHidden
             ? "****"
             : isBalanceLoading
-              ? "Loading"
+              ? "—"
               : balanceDisplay}
-        </p>
+        </Typography>
 
         <p
           className={cn(
@@ -102,15 +114,13 @@ export function BalanceCard({
           </span>
         </p>
 
-        <p className="mt-2 text-sm font-medium leading-snug text-white/80">
+        <Typography variant="body-sm" color="inherit" align="center" className="mt-2 text-white/80">
           {!mounted ? (
             <>
               Add your assets to start
               <br />
               using mom3
             </>
-          ) : isBalanceLoading ? (
-            "Fetching your Universal Account balance."
           ) : hasAssets ? (
             "Your portfolio is growing today."
           ) : (
@@ -120,38 +130,40 @@ export function BalanceCard({
               using mom3
             </>
           )}
-        </p>
+        </Typography>
 
         {hasAssets ? (
-          <div className="mt-4 grid grid-cols-3 gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-2">
             {quickActionLinks.map((action) => (
               <Link
                 key={action.label}
                 href={action.href}
-                className="flex flex-col items-center justify-center gap-2 rounded-[18px] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
+                className={cn(
+                  "flex min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl px-1 py-1 text-xs font-black text-white transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ccff00]/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#3B33BD]",
+                )}
               >
                 <span
                   className={cn(
                     "flex h-11 w-11 items-center justify-center rounded-full",
-                    action.className,
+                    action.icon === "deposit"
+                      ? "bg-[#ccff00] text-[#3B33BD]"
+                      : "bg-[#242426] text-white",
                   )}
                 >
                   <ActionIcon icon={action.icon} />
                 </span>
-                <span className="text-xs font-semibold text-white">
-                  {action.label}
-                </span>
+                <span className="truncate">{action.label}</span>
               </Link>
             ))}
           </div>
         ) : (
-          <button
-            type="button"
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#ccff00] px-7 py-3 text-base font-black text-[#3B33BD] shadow-[0_8px_24px_-8px_rgba(204,255,0,0.45)] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/70"
+          <Link
+            href="/deposit"
+            className="mt-4 inline-flex min-h-12 items-center gap-2 rounded-full bg-[#ccff00] px-7 py-3 text-base font-black text-[#3B33BD] shadow-[0_8px_24px_-8px_rgba(204,255,0,0.45)] transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ccff00]/70"
           >
             <ArrowDown className="h-5 w-5" strokeWidth={3} aria-hidden="true" />
             Deposit
-          </button>
+          </Link>
         )}
       </div>
     </section>

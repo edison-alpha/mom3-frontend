@@ -20,8 +20,7 @@ import {
   parseDecimalish,
 } from "@/lib/format";
 import { chainNameFromId, tokenIcon } from "@/lib/chain";
-
-/* â”€â”€ Address validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+import { getActiveFeeQuote } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 
 export function isValidAddress(address: string) {
   return /^0x[a-fA-F0-9]{40}$/.test(address);
@@ -30,12 +29,6 @@ export function isValidAddress(address: string) {
 export function isValidSolanaAddress(address: string) {
   return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(address);
 }
-
-/* â”€â”€ Token / chain helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* â”€â”€ Formatting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
-/* â”€â”€ Token price / amount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function getTokenUsdPrice(token: TokenRow | null) {
   if (!token) return null;
@@ -101,12 +94,15 @@ export function normalizePrimaryAssetTokens(
   });
 }
 
-/* â”€â”€ Fee helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
 export function getTransactionFeeQuote(transaction: ITransaction | null) {
-  if (!transaction) return null;
-  return transaction.gasless ?? transaction.feeQuotes?.[0] ?? null;
+  return getActiveFeeQuote(transaction);
 }
+
+export type FeeBreakdownRow = {
+  label: string;
+  value: string;
+  originalValue?: string;
+};
 
 export function getFeeBreakdownRows(transaction: ITransaction | null) {
   const feeQuote = getTransactionFeeQuote(transaction);
@@ -116,10 +112,19 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
     return [{ label: "Estimated fees", value: "Unavailable" }];
   }
 
-  const rows = [
+  const originalGasFee = transaction?.feeQuotes?.[0]?.fees.totals.gasFeeTokenAmountInUSD;
+  const rows: FeeBreakdownRow[] = [
     {
-      label: "Network + gas",
-      value: feeQuote.fees.freeGasFee ? "Free" : formatUsdValue(totals.gasFeeTokenAmountInUSD),
+      label: feeQuote.fees.freeGasFee
+        ? "Network gas"
+        : "Network gas · Universal Balance",
+      value: feeQuote.fees.freeGasFee
+        ? "Sponsored by mom3"
+        : formatUsdValue(totals.gasFeeTokenAmountInUSD),
+      originalValue:
+        feeQuote.fees.freeGasFee && parseDecimalish(originalGasFee) > 0
+          ? formatUsdValue(originalGasFee)
+          : undefined,
     },
     {
       label: "Service fee",
@@ -182,7 +187,6 @@ export function getFeeTokenRows(transaction: ITransaction | null) {
   }));
 }
 
-/* â”€â”€ Asset query helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function normalizeAssetQuery(value: string) {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
@@ -223,7 +227,6 @@ export function findPreferredToken(tokens: TokenRow[], asset: string, chain = ""
   );
 }
 
-/* â”€â”€ Amount validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function getAmountValidationMessage(
   amount: string,
@@ -235,7 +238,7 @@ export function getAmountValidationMessage(
   const numericAmount = Number(amount);
 
   if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
-    return "Masukkan jumlah yang valid.";
+    return "Enter an amount greater than zero.";
   }
 
   const estimatedAmountInUSD = getEstimatedAmountInUSD(numericAmount, selectedToken);
@@ -245,13 +248,11 @@ export function getAmountValidationMessage(
     estimatedAmountInUSD !== null &&
     estimatedAmountInUSD > totalPrimaryAssetsInUSD
   ) {
-    return `Universal Balance belum cukup. Estimasi kebutuhan ${formatUsd(estimatedAmountInUSD)}, tersedia ${formatUsd(totalPrimaryAssetsInUSD)}.`;
+    return `Insufficient balance. Required approximately ${formatUsd(estimatedAmountInUSD)}; available ${formatUsd(totalPrimaryAssetsInUSD)}.`;
   }
 
   return null;
 }
-
-/* â”€â”€ Recipient validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function isRecipientValidForToken(recipient: Recipient, selectedToken: TokenRow) {
   if (selectedToken.chainId === CHAIN_ID.SOLANA_MAINNET) {
@@ -260,31 +261,90 @@ export function isRecipientValidForToken(recipient: Recipient, selectedToken: To
   return isValidAddress(recipient.address);
 }
 
-/* â”€â”€ Error helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-
 export function isUserRejectedError(cause: unknown) {
   const message = cause instanceof Error ? cause.message : String(cause);
   return /reject|denied|cancel/i.test(message);
+}
+
+export function isTransactionRecordNotFoundError(cause: unknown) {
+  const message = cause instanceof Error ? cause.message : JSON.stringify(cause);
+  return /no records found|-32608|transaction record/i.test(message);
+}
+
+export function isRetryableParticleTransactionError(cause: unknown) {
+  const message = cause instanceof Error ? cause.message : JSON.stringify(cause);
+  return /no records found|-32608|transaction record|aa24|signature error|expired/i.test(message);
+}
+
+export function isTransactionQuoteExpired(
+  transaction: ITransaction | null,
+  safetyWindowMs = 20_000,
+) {
+  if (!transaction) return true;
+
+  const expirations = (transaction.userOps ?? [])
+    .map((userOp) => Number(userOp.expiredAt))
+    .filter((expiredAt) => Number.isFinite(expiredAt) && expiredAt > 0)
+    .map((expiredAt) => (expiredAt < 10_000_000_000 ? expiredAt * 1_000 : expiredAt));
+
+  if (expirations.length === 0) return false;
+  return Math.min(...expirations) <= Date.now() + safetyWindowMs;
 }
 
 export function getSendErrorMessage(cause: unknown) {
   const message = cause instanceof Error ? cause.message : String(cause || "");
   const normalized = message.toLowerCase();
 
+  if (isUserRejectedError(cause)) {
+    return "Request cancelled. No funds were moved.";
+  }
+  if (
+    normalized.includes("gas sponsorship") ||
+    normalized.includes("paymaster") ||
+    normalized.includes("aa31")
+  ) {
+    return "Gas sponsorship is temporarily unavailable. No funds were moved. Please try again later.";
+  }
   if (normalized.includes("insufficient")) {
-    return "Saldo belum cukup untuk amount atau biaya jaringan.";
+    return "Insufficient balance to cover the amount and transaction fees.";
   }
   if (normalized.includes("blockhash")) {
-    return "Jaringan sedang berubah cepat. Coba kirim ulang sebentar lagi.";
+    return "The network state changed before submission. Review the refreshed quote and try again.";
   }
-  if (normalized.includes("timeout") || normalized.includes("network")) {
-    return "Koneksi ke jaringan sedang lambat. Coba lagi dalam beberapa detik.";
+  if (
+    normalized.includes("chainid 0") ||
+    normalized.includes("source network") ||
+    normalized.includes("eip-7702 upgrade")
+  ) {
+    return "Your wallet needs a one-time network upgrade before this payment can be sent. Complete the upgrade and try again.";
+  }
+  if (
+    normalized.includes("timeout") ||
+    normalized.includes("network error") ||
+    normalized.includes("failed to fetch") ||
+    normalized.includes("connection") ||
+    normalized.includes("offline")
+  ) {
+    return "The network request timed out. Check your connection and try again.";
+  }
+  if (normalized.includes("no records found") || normalized.includes("-32608")) {
+    return "This quote is no longer available. Review the refreshed transaction details and confirm again.";
+  }
+  if (normalized.includes("aa24") || normalized.includes("signature error")) {
+    return "The wallet signature could not be verified. Review the refreshed quote and confirm again.";
+  }
+  if (normalized.includes("maintenance") || normalized.includes("maintanence")) {
+    return "Payments are temporarily unavailable. Your funds are safe. Please try again later.";
+  }
+  if (normalized.includes("not ready")) {
+    return "Your wallet is not ready. Reconnect your wallet and try again.";
+  }
+  if (normalized.includes("incomplete") || normalized.includes("without a useroperation")) {
+    return "We couldn't prepare complete transaction details. Refresh and try again.";
   }
 
-  return message || "Gagal mengirim transaksi.";
+  return "We couldn't send this transaction. Please try again.";
 }
-
-/* â”€â”€ Recipient search / resolve â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 export function matchesRecipient(recipient: Recipient, query: string) {
   const normalized = query.toLowerCase();

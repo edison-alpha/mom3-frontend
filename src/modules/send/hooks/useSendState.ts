@@ -176,7 +176,7 @@ export function useSendState(
   const handleSearchSubmit = () => {
     const resolved = resolveRecipient(query);
     if (!resolved) {
-      setError("Recipient tidak ditemukan. Pakai @tag atau paste alamat wallet yang valid.");
+      setError("Recipient not found. Enter a valid mom3 tag or wallet address.");
       return;
     }
     selectRecipient(resolved);

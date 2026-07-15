@@ -31,7 +31,7 @@ export const portfolioModes: PortfolioMode[] = [
     label: "Balanced",
     icon: "solar:scale-bold",
     title: "Optimize steady growth",
-    description: "Mix stable lending and selective yield positions.",
+    description: "Mix stable and adaptive yield positions.",
     metric: "5.9%",
     tone: "Medium risk",
   },
@@ -53,10 +53,10 @@ export const currencyOptions: Record<CurrencyCode, CurrencyOption> = {
 
 export const quickActionLinks: QuickActionLink[] = [
   {
-    label: "Deposit",
-    href: "#",
-    icon: "deposit",
-    className: "bg-[#ccff00] text-[#3B33BD]",
+    label: "Send",
+    href: "/send",
+    icon: "send",
+    className: "bg-[#242426] text-white",
   },
   {
     label: "Convert",
@@ -65,25 +65,23 @@ export const quickActionLinks: QuickActionLink[] = [
     className: "bg-[#242426] text-white",
   },
   {
-    label: "Send",
-    href: "/send",
-    icon: "send",
-    className: "bg-[#242426] text-white",
+    label: "Deposit",
+    href: "/deposit",
+    icon: "deposit",
+    className: "bg-[#ccff00] text-[#3B33BD]",
   },
 ];
 
 export const opportunityCards: OpportunityCard[] = [
   {
-    title: "Yield",
-    subtitle: "Grow Your Assets",
-    audienceLabel: "12k+ user earning",
+    title: "Explore Yield",
+    subtitle: "Discover opportunities",
     icon: "yield",
   },
   {
-    title: "Lend & Borrow",
-    subtitle: "Unlock Liquidity",
-    audienceLabel: "12k+ user borrowing",
-    icon: "borrow",
+    title: "AI Yield Strategy",
+    subtitle: "Automate your allocation",
+    icon: "yield",
   },
 ];
 
@@ -101,8 +99,8 @@ export function createEarnLinks(
     },
     {
       href: "/ai",
-      title: "AI Rebalancing",
-      description: "Optimize your portfolio with AI",
+      title: "AI Yield Strategy",
+      description: "Automate your yield allocation with AI",
       badge: "Beta",
       badgeClassName: "bg-[#3B33BD]/20 text-[#8F89FF]",
       value: "Smart",

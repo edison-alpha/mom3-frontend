@@ -315,9 +315,46 @@ html.lenis body {
   animation: splash-halo-pulse 1000ms ease-in-out infinite;
 }
 
+@keyframes send-result-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes send-result-icon {
+  0% { opacity: 0; transform: scale(0.65) rotate(-8deg); }
+  70% { transform: scale(1.08) rotate(2deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+.send-result-enter {
+  animation: send-result-enter 320ms ease-out both;
+}
+
+.send-result-icon {
+  animation: send-result-icon 480ms cubic-bezier(0.16, 1, 0.3, 1) 80ms both;
+}
+
+@keyframes balance-value-transition {
+  from {
+    opacity: 0.72;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.balance-value-transition {
+  animation: balance-value-transition 260ms ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .splash-logo,
-  .splash-halo {
+  .splash-halo,
+  .send-result-enter,
+  .send-result-icon,
+  .balance-value-transition {
     animation: none;
   }
 }

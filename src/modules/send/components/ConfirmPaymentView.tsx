@@ -4,16 +4,21 @@ import { AppIcon } from "@/components/ui/app-icon";
 import * as React from "react";
 
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
+import { Button } from "@/components/ui/button";
+import { Typography } from "@/components/ui/typography";
 import { WalletAvatar } from "@/components/ui/wallet-avatar";
 import { formatTokenBalance, formatUsd } from "@/lib/format";
 import { truncateAddress } from "@/utils/address.utils";
+import { SentConfirmation } from "@/modules/send/components/SentConfirmation";
+import { FailedConfirmation } from "@/modules/send/components/FailedConfirmation";
 import { useConfirmPaymentState } from "@/modules/send/hooks/useConfirmPaymentState";
-import { getFeeBreakdownRows, getTotalFeeLabel } from "@/modules/send/utils/send.utils";
+import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/modules/send/utils/send.utils";
 
 export default function ConfirmPaymentView() {
   const state = useConfirmPaymentState();
 
   const feeRows = state.sendPreview ? getFeeBreakdownRows(state.sendPreview.transaction) : [];
+  const feeTokenRows = state.sendPreview ? getFeeTokenRows(state.sendPreview.transaction) : [];
 
   const estimatedUsd = React.useMemo(() => {
     if (!state.selectedToken || !state.amount) return null;
@@ -26,19 +31,71 @@ export default function ConfirmPaymentView() {
     return Number(state.amount) * price;
   }, [state.selectedToken, state.amount]);
 
+  if (
+    state.transactionId &&
+    state.sendPreview &&
+    state.selectedToken &&
+    state.recipient
+  ) {
+    return (
+      <MobileShell>
+        <MobilePageHeader
+          title="Transaction complete"
+          leading={
+            <Button
+              type="button"
+              onClick={state.handleSuccessBack}
+              color="dark"
+              size="icon"
+              rounded="full"
+              startIcon="lucide:x"
+              aria-label="Back to dashboard"
+            />
+          }
+        />
+        <SentConfirmation
+          amount={state.amount}
+          tokenSymbol={state.selectedToken.symbol}
+          chainName={state.selectedToken.chainName}
+          recipientName={state.recipient.name}
+          recipientAddress={state.recipient.address}
+          transactionId={state.transactionId}
+          feeLabel={getTotalFeeLabel(state.sendPreview.transaction)}
+          onSendAgain={state.handleSendAgain}
+          onBack={state.handleSuccessBack}
+        />
+      </MobileShell>
+    );
+  }
+
+  if (state.error && !state.isPreparing && !state.isSigning) {
+    return (
+      <MobileShell>
+        <MobilePageHeader title="Payment status" />
+        <FailedConfirmation
+          message={state.error}
+          onRetry={state.handleRetry}
+          onBack={state.handleBack}
+        />
+      </MobileShell>
+    );
+  }
+
   return (
     <MobileShell>
       <MobilePageHeader
         title="Confirm Payment"
         leading={
-          <button
+          <Button
             type="button"
             onClick={state.handleBack}
+            color="dark"
+            size="icon"
+            rounded="full"
+            startIcon="lucide:chevron-left"
             className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1E] text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
             aria-label="Back to send"
-          >
-            <AppIcon icon="lucide:chevron-left" aria-hidden="true" width={28} height={28} />
-          </button>
+          />
         }
       />
 
@@ -56,7 +113,7 @@ export default function ConfirmPaymentView() {
                 fallbackClassName={state.recipient.color}
               />
               <div className="mt-4 flex items-center justify-center gap-2">
-                <h2 className="text-2xl font-black tracking-tight text-white">{state.recipient.handle}</h2>
+                <Typography as="h2" variant="h2">{state.recipient.handle}</Typography>
                 {state.recipient.status === "Verified" ? (
                   <AppIcon
                     icon="material-symbols:verified-rounded"
@@ -78,7 +135,7 @@ export default function ConfirmPaymentView() {
 
         {/* Amount card */}
         <div className="mt-4 rounded-[28px] bg-[#111217] p-5">
-          <p className="text-center text-xs font-black uppercase text-[#77777f]">You send</p>
+          <Typography variant="label" color="muted" align="center">You send</Typography>
           <div className="mt-2 text-center">
             <span className="text-4xl font-black text-white">
               {state.amount ? formatTokenBalance(Number(state.amount)) : "0.00"}
@@ -106,7 +163,7 @@ export default function ConfirmPaymentView() {
 
         {/* Fee breakdown */}
         <div className="mt-4 rounded-[28px] bg-[#111217] p-5">
-          <h3 className="text-xs font-black uppercase text-[#77777f]">Transaction details</h3>
+          <Typography as="h3" variant="label" color="muted">Transaction details</Typography>
 
           {!state.sendPreview || state.isPreparing ? (
             <div className="mt-4 flex items-center justify-center gap-2 text-sm font-semibold text-[#9A9AA2]">
@@ -119,9 +176,30 @@ export default function ConfirmPaymentView() {
                 {feeRows.map((row) => (
                   <div key={row.label} className="flex items-start justify-between gap-3">
                     <dt className="text-[#9A9AA2]">{row.label}</dt>
-                    <dd className="font-mono font-bold tabular-nums text-white">{row.value}</dd>
+                    <dd className="flex items-center justify-end gap-2 font-mono font-bold tabular-nums">
+                      {row.originalValue ? (
+                        <span className="text-[#77777F] line-through decoration-[#77777F]">
+                          {row.originalValue}
+                        </span>
+                      ) : null}
+                      <span className={row.originalValue ? "text-[#ccff00]" : "text-white"}>
+                        {row.value}
+                      </span>
+                    </dd>
                   </div>
                 ))}
+                {feeTokenRows.length > 0 ? (
+                  <div className="border-t border-white/10 pt-2.5">
+                    {feeTokenRows.map((row) => (
+                      <div key={row.label} className="flex items-start justify-between gap-3">
+                        <dt className="text-[#9A9AA2]">Fee paid with</dt>
+                        <dd className="text-right font-mono text-xs font-bold tabular-nums text-white">
+                          {row.label}
+                        </dd>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </dl>
 
               <div className="mt-4 border-t border-white/10 pt-4">
@@ -139,54 +217,47 @@ export default function ConfirmPaymentView() {
 
         {state.accountError ? (
           <div className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3">
-            <p className="text-sm font-semibold text-red-100">Real balance belum bisa dimuat.</p>
-            <p className="mt-1 text-xs font-medium text-red-100/75">{state.accountError}</p>
-            <button
+            <p className="text-sm font-semibold text-red-100">Unable to load your balance</p>
+            <p className="mt-1 text-xs font-medium text-red-100/75">
+              Check your connection, then try again.
+            </p>
+            <Button
               type="button"
               onClick={() => void state.refreshAccount()}
+              color="danger"
+              size="compact"
+              rounded="full"
+              label="Retry"
               className="mt-3 flex h-10 items-center justify-center rounded-full bg-red-500/15 px-4 text-xs font-black text-red-50 transition-colors hover:bg-red-500/20"
-            >
-              Retry
-            </button>
+            />
           </div>
         ) : null}
 
-        {state.error ? (
-          <div className="mt-4 rounded-2xl bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-100">
-            {state.error}
-          </div>
-        ) : null}
-
-        {state.transactionId ? (
-          <div className="mt-4 rounded-2xl bg-[#ccff00]/10 px-4 py-3 text-sm font-bold text-[#ccff00]">
-            Transaction sent!{" "}
-            <a
-              href={`https://universalx.app/activity/details?id=${state.transactionId}`}
-              target="_blank"
-              rel="noreferrer"
-              className="underline decoration-[#ccff00]/50 underline-offset-4"
-            >
-              View transaction
-            </a>
+        {state.notice ? (
+          <div
+            className="mt-4 rounded-2xl bg-[#3B33BD]/20 px-4 py-3 text-sm font-semibold text-[#C9C6FF]"
+            role="status"
+          >
+            {state.notice}
           </div>
         ) : null}
 
         <div className="mt-auto pt-5">
-          <button
+          <Button
             type="button"
             onClick={() => void state.handleConfirmSend()}
-            disabled={!state.isReady || state.isPreparing || state.isSigning || Boolean(state.transactionId)}
+            isDisabled={
+              !state.isReady ||
+              state.isPreparing ||
+              state.isSigning ||
+              Boolean(state.transactionId)
+            }
+            isLoading={state.isSigning}
+            color="warning"
+            label={state.isSigning ? "Signing..." : "Confirm Payment"}
+            startIcon="lucide:check-circle"
             className="flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#ccff00] text-base font-black text-[#3B33BD] shadow-[0_10px_28px_-10px_rgba(204,255,0,0.5)] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/70 disabled:cursor-not-allowed disabled:bg-[#2A2A3E] disabled:text-[#77777f]"
-          >
-            <AppIcon
-              icon={state.isSigning ? "lucide:loader-circle" : "lucide:check-circle"}
-              aria-hidden="true"
-              width={20}
-              height={20}
-              className={state.isSigning ? "animate-spin" : ""}
-            />
-            {state.isSigning ? "Signing..." : "Confirm Payment"}
-          </button>
+          />
         </div>
       </section>
     </MobileShell>

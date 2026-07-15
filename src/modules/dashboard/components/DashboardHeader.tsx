@@ -1,4 +1,5 @@
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 
 import { WalletAvatar } from "@/components/ui/wallet-avatar";
@@ -47,9 +48,12 @@ export function DashboardHeader({
       </div>
 
       <div className="relative">
-        <button
+        <Button
           type="button"
           onClick={onToggleCurrencyMenu}
+          color="dark"
+          size="compact"
+          rounded="full"
           className="inline-flex h-10 items-center gap-2 rounded-full bg-[#1C1C1E] px-3 text-xs font-bold text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
           aria-label="Select wallet currency"
           aria-expanded={currencyOpen}
@@ -69,7 +73,7 @@ export function DashboardHeader({
             )}
             aria-hidden="true"
           />
-        </button>
+        </Button>
 
         {currencyOpen ? (
           <div
@@ -77,11 +81,15 @@ export function DashboardHeader({
             className="absolute right-0 top-12 z-30 w-32 overflow-hidden rounded-2xl border border-white/10 bg-[#16161A]/95 p-1.5 shadow-[0_18px_45px_-18px_rgba(0,0,0,0.75)] backdrop-blur-xl"
           >
             {(Object.keys(currencyOptions) as CurrencyCode[]).map((code) => (
-              <button
+              <Button
                 key={code}
                 type="button"
                 role="menuitem"
                 onClick={() => onSelectCurrency(code)}
+                variant="plain"
+                size="compact"
+                rounded="md"
+                label={code}
                 className={cn(
                   "flex h-9 w-full items-center justify-between rounded-xl px-3 text-xs font-bold transition-colors",
                   currency === code
@@ -98,7 +106,7 @@ export function DashboardHeader({
                     aria-hidden="true"
                   />
                 ) : null}
-              </button>
+              </Button>
             ))}
           </div>
         ) : null}

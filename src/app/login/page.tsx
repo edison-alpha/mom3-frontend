@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen bg-[#1700D6]" />}>
       <OnboardingView />
     </Suspense>
   );

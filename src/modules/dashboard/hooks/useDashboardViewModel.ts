@@ -31,7 +31,7 @@ export function useDashboardViewModel() {
   const pnlValue = 0;
   const balanceDisplay = formatCurrency(balanceValue, currency);
   const pnlDisplay = formatCurrency(Math.abs(pnlValue), currency);
-  const isBalanceLoading = mounted && isUniversalAccountLoading;
+  const isBalanceLoading = mounted && isUniversalAccountLoading && primaryAssets === null;
   const isInitialLoading = isUniversalAccountLoading && primaryAssets === null;
 
   function handleToggleBalance() {

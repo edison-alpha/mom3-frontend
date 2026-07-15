@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { AppIcon } from "@/components/ui/app-icon";
+import { Typography } from "@/components/ui/typography";
 
 import { portfolioModes } from "../constants/dashboard";
 import type { PortfolioMode } from "../types/dashboard.types";
@@ -19,14 +20,14 @@ export function StrategyModeCard({
 }: StrategyModeCardProps) {
   return (
     <section className="mt-4 rounded-[22px] border border-white/10 bg-[#1C1C1E] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h2 className="text-sm font-semibold text-white">Strategy mode</h2>
-          <p className="text-[11px] font-medium text-[#9A9AA2]">
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <Typography as="h2" variant="h4">Strategy mode</Typography>
+          <Typography variant="caption" color="muted" className="mt-0.5">
             Pick how aggressive mom3 should be.
-          </p>
+          </Typography>
         </div>
-        <span className="rounded-full bg-[#3B33BD]/20 px-2.5 py-1 text-[11px] font-black text-[#ccff00]">
+        <span className="shrink-0 rounded-full bg-[#3B33BD]/20 px-2.5 py-1 text-[11px] font-black text-[#ccff00]">
           {activeMode.metric}
         </span>
       </div>
@@ -42,7 +43,7 @@ export function StrategyModeCard({
               onClick={() => onSelectMode(index)}
               whileTap={{ scale: 0.96 }}
               className={cn(
-                "flex h-10 items-center justify-center gap-1 rounded-full text-[11px] font-black transition-all duration-500 focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
+                "flex h-10 min-w-0 items-center justify-center gap-1 overflow-hidden rounded-full px-1 text-[11px] font-black transition-all duration-500 focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
                 isActive
                   ? "scale-[1.02] bg-[#3B33BD] text-[#ccff00] shadow-[0_10px_24px_-16px_rgba(59,51,189,0.9)]"
                   : "bg-[#111113] text-[#8E8E98] hover:bg-white/5 hover:text-white",
@@ -53,7 +54,7 @@ export function StrategyModeCard({
               ) : (
                 <AppIcon icon={mode.icon} aria-hidden="true" width={14} height={14} />
               )}
-              {mode.label}
+              <span className="truncate">{mode.label}</span>
             </motion.button>
           );
         })}
@@ -73,12 +74,12 @@ export function StrategyModeCard({
             )}
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-bold text-white">
+            <Typography as="span" variant="h4" truncate>
               {activeMode.title}
-            </span>
-            <span className="mt-0.5 block text-[11px] font-medium leading-snug text-[#9A9AA2]">
+            </Typography>
+            <Typography as="span" variant="caption" color="muted" className="mt-0.5 block">
               {activeMode.description}
-            </span>
+            </Typography>
           </span>
           <span className="shrink-0 rounded-full border border-white/10 px-2 py-0.5 text-[10px] font-black text-[#9A9AA2]">
             {activeMode.tone}

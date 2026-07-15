@@ -6,19 +6,46 @@ import { useEffect } from "react";
 import * as React from "react";
 
 import { formatUsd } from "@/lib/format";
+import { chainNameFromId } from "@/lib/chain";
 import { truncateAddress } from "@/utils/address.utils";
 import { useMagic } from "@/providers/magic/components/MagicProvider";
+import { DEFAULT_CHAIN_ID } from "@/providers/shared/constants/chain.constants";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import type {
   ProfileIdentityRow,
   UniversalAccountRow,
 } from "@/modules/profile/types/profile.types";
 
+function nativeGasToken(chainId: number) {
+  if (chainId === 56) return "BNB";
+  if (chainId === 196) return "OKB";
+  if (chainId === 146) return "S";
+  if (chainId === 43114) return "AVAX";
+  return "ETH";
+}
+
+function isUserRejected(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  return /user rejected|user denied|request rejected|cancelled|canceled/i.test(message);
+}
+
+function delegationErrorMessage(error: unknown, chainId: number) {
+  const message = error instanceof Error ? error.message : String(error || "");
+  const chain = chainNameFromId(chainId);
+
+  if (/insufficient funds|have 0 want/i.test(message)) {
+    return `Add a small amount of ${nativeGasToken(chainId)} on ${chain} to pay the EIP-7702 delegation gas, then try again.`;
+  }
+
+  return `EIP-7702 could not be enabled on ${chain}. Check your network and try again.`;
+}
+
 export function useProfileViewModel() {
   const router = useRouter();
   const { isLoading: isMagicLoading, logout: magicLogout, session } = useMagic();
   const {
     accountInfo,
+    eip7702Deployments,
     ensureDelegated,
     error: universalAccountError,
     isDelegated,
@@ -29,6 +56,9 @@ export function useProfileViewModel() {
   } = useUniversalAccount();
   const [copiedAddress, setCopiedAddress] = React.useState<string | null>(null);
   const [universalAccountOpen, setUniversalAccountOpen] = React.useState(false);
+  const [eip7702Open, setEip7702Open] = React.useState(false);
+  const [delegatingChainId, setDelegatingChainId] = React.useState<number | null>(null);
+  const [delegationError, setDelegationError] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (!isMagicLoading && !session?.ownerAddress) {
@@ -37,11 +67,38 @@ export function useProfileViewModel() {
   }, [isMagicLoading, router, session?.ownerAddress]);
 
   const delegateMutation = useMutation({
-    mutationFn: async () => {
-      await ensureDelegated();
+    mutationFn: async (chainId: number) => {
+      await ensureDelegated(chainId);
       await refreshAccount();
     },
   });
+
+  const delegateOnChain = async (chainId: number) => {
+    setDelegatingChainId(chainId);
+    setDelegationError(null);
+    try {
+      await delegateMutation.mutateAsync(chainId);
+    } catch (error) {
+      if (!isUserRejected(error)) {
+        setDelegationError(delegationErrorMessage(error, chainId));
+      }
+      delegateMutation.reset();
+    } finally {
+      setDelegatingChainId(null);
+    }
+  };
+
+  const handleEip7702OpenChange = (open: boolean) => {
+    if (open) {
+      setDelegationError(null);
+      setEip7702Open(true);
+      return;
+    }
+
+    setEip7702Open(false);
+    setDelegationError(null);
+    delegateMutation.reset();
+  };
 
   const totalUsd =
     primaryAssets && "totalAmountInUSD" in primaryAssets
@@ -49,6 +106,7 @@ export function useProfileViewModel() {
       : 0;
 
   const ownerAddress = accountInfo.ownerAddress || session?.ownerAddress || "";
+  const isAnyChainDelegated = eip7702Deployments.some((deployment) => deployment.isDelegated);
 
   const identityRows: ProfileIdentityRow[] = [
     {
@@ -59,7 +117,7 @@ export function useProfileViewModel() {
     {
       icon: "solar:shield-check-bold",
       label: "EIP-7702",
-      value: isDelegated ? "Delegated" : "Ready to upgrade",
+      value: isAnyChainDelegated ? "Delegated" : "Ready to upgrade",
     },
     {
       icon: "solar:global-bold",
@@ -105,9 +163,16 @@ export function useProfileViewModel() {
 
   return {
     copiedAddress,
-    delegateErrorMessage: delegateMutation.error?.message || null,
+    delegateErrorMessage: delegationError,
+    delegatedChainIds: eip7702Deployments
+      .filter((deployment) => deployment.isDelegated)
+      .map((deployment) => deployment.chainId),
+    delegatingChainId,
+    eip7702Deployments,
+    eip7702Open,
     identityRows,
     isAuthenticated: Boolean(session?.ownerAddress),
+    isUniversalAccountLoading,
     isDelegated,
     isUpgradeDisabled:
       isMagicLoading ||
@@ -116,11 +181,18 @@ export function useProfileViewModel() {
       delegateMutation.isPending,
     isUpgradePending: delegateMutation.isPending,
     logout,
-    onUpgrade: () => delegateMutation.mutate(),
+    onDelegate: (chainId: number) => {
+      void delegateOnChain(chainId);
+    },
+    onOpenEip7702: () => handleEip7702OpenChange(true),
+    onUpgrade: () => {
+      void delegateOnChain(DEFAULT_CHAIN_ID);
+    },
     openUniversalAccountSheet,
     ownerAddress,
     profileEmail: session?.email || null,
     setUniversalAccountOpen,
+    onEip7702OpenChange: handleEip7702OpenChange,
     universalAccountError,
     universalAccountOpen,
     universalAccountRows,

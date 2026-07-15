@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import * as React from "react";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -17,9 +18,12 @@ export function UniversalAccountHeaderButton({
   onOpen,
 }: UniversalAccountHeaderButtonProps) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onOpen}
+      color="dark"
+      size="compact"
+      rounded="full"
       disabled={!ownerAddress}
       aria-label="Open Universal Account details"
       className="flex h-10 max-w-[128px] items-center gap-2 rounded-full bg-[#1C1C1E] px-3 text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD] disabled:cursor-not-allowed disabled:opacity-60"
@@ -28,7 +32,7 @@ export function UniversalAccountHeaderButton({
       <span className="truncate font-mono text-xs font-black tabular-nums">
         {ownerAddress ? truncateAddress(ownerAddress, 3) : "Wallet"}
       </span>
-    </button>
+    </Button>
   );
 }
 
@@ -48,9 +52,12 @@ export function UniversalAccountOwnerRow({
   onOpen,
 }: UniversalAccountOwnerRowProps) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onOpen}
+      variant="plain"
+      size="lg"
+      rounded="none"
       className={`flex min-h-[64px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-[#3B33BD] ${
         bordered ? "border-b border-white/5" : ""
       }`}
@@ -64,7 +71,7 @@ export function UniversalAccountOwnerRow({
         <span className="mt-0.5 block text-xs font-medium text-[#9A9AA2]">{value}</span>
       </span>
       <AppIcon icon="lucide:chevron-right" aria-hidden="true" width={18} height={18} className="text-[#66666D]" />
-    </button>
+    </Button>
   );
 }
 
@@ -95,10 +102,13 @@ export function ProfileUniversalAccountSheet({
       contentClassName="space-y-2"
     >
       {rows.map((row) => (
-        <button
+        <Button
           type="button"
           key={row.label}
           onClick={() => onCopyAddress(row.address, row.label)}
+          variant="plain"
+          size="lg"
+          rounded="lg"
           disabled={!row.address}
           aria-label={`Copy ${row.label} address`}
           className="flex min-h-[62px] w-full items-center gap-3 rounded-2xl bg-black/25 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-[#3B33BD] disabled:cursor-not-allowed disabled:opacity-60"
@@ -118,7 +128,7 @@ export function ProfileUniversalAccountSheet({
             </span>
           </span>
           <AppIcon icon="lucide:copy" aria-hidden="true" width={16} height={16} className="shrink-0 text-[#66666D]" />
-        </button>
+        </Button>
       ))}
 
       {error ? (

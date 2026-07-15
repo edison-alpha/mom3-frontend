@@ -37,6 +37,21 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!mom3-agentkit/.env.example
+
+# python agentkit
+**/__pycache__/
+*.py[cod]
+mom3-agentkit/.venv/
+
+# local projects and reference material maintained in separate repositories
+/mom3-agentkit/
+/mom3-backend/
+/mom3-contract/
+/resource/
+/.claude/
+/.pnpm-store/
+/.superstack/
 
 # vercel
 .vercel

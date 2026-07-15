@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import * as React from "react";
 
 import { WalletAvatar } from "@/components/ui/wallet-avatar";
@@ -18,11 +19,14 @@ export function RecipientRow({
   onSelect: () => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onSelect}
+      variant="ghost"
+      size="lg"
+      rounded="none"
       className={cn(
-        "flex min-h-[74px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
+        "flex min-h-[74px] w-full items-center justify-start rounded-none px-4 py-3 text-left text-white transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
         selected && "bg-[#3B33BD]/10",
       )}
     >
@@ -52,6 +56,6 @@ export function RecipientRow({
       <span className="shrink-0 rounded-full bg-black/30 px-2.5 py-1 text-[10px] font-black text-[#9A9AA2]">
         {recipient.network}
       </span>
-    </button>
+    </Button>
   );
 }

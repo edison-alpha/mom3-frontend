@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { TokenAssetBadge } from "@/modules/send/components/TokenAssetBadge";
 import type { TokenRow } from "@/modules/send/types/send.types";
 import { formatTokenBalance, formatUsd } from "@/lib/format";
@@ -15,9 +16,12 @@ export function TokenRowItem({
   onSelect: (token: TokenRow) => void;
 }) {
   return (
-    <button
+    <Button
       type="button"
       onClick={() => onSelect(token)}
+      variant="plain"
+      size="lg"
+      rounded="lg"
       className={cn(
         "flex min-h-[76px] w-full items-center gap-3 rounded-[24px] border border-white/5 bg-black/20 px-3 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
       )}
@@ -38,6 +42,6 @@ export function TokenRowItem({
           {formatUsd(token.amountInUSD)}
         </span>
       </span>
-    </button>
+    </Button>
   );
 }

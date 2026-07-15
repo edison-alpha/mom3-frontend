@@ -6,4 +6,6 @@ export const universalAccountQueryKeys = {
     ["universal-account", "instance", ownerAddress || "anonymous"] as const,
   snapshot: (ownerAddress?: string) =>
     ["universal-account", "snapshot", ownerAddress || "anonymous"] as const,
+  transaction: (transactionId?: string) =>
+    ["universal-account", "transaction", transactionId || "pending"] as const,
 };

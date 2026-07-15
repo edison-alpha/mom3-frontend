@@ -16,7 +16,7 @@ export const viewport: Viewport = {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<div className="min-h-screen bg-[#1700D6]" />}>
       <AuthCallbackView />
     </Suspense>
   );

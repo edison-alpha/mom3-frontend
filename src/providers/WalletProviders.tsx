@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 
 import { MagicProvider } from "@/providers/magic/components/MagicProvider";
+import { RealtimeProvider } from "@/providers/realtime/components/RealtimeProvider";
 import { UniversalAccountProvider } from "@/providers/universal-account/components/UniversalAccountProvider";
 
 const queryClient = new QueryClient({
@@ -20,7 +21,9 @@ export function WalletProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <MagicProvider>
-        <UniversalAccountProvider>{children}</UniversalAccountProvider>
+        <UniversalAccountProvider>
+          <RealtimeProvider>{children}</RealtimeProvider>
+        </UniversalAccountProvider>
       </MagicProvider>
     </QueryClientProvider>
   );

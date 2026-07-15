@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -9,6 +10,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { FloatingMenuButton } from "@/components/ui/menu-button";
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
 import { historyItems, type HistoryItem } from "@/lib/history";
+import { useTransactions, type RealHistoryItem } from "./hooks/useTransactions";
 import { cn } from "@/lib/utils";
 
 const toneClassName: Record<HistoryItem["tone"], string> = {
@@ -21,7 +23,10 @@ export default function HistoryView() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
-  const myHistoryItems = historyItems.me;
+  const { items: realItems, isLoading, error } = useTransactions();
+
+  // Real on-chain transactions replace the mock "me" list.
+  const myHistoryItems: RealHistoryItem[] = realItems;
   const networkOptions = React.useMemo(
     () => ["all", ...Array.from(new Set(myHistoryItems.map((item) => item.network)))],
     [myHistoryItems],
@@ -53,16 +58,18 @@ export default function HistoryView() {
     selectedNetwork === "all" ? "Semua" : selectedNetwork;
 
   const networkHeaderAction = (
-    <button
+    <Button
       type="button"
       onClick={() => setFilterSheetOpen(true)}
+      color="dark"
+      size="icon"
+      rounded="full"
+      startIcon="solar:global-bold"
       className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1E] text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
       aria-label="Filter by network"
       aria-expanded={filterSheetOpen}
       aria-haspopup="dialog"
-    >
-      <AppIcon icon="solar:global-bold" aria-hidden="true" width={21} height={21} />
-    </button>
+    />
   );
 
   return (
@@ -81,9 +88,12 @@ export default function HistoryView() {
           transition={{ duration: 0.3, delay: 0.05 }}
           className="relative mt-5 flex items-center gap-2"
         >
-          <button
+          <Button
             type="button"
             onClick={() => setFilterSheetOpen(true)}
+            color="dark"
+            size="compact"
+            rounded="full"
             className="flex h-9 max-w-36 items-center gap-1.5 rounded-full bg-[#1C1C1E] px-3 text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
             aria-label="Filter by network"
             aria-expanded={filterSheetOpen}
@@ -102,18 +112,20 @@ export default function HistoryView() {
                 filterSheetOpen && "rotate-180",
               )}
             />
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
             onClick={() => setFilterSheetOpen(true)}
+            color="dark"
+            size="icon-sm"
+            rounded="full"
+            startIcon="lucide:sliders-horizontal"
             className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1C1C1E] text-[#77777f] transition-colors hover:bg-[#262628] hover:text-white focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
             aria-label="Open history filters"
             aria-expanded={filterSheetOpen}
             aria-haspopup="dialog"
-          >
-            <AppIcon icon="lucide:sliders-horizontal" aria-hidden="true" width={15} height={15} />
-          </button>
+          />
         </motion.section>
 
         <section className="mt-5">
@@ -139,7 +151,29 @@ export default function HistoryView() {
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.25 }}
             >
-              {activeItems.length > 0 ? (
+              {isLoading ? (
+                <div className="mt-4 flex min-h-48 flex-col items-center justify-center rounded-[28px] bg-[#1C1C1E] px-6 text-center">
+                  <AppIcon
+                    icon="lucide:loader-circle"
+                    aria-hidden="true"
+                    width={32}
+                    height={32}
+                    className="animate-spin text-[#9A9AA2]"
+                  />
+                  <p className="mt-3 text-sm font-medium text-[#9A9AA2]">Loading on-chain history…</p>
+                </div>
+              ) : error ? (
+                <div className="mt-4 flex min-h-48 flex-col items-center justify-center rounded-[28px] bg-[#1C1C1E] px-6 text-center">
+                  <AppIcon
+                    icon="solar:danger-triangle-bold"
+                    aria-hidden="true"
+                    width={32}
+                    height={32}
+                    className="text-[#FF7B7B]"
+                  />
+                  <p className="mt-3 text-sm font-medium text-[#A7A7B7]">{error}</p>
+                </div>
+              ) : activeItems.length > 0 ? (
                 <div className="mt-4 overflow-hidden rounded-[28px] bg-[#1C1C1E]">
                   {activeItems.map((item, index) => (
                     <motion.div
@@ -238,10 +272,13 @@ export default function HistoryView() {
             const label = network === "all" ? "Semua" : network;
 
             return (
-              <button
+              <Button
                 key={network}
                 type="button"
                 onClick={() => selectNetwork(network)}
+                variant="plain"
+                size="lg"
+                rounded="lg"
                 className={cn(
                   "flex min-h-[52px] w-full items-center justify-between gap-3 rounded-2xl px-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]",
                   isActive
@@ -268,7 +305,7 @@ export default function HistoryView() {
                     className="shrink-0"
                   />
                 ) : null}
-              </button>
+              </Button>
             );
           })}
         </BottomSheet>

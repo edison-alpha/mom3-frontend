@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 
 import { TokenAssetBadge } from "@/modules/send/components/TokenAssetBadge";
 import type { TokenRow } from "@/modules/send/types/send.types";
@@ -48,14 +49,16 @@ export function AmountInput({
           aria-describedby={amountValidationMessage ? "send-amount-error" : undefined}
           className="min-w-0 flex-1 bg-transparent text-3xl font-black text-white placeholder:text-[#66666D] focus:outline-none"
         />
-        <button
+        <Button
           type="button"
           onClick={onMaxAmount}
-          disabled={token.balance <= 0}
+          isDisabled={token.balance <= 0}
+          label="Max"
+          color="transparent"
+          size="compact"
+          rounded="full"
           className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#3B33BD]/20 px-3 text-xs font-black text-[#8F89FF] transition-colors hover:bg-[#3B33BD]/30 focus-visible:ring-2 focus-visible:ring-[#3B33BD] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          Max
-        </button>
+        />
       </div>
 
       <div className="mt-2 flex items-center justify-between text-xs font-semibold text-[#9A9AA2]">

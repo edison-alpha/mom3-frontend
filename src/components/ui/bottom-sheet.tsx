@@ -5,6 +5,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { Typography } from "@/components/ui/typography";
 
 type BottomSheetProps = {
   open: boolean;
@@ -86,13 +87,13 @@ export function BottomSheet({
 
         <div className="mt-5 flex items-start justify-between gap-3">
           <div>
-            <h3 id={titleId} className="text-lg font-black text-white">
+            <Typography id={titleId} as="h3" variant="h3">
               {title}
-            </h3>
+            </Typography>
             {description ? (
-              <p className="mt-1 text-sm font-medium text-[#9A9AA2]">
-                {description}
-              </p>
+            <Typography variant="body-sm" color="muted" className="mt-1">
+              {description}
+            </Typography>
             ) : null}
           </div>
 

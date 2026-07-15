@@ -9,6 +9,12 @@ export const magicQueryKeys = {
 
 export const MAGIC_CHAIN_CONFIGS = [
   {
+    chainId: 1,
+    rpcUrl:
+      process.env.NEXT_PUBLIC_ETH_RPC_URL ||
+      "https://ethereum-rpc.publicnode.com",
+  },
+  {
     chainId: 42161,
     rpcUrl: process.env.NEXT_PUBLIC_ARB_RPC_URL || "https://arb1.arbitrum.io/rpc",
   },

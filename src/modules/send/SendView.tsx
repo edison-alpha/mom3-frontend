@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 
 import { MobileBottomBar, MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AmountInput } from "@/modules/send/components/AmountInput";
 import { RecipientHeader } from "@/modules/send/components/RecipientHeader";
@@ -80,14 +81,16 @@ export default function SendView() {
         title={pageTitle}
         leading={
           state.step !== "recipient" ? (
-            <button
+            <Button
               type="button"
               onClick={state.goBack}
+              color="dark"
+              size="icon"
+              rounded="full"
+              startIcon="lucide:chevron-left"
               className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1E] text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
               aria-label="Go back"
-            >
-              <AppIcon icon="lucide:chevron-left" aria-hidden="true" width={28} height={28} />
-            </button>
+            />
           ) : (
             <Link
               href="/assets"
@@ -133,15 +136,19 @@ export default function SendView() {
 
               {state.accountError ? (
                 <div className="mt-3 rounded-2xl bg-red-500/10 px-4 py-3">
-                  <p className="text-sm font-semibold text-red-100">Real balance belum bisa dimuat.</p>
-                  <p className="mt-1 text-xs font-medium text-red-100/75">{state.accountError}</p>
-                  <button
+                  <p className="text-sm font-semibold text-red-100">Unable to load your balance</p>
+                  <p className="mt-1 text-xs font-medium text-red-100/75">
+                    Check your connection, then try again.
+                  </p>
+                  <Button
                     type="button"
                     onClick={() => void state.refreshAccount()}
+                    color="danger"
+                    size="compact"
+                    rounded="full"
+                    label="Retry"
                     className="mt-3 flex h-10 items-center justify-center rounded-full bg-red-500/15 px-4 text-xs font-black text-red-50 transition-colors hover:bg-red-500/20"
-                  >
-                    Retry
-                  </button>
+                  />
                 </div>
               ) : null}
 
@@ -151,14 +158,17 @@ export default function SendView() {
                 </div>
               ) : null}
 
-              <button
+              <Button
                 type="submit"
-                disabled={!state.canSend || state.isLoading}
+                isDisabled={!state.canSend}
+                isLoading={state.isLoading}
+                color="primary"
+                label="Send"
+                startIcon="lucide:send"
                 className="mt-4 flex h-14 w-full items-center justify-center gap-2 rounded-full bg-[#3B33BD] text-base font-black text-[#ccff00] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#3B33BD] disabled:cursor-not-allowed disabled:bg-[#2A2A3E] disabled:text-[#77777f]"
-              >
-                <AppIcon icon="lucide:send" aria-hidden="true" width={20} height={20} />
-                Send
-              </button>
+                fullWidth
+                size="lg"
+              />
             </form>
           ) : null}
         </section>

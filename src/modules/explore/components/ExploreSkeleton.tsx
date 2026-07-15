@@ -45,3 +45,31 @@ export function ExploreSkeleton() {
     </MobileShell>
   );
 }
+
+function MarketSectionSkeleton({ title, rows = 3 }: { title: string; rows?: number }) {
+  return (
+    <section className="mt-6" aria-hidden="true">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-base font-semibold text-white/70">{title}</h2>
+        <Skeleton className="h-7 w-20 rounded-full" />
+      </div>
+      <div className="mt-3 overflow-hidden rounded-[28px] bg-[#1C1C1E] p-3">
+        {Array.from({ length: rows }).map((_, index) => (
+          <SkeletonListRow key={index} className="rounded-[20px] px-2" />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+export function ExploreMarketSectionsSkeleton() {
+  return (
+    <div role="status" aria-label="Loading yield markets">
+      <MarketSectionSkeleton title="Best Yield" rows={3} />
+      <MarketSectionSkeleton title="Aave" rows={2} />
+      <MarketSectionSkeleton title="Morpho" rows={2} />
+      <MarketSectionSkeleton title="Compound" rows={2} />
+      <span className="sr-only">Loading Best Yield, Aave, Morpho, and Compound markets</span>
+    </div>
+  );
+}

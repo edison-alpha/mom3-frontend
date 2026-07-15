@@ -1,6 +1,6 @@
 import type { TimeRange } from "@/components/ui/mini-chart";
 
-export type PositionKind = "Yield" | "Lend" | "Borrow";
+export type PositionKind = "Yield";
 export type Risk = "Low" | "Medium" | "High";
 
 export type AssetDetail = {
@@ -39,6 +39,7 @@ export type PositionDetail = {
 
 export type MarketDetail = {
   slug: string;
+  chainId?: number;
   asset: string;
   protocol: string;
   primary: string;
@@ -46,7 +47,7 @@ export type MarketDetail = {
   icon: string;
   color: string;
   positive?: boolean;
-  category: "Lend" | "Borrow" | "Risk";
+  category: "Yield" | "Risk";
   tvl: string;
   utilization: string;
   risk: Risk;
@@ -88,7 +89,7 @@ export const assetDetails: AssetDetail[] = [
     change: "+0.24%",
     price: "$1.00",
     avgCost: "$1.00",
-    detail: "Stablecoin utama untuk deposit, lending, dan pembayaran harian.",
+    detail: "Stablecoin utama untuk deposit, yield, dan pembayaran harian.",
     chartData: chartSeries.steady,
   },
   {
@@ -133,7 +134,7 @@ export const assetDetails: AssetDetail[] = [
     change: "+0.12%",
     price: "$1.00",
     avgCost: "$1.00",
-    detail: "Stablecoin cadangan untuk lending konservatif dan likuiditas.",
+    detail: "Stablecoin cadangan untuk yield konservatif dan likuiditas.",
     chartData: chartSeries.steady,
   },
   {
@@ -170,12 +171,12 @@ export const assetDetails: AssetDetail[] = [
 
 export const positionDetails: PositionDetail[] = [
   {
-    slug: "usdc-aave-v3-lend",
+    slug: "usdc-aave-v3-yield",
     asset: "USDC",
     protocol: "Aave v3",
     balance: "$1,250.00",
     detail: "5.15% APY",
-    kind: "Lend",
+    kind: "Yield",
     risk: "Low",
     health: 94,
     summary: "Stable USDC supply on Aave with deep liquidity and low volatility.",
@@ -187,12 +188,12 @@ export const positionDetails: PositionDetail[] = [
     chartData: chartSeries.steady,
   },
   {
-    slug: "eth-aave-v3-borrow",
+    slug: "eth-aave-v3-yield",
     asset: "ETH",
     protocol: "Aave v3",
     balance: "0.42 ETH",
-    detail: "70% borrow power",
-    kind: "Borrow",
+    detail: "Adaptive yield allocation",
+    kind: "Yield",
     risk: "Medium",
     health: 82,
     summary: "ETH collateral position is healthy, but should be watched during volatility.",
@@ -221,15 +222,15 @@ export const positionDetails: PositionDetail[] = [
     chartData: chartSeries.steady,
   },
   {
-    slug: "usdt-morpho-lend",
+    slug: "usdt-morpho-yield",
     asset: "USDT",
     protocol: "Morpho",
     balance: "$430.00",
     detail: "4.88% APY",
-    kind: "Lend",
+    kind: "Yield",
     risk: "Low",
     health: 91,
-    summary: "Conservative lending market with strong collateral buffers.",
+    summary: "Conservative yield market with strong liquidity buffers.",
     icon: "cryptocurrency-color:usdt",
     protocolIcon: "simple-icons:morpho",
     protocolTone: "text-[#2E5BFF]",
@@ -275,7 +276,8 @@ export const positionDetails: PositionDetail[] = [
 
 export const marketDetails: MarketDetail[] = [
   {
-    slug: "lend-usdc-aave-v3",
+    slug: "yield-usdc-aave-v3",
+    chainId: 42161,
     asset: "USDC",
     protocol: "Aave v3",
     primary: "5.15% APY",
@@ -283,31 +285,31 @@ export const marketDetails: MarketDetail[] = [
     icon: "cryptocurrency-color:usdc",
     color: "bg-[#2775CA]",
     positive: true,
-    category: "Lend",
+    category: "Yield",
     tvl: "$184.2M",
     utilization: "68%",
     risk: "Low",
-    description: "Stable USDC lending market with deep liquidity and predictable yield.",
+    description: "Stable USDC yield with deep liquidity and predictable returns.",
     chartData: chartSeries.steady,
   },
   {
-    slug: "lend-eth-compound",
+    slug: "yield-eth-aerodrome",
     asset: "ETH",
-    protocol: "Compound",
+    protocol: "Aerodrome",
     primary: "3.42% APY",
     secondary: "Blue-chip",
     icon: "cryptocurrency-color:eth",
     color: "bg-[#627EEA]",
     positive: true,
-    category: "Lend",
+    category: "Yield",
     tvl: "$96.4M",
     utilization: "54%",
     risk: "Low",
-    description: "Blue-chip ETH lending market with lower APY and broad protocol support.",
+    description: "Blue-chip liquidity strategy with transparent, market-driven yield.",
     chartData: chartSeries.volatile,
   },
   {
-    slug: "lend-usdt-morpho",
+    slug: "yield-usdt-morpho",
     asset: "USDT",
     protocol: "Morpho",
     primary: "4.88% APY",
@@ -315,56 +317,56 @@ export const marketDetails: MarketDetail[] = [
     icon: "cryptocurrency-color:usdt",
     color: "bg-[#26A17B]",
     positive: true,
-    category: "Lend",
+    category: "Yield",
     tvl: "$72.8M",
     utilization: "61%",
     risk: "Low",
-    description: "Conservative stablecoin lending route with steady utilization.",
+    description: "Conservative stablecoin yield route with steady utilization.",
     chartData: chartSeries.steady,
   },
   {
-    slug: "borrow-usdc-base-market",
+    slug: "yield-usdc-base-market",
     asset: "USDC",
     protocol: "Base Market",
-    primary: "6.20% APR",
-    secondary: "80% LTV",
+    primary: "6.20% APY",
+    secondary: "Medium risk",
     icon: "cryptocurrency-color:usdc",
     color: "bg-[#2775CA]",
-    category: "Borrow",
+    category: "Yield",
     tvl: "$42.1M",
     utilization: "80%",
     risk: "Medium",
-    description: "Borrow USDC against supported collateral. Watch utilization before entering.",
+    description: "Adaptive USDC yield route with market conditions monitored continuously.",
     chartData: chartSeries.volatile,
   },
   {
-    slug: "borrow-cbeth-aave-v3",
+    slug: "yield-cbeth-aave-v3",
     asset: "cbETH",
     protocol: "Aave v3",
-    primary: "2.14% APR",
-    secondary: "70% LTV",
+    primary: "2.14% APY",
+    secondary: "Medium risk",
     icon: "cryptocurrency-color:eth",
     color: "bg-[#3B33BD]",
-    category: "Borrow",
+    category: "Yield",
     tvl: "$38.6M",
     utilization: "70%",
     risk: "Medium",
-    description: "Borrow market for cbETH collateral with moderate rate movement.",
+    description: "cbETH yield route with moderate rate movement and active monitoring.",
     chartData: chartSeries.volatile,
   },
   {
-    slug: "borrow-mom-mom3-vault",
+    slug: "yield-mom-mom3-vault",
     asset: "MOM",
     protocol: "mom3 Vault",
-    primary: "9.80% APR",
+    primary: "9.80% APY",
     secondary: "Beta",
     icon: "solar:stars-bold",
     color: "bg-[#ccff00]",
-    category: "Borrow",
+    category: "Yield",
     tvl: "$4.8M",
     utilization: "46%",
     risk: "High",
-    description: "Beta borrow market with higher rate uncertainty and smaller liquidity.",
+    description: "High-upside yield strategy with higher rate uncertainty and smaller liquidity.",
     chartData: chartSeries.risk,
   },
   {
@@ -398,4 +400,3 @@ export const marketDetails: MarketDetail[] = [
     chartData: chartSeries.risk,
   },
 ];
-

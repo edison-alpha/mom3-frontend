@@ -4,6 +4,7 @@ import { AppIcon } from "@/components/ui/app-icon";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils";
+import { Typography } from "@/components/ui/typography";
 
 type MobileShellProps = React.ComponentProps<"main"> & {
   contentClassName?: string;
@@ -76,7 +77,7 @@ export function MobileHeader({
         </Link>
       ) : null}
 
-      <h1 className="text-xl font-bold text-white">{title}</h1>
+      <Typography variant="h2" as="h1">{title}</Typography>
 
       {action ? <div className="absolute right-5">{action}</div> : null}
     </header>
@@ -122,7 +123,7 @@ export function MobilePageHeader({
         </Link>
       ) : null}
 
-      <h1 className="text-xl font-bold text-white">{title}</h1>
+      <Typography variant="h2" as="h1">{title}</Typography>
 
       {action ? <div className="absolute right-0">{action}</div> : null}
     </header>

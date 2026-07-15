@@ -10,15 +10,12 @@ import { BalanceCard } from "./components/BalanceCard";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EarnSection } from "./components/EarnSection";
 import { OpportunityGrid } from "./components/OpportunityGrid";
-import { StrategyModeCard } from "./components/StrategyModeCard";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { useDashboardViewModel } from "./hooks/useDashboardViewModel";
 
 export default function DashboardView() {
   const { isLoading: isMagicLoading, session } = useMagic();
   const {
-    activeMode,
-    activeModeIndex,
     balanceDisplay,
     balanceHidden,
     balanceValue,
@@ -31,7 +28,6 @@ export default function DashboardView() {
     pnlDisplay,
     pnlValue,
     handleSelectCurrency,
-    handleSelectMode,
     handleToggleBalance,
     handleToggleCurrencyMenu,
   } = useDashboardViewModel();
@@ -73,19 +69,6 @@ export default function DashboardView() {
             pnlDisplay={pnlDisplay}
             pnlValue={pnlValue}
             onToggleBalance={handleToggleBalance}
-          />
-        </motion.div>
-
-        <motion.div
-          variants={fadeUp}
-          initial="hidden"
-          animate="show"
-          transition={{ duration: 0.5, delay: 0.16, ease: "easeOut" }}
-        >
-          <StrategyModeCard
-            activeMode={activeMode}
-            activeModeIndex={activeModeIndex}
-            onSelectMode={handleSelectMode}
           />
         </motion.div>
 

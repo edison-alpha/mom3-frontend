@@ -22,6 +22,12 @@ Endpoint Next.js meneruskan respons upstream dengan status HTTP yang sama, kecua
 | `NEXT_PUBLIC_MOM3_BACKEND_URL` | Fallback backend URL dan koneksi browser realtime. |
 | `AAVESCAN_API_KEY` | Key server-only opsional untuk chart historis Aave. |
 
+## Realtime client
+
+WebSocket bukan route handler Next.js. `RealtimeProvider` pada browser terhubung langsung ke backend melalui `NEXT_PUBLIC_MOM3_REALTIME_URL`; bila variabel itu kosong, frontend memakai `NEXT_PUBLIC_MOM3_BACKEND_URL` dengan path `/realtime`, atau membangun fallback ke port `4000` pada hostname yang sama.
+
+Saat koneksi terbuka, provider mengirim subscription `markets` dan, ketika Universal Account tersedia, juga `balance` untuk chain `42161` dan `8453`. Kontrak pesan WebSocket lengkap ada di [Backend endpoints](https://github.com/mom3-finance/mom3-backend/blob/mom3-dev-test/docs/endpoints.md#websocket-realtime).
+
 ## Market dan catalog
 
 | Method | Endpoint | Parameter | Upstream | Kegunaan |

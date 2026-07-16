@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { Typography } from "@/components/ui/typography";
 import { formatTokenBalance, formatUsd } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import {
   getFeeBreakdownRows,
   getFeeTokenRows,

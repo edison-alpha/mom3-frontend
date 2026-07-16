@@ -119,8 +119,6 @@ export default function AssetsView() {
   const [activeTab, setActiveTab] = React.useState<Tab>("assets");
   const [visibilityOpen, setVisibilityOpen] = React.useState(false);
 
-  if (portfolio.isLoading) return <AssetsSkeleton />;
-
   const cta = activeTab === "positions"
     ? portfolio.positions.length > 0
       ? { label: "Optimize with AI", href: "/ai/strategy", icon: "lucide:arrow-right" }
@@ -128,7 +126,38 @@ export default function AssetsView() {
     : activeTab === "summary"
       ? { label: "Open AI Strategy", href: "/ai/strategy", icon: "solar:stars-bold" }
       : { label: "Add Assets", href: "/deposit", icon: "lucide:plus" };
-  const healthNeedleAngle = 180 - Math.max(0, Math.min(100, portfolio.summary.healthScore)) * 1.8;
+  const targetHealthScore = Number.isFinite(portfolio.summary.healthScore)
+    ? Math.max(0, Math.min(100, portfolio.summary.healthScore))
+    : 0;
+  const [displayedHealthScore, setDisplayedHealthScore] = React.useState(targetHealthScore);
+  const previousHealthScoreRef = React.useRef(targetHealthScore);
+  React.useEffect(() => {
+    const from = previousHealthScoreRef.current;
+    const to = targetHealthScore;
+    if (Math.abs(from - to) < 0.01) {
+      previousHealthScoreRef.current = to;
+      setDisplayedHealthScore(to);
+      return;
+    }
+
+    let frame = 0;
+    const startedAt = performance.now();
+    const duration = 650;
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - startedAt) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const value = from + (to - from) * eased;
+      previousHealthScoreRef.current = value;
+      setDisplayedHealthScore(value);
+      if (progress < 1) frame = requestAnimationFrame(animate);
+      else previousHealthScoreRef.current = to;
+    };
+    frame = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(frame);
+  }, [targetHealthScore]);
+  if (portfolio.isLoading) return <AssetsSkeleton />;
+
+  const healthNeedleAngle = 180 - displayedHealthScore * 1.8;
   const selectedTokenCount = portfolio.visibility.allTokens.filter(
     (token) => !portfolio.visibility.hiddenAssetIds.has(token.id),
   ).length;
@@ -167,7 +196,7 @@ export default function AssetsView() {
           {portfolio.summary.assetCount} valued assets across {portfolio.summary.chainCount} chain{portfolio.summary.chainCount === 1 ? "" : "s"} · {portfolio.summary.stableAllocation.toFixed(0)}% stable
         </p>
 
-        <div className="relative mx-auto mt-4 flex h-36 w-56 items-end justify-center" aria-label={`Portfolio health ${portfolio.summary.healthScore} out of 100`}>
+        <div className="relative mx-auto mt-4 flex h-36 w-56 items-end justify-center" aria-label={`Portfolio health ${Math.round(displayedHealthScore)} out of 100`}>
           <svg viewBox="0 0 200 140" className="h-36 w-56" aria-hidden="true">
             <defs>
               <linearGradient id="assets-gauge-risk" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stopColor="#FF4444" /><stop offset="100%" stopColor="#FF6B35" /></linearGradient>
@@ -178,13 +207,9 @@ export default function AssetsView() {
             <path d="M 20 100 A 80 80 0 0 1 75.3 23.9" fill="none" stroke="url(#assets-gauge-risk)" strokeWidth="14" strokeLinecap="round" />
             <path d="M 75.3 23.9 A 80 80 0 0 1 147 35.3" fill="none" stroke="url(#assets-gauge-watch)" strokeWidth="14" strokeLinecap="round" />
             <path d="M 147 35.3 A 80 80 0 0 1 180 100" fill="none" stroke="url(#assets-gauge-strong)" strokeWidth="14" strokeLinecap="round" />
-            {!portfolio.isPortfolioLoading ? (
-              <>
-                <line x1="100" y1="100" x2={100 + 65 * Math.cos((healthNeedleAngle * Math.PI) / 180)} y2={100 - 65 * Math.sin((healthNeedleAngle * Math.PI) / 180)} stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                <circle cx="100" cy="100" r="5" fill="white" />
-              </>
-            ) : null}
-            <text x="100" y="126" textAnchor="middle" className="fill-white text-[22px] font-black">{portfolio.isPortfolioLoading ? "—" : portfolio.summary.healthScore}</text>
+            <line x1="100" y1="100" x2={100 + 65 * Math.cos((healthNeedleAngle * Math.PI) / 180)} y2={100 - 65 * Math.sin((healthNeedleAngle * Math.PI) / 180)} stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+            <circle cx="100" cy="100" r="5" fill="white" />
+            <text x="100" y="126" textAnchor="middle" className="fill-white text-[22px] font-black">{Math.round(displayedHealthScore)}</text>
             <text x="100" y="139" textAnchor="middle" className="fill-[#8F8F96] text-[13px] font-semibold">/ 100 health</text>
           </svg>
         </div>

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const agentkitUrl = process.env.MOM3_AGENTKIT_URL;
-  if (!agentkitUrl) {
+  const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
+  if (!backendUrl) {
     return NextResponse.json(
-      { error: "Portfolio intelligence requires MOM3_AGENTKIT_URL." },
+      { error: "Portfolio intelligence requires MOM3_BACKEND_URL." },
       { status: 503 },
     );
   }
 
   const body = await request.json().catch(() => ({}));
   try {
-    const response = await fetch(`${agentkitUrl}/api/portfolio/analyze`, {
+    const response = await fetch(`${backendUrl}/api/ai/portfolio/analyze`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

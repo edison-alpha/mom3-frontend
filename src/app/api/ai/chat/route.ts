@@ -17,10 +17,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Message is required." }, { status: 400 });
   }
 
-  const agentkitUrl = process.env.MOM3_AGENTKIT_URL;
-  if (agentkitUrl) {
+  const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
+  if (backendUrl) {
     try {
-      const agentResponse = await fetch(`${agentkitUrl}/api/chat`, {
+      const agentResponse = await fetch(`${backendUrl}/api/ai/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

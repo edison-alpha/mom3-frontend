@@ -5,9 +5,9 @@ export async function GET(request: Request) {
   const chainId = new URL(request.url).searchParams.get("chainId") || undefined;
   const executionOnly = new URL(request.url).searchParams.get("executionOnly") === "true";
   const protocol = new URL(request.url).searchParams.get("protocol") || undefined;
-  const agentkitUrl = process.env.MOM3_AGENTKIT_URL;
+  const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
 
-  if (!agentkitUrl) {
+  if (!backendUrl) {
     return NextResponse.json({ timestamp: null, chain_id: chainId, markets: [] });
   }
 
@@ -16,14 +16,14 @@ export async function GET(request: Request) {
     if (chainId) params.set("chain_id", chainId);
     if (executionOnly) params.set("execution_only", "true");
     if (protocol) params.set("protocol", protocol);
-    const response = await fetch(`${agentkitUrl}/api/yield-markets?${params.toString()}`, { cache: "no-store" });
+    const response = await fetch(`${backendUrl}/api/ai/markets?${params.toString()}`, { cache: "no-store" });
     const payload = await response.json();
 
     // Keep the frontend compatible with an older Agentkit process that only
     // exposes /api/yield-forecast. This can happen while the local service is
     // running from a previous checkout or before it has been restarted.
     if (response.status === 404) {
-      const forecastResponse = await fetch(`${agentkitUrl}/api/yield-forecast?${params.toString()}`, {
+      const forecastResponse = await fetch(`${backendUrl}/api/ai/forecast?${params.toString()}`, {
         cache: "no-store",
       });
       const forecastPayload = await forecastResponse.json();

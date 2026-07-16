@@ -5,15 +5,15 @@ export async function GET(
   context: { params: Promise<{ marketId: string }> },
 ) {
   const { marketId } = await context.params;
-  const agentkitUrl = process.env.MOM3_AGENTKIT_URL;
+  const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
 
-  if (!agentkitUrl) {
+  if (!backendUrl) {
     return NextResponse.json({ timestamp: null, market: null }, { status: 503 });
   }
 
   try {
     const response = await fetch(
-      `${agentkitUrl}/api/yield-markets/${encodeURIComponent(marketId)}`,
+      `${backendUrl}/api/ai/markets/${encodeURIComponent(marketId)}`,
       { cache: "no-store" },
     );
     const payload = await response.json().catch(() => ({}));

@@ -4,15 +4,15 @@ export async function GET(
   _request: Request,
   { params }: { params: Promise<{ marketId: string }> },
 ) {
-  const agentkitUrl = process.env.MOM3_AGENTKIT_URL;
-  if (!agentkitUrl) {
+  const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
+  if (!backendUrl) {
     return NextResponse.json({ points: [], error: "Agentkit is not configured." }, { status: 503 });
   }
 
   try {
     const { marketId } = await params;
     const response = await fetch(
-      `${agentkitUrl}/api/yield-markets/${encodeURIComponent(marketId)}/chart`,
+      `${backendUrl}/api/ai/markets/${encodeURIComponent(marketId)}/chart`,
       { cache: "no-store" },
     );
     const payload = await response.json();

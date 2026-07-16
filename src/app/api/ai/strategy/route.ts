@@ -3,10 +3,11 @@ import { NextResponse } from "next/server";
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));
-    if (!process.env.MOM3_AGENTKIT_URL) {
-      return NextResponse.json({ error: "Live strategy service is not configured." }, { status: 503 });
+    const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
+    if (!backendUrl) {
+      return NextResponse.json({ error: "Live strategy backend is not configured." }, { status: 503 });
     }
-    const agentResponse = await fetch(`${process.env.MOM3_AGENTKIT_URL}/api/ai/strategy`, {
+    const agentResponse = await fetch(`${backendUrl}/api/ai/strategy`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),

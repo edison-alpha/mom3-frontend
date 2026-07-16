@@ -21,7 +21,7 @@ export function usePortfolioIntelligence(account: string, tokens: TokenRow[]) {
     queryKey: ["portfolio-intelligence", account, fingerprint, marketRevision],
     enabled: Boolean(account),
     staleTime: 20_000,
-    retry: 1,
+    retry: 2,
     queryFn: async () => {
       const response = await fetch("/api/ai/portfolio", {
         method: "POST",

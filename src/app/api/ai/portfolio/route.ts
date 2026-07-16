@@ -16,7 +16,7 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       cache: "no-store",
-      signal: AbortSignal.timeout(30_000),
+      signal: AbortSignal.timeout(120_000),
     });
     const payload = await response.json().catch(() => ({
       error: "Agentkit returned an invalid portfolio response.",

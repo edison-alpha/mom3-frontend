@@ -73,9 +73,7 @@ export default function MarketDetailView({
   const universalAssetBalance = tokenRows
     .filter((token) => token.symbol.toUpperCase() === executionAssetSymbol.toUpperCase())
     .reduce((total, token) => total + token.balance, 0);
-  const canExecuteYield = market.category === "Yield"
-    && Boolean(executionMarketId)
-    && catalogDetail.metadata.executionEnabled;
+  const canExecuteYield = Boolean(executionMarketId) && catalogDetail.metadata.executionEnabled;
   const tone = liveMarket.risk === "High" ? "red" : liveMarket.risk === "Medium" ? "yellow" : "green";
 
   async function refreshAll() {

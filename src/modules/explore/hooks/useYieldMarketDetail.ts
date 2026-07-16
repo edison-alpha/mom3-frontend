@@ -102,14 +102,14 @@ export function useYieldMarketDetail(seed: MarketDetail, marketId?: string) {
       const live: CatalogMarket | null = payload.market && typeof payload.market === "object" ? payload.market : null;
       if (!live) throw new Error("This pool is no longer present in the live market catalog.");
 
-      let executionEnabled = false;
+      let executionEnabled = live.execution?.enabled === true;
       try {
         const allowlistResponse = await fetch(
           `/api/ai/execution-markets/${encodeURIComponent(marketId)}`,
           { cache: "no-store" },
         );
         const allowlistPayload = await allowlistResponse.json().catch(() => ({}));
-        executionEnabled = allowlistResponse.ok && allowlistPayload.allowlisted === true;
+        executionEnabled = executionEnabled || (allowlistResponse.ok && allowlistPayload.allowlisted === true);
       } catch {
         // Execution stays disabled when the backend policy cannot be verified.
       }

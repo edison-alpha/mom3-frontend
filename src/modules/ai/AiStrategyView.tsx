@@ -126,12 +126,12 @@ function StrategyDetail({ opportunity, reasoning }: { opportunity: StrategyOppor
         <p className="mt-3 text-[10px] font-black uppercase tracking-[0.08em] text-[#777780]">Source: {opportunity.source}</p>
       </section>
 
-      {opportunity.execution?.enabled && opportunity.market_id ? (
+      {opportunity.market_id ? (
         <Link
           href={`/explore/${encodeURIComponent(`${opportunity.protocol}-${opportunity.asset}`)}?chainId=${opportunity.chain_id}&marketId=${encodeURIComponent(opportunity.market_id)}`}
           className="mt-4 flex min-h-12 w-full items-center justify-center gap-2 rounded-full bg-[#ccff00] px-5 text-sm font-black text-black focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
         >
-          Review &amp; execute with Particle
+          Supply with Particle
           <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={17} height={17} />
         </Link>
       ) : null}

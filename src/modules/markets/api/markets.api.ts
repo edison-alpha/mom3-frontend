@@ -4,6 +4,7 @@ export type MarketListParams = {
   chainId?: number;
   protocol?: string;
   executionOnly?: boolean;
+  limitPerProtocol?: number;
 };
 
 export type MarketListResponse = {
@@ -17,6 +18,8 @@ export type MarketListResponse = {
     total_pages: number;
     has_next: boolean;
   };
+  grouped?: boolean;
+  protocol_totals?: Record<string, number> | null;
 };
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -38,6 +41,7 @@ export function getMarkets(params: MarketListParams = {}) {
   }
   if (params.protocol && params.protocol !== "all") query.set("protocol", params.protocol);
   if (params.executionOnly) query.set("execution_only", "true");
+  if (params.limitPerProtocol) query.set("limit_per_protocol", String(params.limitPerProtocol));
   return apiFetch<MarketListResponse>(`/api/ai/markets?${query}`);
 }
 

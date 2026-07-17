@@ -20,6 +20,8 @@ export async function GET(request: Request) {
     const databaseParams = new URLSearchParams(params);
     databaseParams.set("page", new URL(request.url).searchParams.get("page") || "1");
     databaseParams.set("limit", new URL(request.url).searchParams.get("limit") || "50");
+    const limitPerProtocol = searchParams.get("limit_per_protocol");
+    if (limitPerProtocol) databaseParams.set("limit_per_protocol", limitPerProtocol);
     const response = await fetch(`${backendUrl}/api/markets?${databaseParams.toString()}`, { cache: "no-store" });
     const payload = await response.json();
 

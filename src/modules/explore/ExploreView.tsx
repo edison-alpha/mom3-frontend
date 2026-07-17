@@ -11,7 +11,6 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { MobileBottomBar, MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
 import { cn } from "@/lib/utils";
 import { ExploreMarketSectionsSkeleton } from "@/modules/explore/components/ExploreSkeleton";
-import { BestMarket1DCard } from "@/modules/explore/components/BestMarket1DCard";
 import { useExploreYields, type ExploreYieldPool } from "@/modules/explore/hooks/useExploreYields";
 
 type MarketItem = ExploreYieldPool;
@@ -321,6 +320,12 @@ export default function ExploreView() {
     () => (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
     [riskPools, query, chainFilter],
   );
+  const bestMarket1d = React.useMemo(
+    () => [...filteredYield, ...filteredRisk]
+      .filter((market) => market.apyChange1d !== null && market.apyChange1d !== undefined)
+      .sort((left, right) => (right.apyChange1d ?? -Infinity) - (left.apyChange1d ?? -Infinity))[0] ?? null,
+    [filteredRisk, filteredYield],
+  );
 
   const protocolGroups = React.useMemo(() => {
     const groups = new Map<string, MarketItem[]>();
@@ -398,13 +403,6 @@ export default function ExploreView() {
            <MobilePageHeader title="Explore" backHref="/dashboard" backLabel="Back to dashboard" action={headerAction} />
          </motion.div>
 
-        {!isLoading && !error ? (
-          <BestMarket1DCard
-            markets={[...filteredYield, ...filteredRisk]}
-            hrefFor={marketDetailHref}
-          />
-        ) : null}
-
          <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -418,18 +416,44 @@ export default function ExploreView() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className={cn("min-w-[82%] rounded-[24px] p-4", item.className)}
+                className={cn("min-w-[82%] rounded-[24px] p-4", item.className, index === 0 && "min-h-[188px]")}
               >
                 <div className="flex items-start justify-between">
-                  <span className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", item.iconClassName)}>
-                    <AppIcon icon={item.icon} aria-hidden="true" width={25} height={25} />
-                  </span>
+                  {index === 0 && bestMarket1d ? (
+                    <Link
+                      href={marketDetailHref(bestMarket1d)}
+                      aria-label={`Open best one day market: ${bestMarket1d.asset} on ${bestMarket1d.protocol}`}
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2A2A3E] focus-visible:ring-2 focus-visible:ring-[#ccff00]"
+                    >
+                      <AssetLogo asset={bestMarket1d.asset} />
+                    </Link>
+                  ) : (
+                    <span className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", item.iconClassName)}>
+                      <AppIcon icon={item.icon} aria-hidden="true" width={25} height={25} />
+                    </span>
+                  )}
                   <span className={cn("flex h-10 w-10 items-center justify-center rounded-full", item.actionClassName)}>
                     <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={22} height={22} />
                   </span>
                 </div>
                 <h2 className="mt-5 text-base font-bold text-white">{item.title}</h2>
-                <p className="mt-2 text-sm font-medium text-[#8E8E93]">{item.subtitle}</p>
+                {index === 0 && bestMarket1d ? (
+                  <>
+                    <div className="mt-2 flex min-w-0 items-center gap-2">
+                      <p className="truncate text-sm font-bold text-white">{bestMarket1d.asset}</p>
+                      <span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{bestMarket1d.protocol}</span>
+                      <span className="shrink-0 rounded-full bg-[#ccff00]/10 px-2 py-0.5 text-[10px] font-black text-[#ccff00]">1D</span>
+                    </div>
+                    <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#8E8E93]">
+                      <ProtocolLogo protocol={bestMarket1d.protocol} />
+                      <AppIcon icon={chainFilters.find((chain) => chain.id === bestMarket1d.chainId)?.logo ?? "solar:global-bold"} aria-hidden="true" width={14} height={14} />
+                      <span className="truncate">{bestMarket1d.chain}</span>
+                      <span className={cn("ml-auto font-black", (bestMarket1d.apyChange1d ?? 0) >= 0 ? "text-[#ccff00]" : "text-[#FF8B8B]")}>{(bestMarket1d.apyChange1d ?? 0) >= 0 ? "+" : ""}{(bestMarket1d.apyChange1d ?? 0).toFixed(2)}%</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm font-medium text-[#8E8E93]">{item.subtitle}</p>
+                )}
               </motion.article>
             ))}
           </div>

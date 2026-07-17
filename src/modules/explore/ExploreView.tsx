@@ -417,7 +417,6 @@ export default function ExploreView() {
         <section className="mt-4" aria-label="Protocols">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-sm font-black text-white">Protocols</h2>
-            <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#777780]">Select to load markets</span>
           </div>
           <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {EXPLORE_PROTOCOLS.map((protocol) => {

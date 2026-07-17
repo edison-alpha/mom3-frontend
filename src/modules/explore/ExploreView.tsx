@@ -119,7 +119,7 @@ const chainFilters: Array<{
   { id: 146, label: "Sonic", logo: "solar:global-bold" },
   { id: 169, label: "Manta", logo: "solar:global-bold" },
   { id: 500, label: "Mantle", logo: "solar:global-bold" },
-  { id: 999, label: "ZKsync", logo: "solar:global-bold" },
+  { id: 999, label: "HyperEVM", logo: "solar:global-bold" },
   { id: 1030, label: "Conflux", logo: "solar:global-bold" },
   { id: 4200, label: "Merlin", logo: "solar:global-bold" },
   { id: 5000, label: "Mantle", logo: "solar:global-bold" },
@@ -466,7 +466,7 @@ export default function ExploreView() {
           >
             <AppIcon icon="lucide:loader-circle" aria-hidden="true" width={36} height={36} className="animate-spin text-[#9A9AA2]" />
             <p className="mt-4 text-base font-bold text-white">Loading live yields</p>
-            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Fetching on-chain Aave + DefiLlama across chains…</p>
+            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Loading live yield markets across Particle-supported chains…</p>
           </motion.div>
             </div>
           </>
@@ -480,6 +480,7 @@ export default function ExploreView() {
             <AppIcon icon="solar:danger-triangle-bold" aria-hidden="true" width={36} height={36} className="text-[#FF7B7B]" />
             <p className="mt-4 text-base font-bold text-white">Yields unavailable</p>
             <p className="mt-1 text-sm font-medium text-[#9A9AA2]">{error}</p>
+            <button type="button" onClick={() => window.location.reload()} className="mt-5 min-h-10 rounded-full bg-[#ccff00] px-5 text-sm font-black text-black focus-visible:ring-2 focus-visible:ring-[#ccff00]">Retry</button>
           </motion.div>
         ) : hasResults ? (
           <>

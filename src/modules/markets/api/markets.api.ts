@@ -6,10 +6,25 @@ export type MarketListParams = {
   executionOnly?: boolean;
 };
 
+export type MarketListResponse = {
+  timestamp?: string | null;
+  data_source?: string;
+  markets?: unknown[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+    has_next: boolean;
+  };
+};
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, { cache: "no-store", ...init });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.detail || payload.error || "Market data is unavailable.");
+  if (!response.ok) {
+    throw new Error(payload.error || payload.detail || "Market catalog is temporarily unavailable.");
+  }
   return payload as T;
 }
 
@@ -18,7 +33,7 @@ export function getMarkets(params: MarketListParams = {}) {
   if (params.chainId) query.set("chain_id", String(params.chainId));
   if (params.protocol && params.protocol !== "all") query.set("protocol", params.protocol);
   if (params.executionOnly) query.set("execution_only", "true");
-  return apiFetch<{ markets?: unknown[] }>(`/api/ai/markets?${query}`);
+  return apiFetch<MarketListResponse>(`/api/ai/markets?${query}`);
 }
 
 export function getMarketDetail(marketId: string) {

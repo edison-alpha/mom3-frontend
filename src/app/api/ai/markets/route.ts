@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 
 /** Proxy for the complete yield-market catalog on Particle-supported chains. */
 export async function GET(request: Request) {
-  const chainId = new URL(request.url).searchParams.get("chainId") || undefined;
-  const executionOnly = new URL(request.url).searchParams.get("executionOnly") === "true";
-  const protocol = new URL(request.url).searchParams.get("protocol") || undefined;
+  const searchParams = new URL(request.url).searchParams;
+  const chainId = searchParams.get("chain_id") || searchParams.get("chainId") || undefined;
+  const executionOnly = (searchParams.get("execution_only") || searchParams.get("executionOnly")) === "true";
+  const protocol = searchParams.get("protocol") || undefined;
   const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
 
   if (!backendUrl) {
-    return NextResponse.json({ timestamp: null, chain_id: chainId, markets: [] });
+    return NextResponse.json({ error: "Market catalog is not configured.", code: "MARKET_BACKEND_NOT_CONFIGURED", markets: [] }, { status: 503 });
   }
 
   try {
@@ -22,9 +23,9 @@ export async function GET(request: Request) {
     const response = await fetch(`${backendUrl}/api/markets?${databaseParams.toString()}`, { cache: "no-store" });
     const payload = await response.json();
 
-    // Keep the AgentKit path available while PostgreSQL is being migrated or
-    // when the local backend has no DATABASE_URL yet.
-    if (!response.ok) {
+    // Keep the AgentKit path available only for a missing PostgreSQL route.
+    // Other failures must remain visible to the UI as errors.
+    if (response.status === 404) {
       const legacyResponse = await fetch(`${backendUrl}/api/ai/markets?${params.toString()}`, { cache: "no-store" });
       const legacyPayload = await legacyResponse.json().catch(() => ({}));
       return NextResponse.json(legacyPayload, { status: legacyResponse.status });
@@ -65,6 +66,6 @@ export async function GET(request: Request) {
     return NextResponse.json(payload, { status: response.status });
   } catch (error) {
     console.error("Agentkit markets proxy failed", error);
-    return NextResponse.json({ timestamp: null, chain_id: chainId, markets: [] }, { status: 502 });
+    return NextResponse.json({ error: "Market catalog is temporarily unavailable.", code: "MARKET_PROXY_UNAVAILABLE", markets: [] }, { status: 502 });
   }
 }

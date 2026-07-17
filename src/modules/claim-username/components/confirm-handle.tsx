@@ -13,7 +13,7 @@ const benefits = [
   'Your unique @username',
   'Your public profile on mom3',
   'Send & receive easily with your handle',
-  'Access to mom3 /agent (coming soon)',
+  'Access to mom3 Agent',
 ];
 
 export default function ConfirmHandle({

@@ -71,7 +71,7 @@ export default function OnboardingView() {
           <Button
             type="button"
             isDisabled
-            label="Apple coming soon"
+            label="Apple sign-in unavailable"
             startIcon="simple-icons:apple"
             rounded="lg"
             className="flex h-14 w-full items-center justify-center gap-3 rounded-[18px] bg-white text-base font-black text-black shadow-[0_16px_42px_-24px_rgba(14,18,58,0.7)] transition-transform active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white"

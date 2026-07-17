@@ -5,7 +5,7 @@ import * as React from "react";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
-import { getMarkets } from "@/modules/markets/api/markets.api";
+import { getMarkets, type MarketListResponse } from "@/modules/markets/api/markets.api";
 
 export type ExploreYieldPool = {
   id: string;
@@ -140,8 +140,17 @@ export function useExploreYields(selectedProtocol?: string) {
         // Realtime snapshots are execution-only and intentionally small. Explore
         // must use the complete discovery catalog so non-executable markets are
         // visible while keeping execution as a separate verified capability.
-        const catalogPayload = await getMarkets({ limit: 100, protocol: selectedProtocol });
-        markets = Array.isArray(catalogPayload.markets) ? catalogPayload.markets as YieldMarketEntry[] : [];
+        const firstPage = await getMarkets({ limit: 500, protocol: selectedProtocol });
+        const pages = firstPage.pagination?.total_pages ?? 1;
+        const remainingPages = await Promise.all(
+          Array.from({ length: Math.max(0, pages - 1) }, (_, index) =>
+            getMarkets({ page: index + 2, limit: 500, protocol: selectedProtocol }),
+          ),
+        );
+        const payloads: MarketListResponse[] = [firstPage, ...remainingPages];
+        markets = payloads.flatMap((payload) =>
+          Array.isArray(payload.markets) ? payload.markets as YieldMarketEntry[] : [],
+        );
         let pulseMap: Record<string, PulseEntry> = {};
         try {
           const pulseResponse = await fetch("/api/ai/pulse", { cache: "no-store" });
@@ -193,7 +202,7 @@ export function useExploreYields(selectedProtocol?: string) {
           });
         }
 
-        // Explore is a ranked shortlist, not the complete DefiLlama catalog.
+        // Keep the complete catalog in state; the UI limits visible rows per section.
         built.sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0));
 
         if (!cancelled) {

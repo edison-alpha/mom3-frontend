@@ -5,8 +5,8 @@ export const DEFAULT_CHAIN_ID = Number(
     42161,
 );
 
-export const MVP_CHAIN_IDS = [42161, 8453, 101] as const;
+export const PARTICLE_EXECUTION_CHAIN_IDS = [42161, 8453, 101] as const;
 
-export function isMvpChainId(chainId: number) {
-  return MVP_CHAIN_IDS.includes(chainId as (typeof MVP_CHAIN_IDS)[number]);
+export function isParticleExecutionChainId(chainId: number) {
+  return PARTICLE_EXECUTION_CHAIN_IDS.includes(chainId as (typeof PARTICLE_EXECUTION_CHAIN_IDS)[number]);
 }

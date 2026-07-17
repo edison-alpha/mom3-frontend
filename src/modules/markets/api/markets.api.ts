@@ -30,7 +30,12 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
 export function getMarkets(params: MarketListParams = {}) {
   const query = new URLSearchParams({ page: String(params.page || 1), limit: String(params.limit || 100) });
-  if (params.chainId) query.set("chain_id", String(params.chainId));
+  if (params.chainId) {
+    // Send both spellings while older Vercel workers drain; the backend
+    // contract remains snake_case.
+    query.set("chain_id", String(params.chainId));
+    query.set("chainId", String(params.chainId));
+  }
   if (params.protocol && params.protocol !== "all") query.set("protocol", params.protocol);
   if (params.executionOnly) query.set("execution_only", "true");
   return apiFetch<MarketListResponse>(`/api/ai/markets?${query}`);

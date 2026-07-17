@@ -140,11 +140,11 @@ export function useExploreYields(selectedProtocol?: string) {
         // Realtime snapshots are execution-only and intentionally small. Explore
         // must use the complete discovery catalog so non-executable markets are
         // visible while keeping execution as a separate verified capability.
-        const firstPage = await getMarkets({ limit: 500, protocol: selectedProtocol });
+        const firstPage = await getMarkets({ limit: 50, protocol: selectedProtocol });
         const pages = firstPage.pagination?.total_pages ?? 1;
         const remainingPages = await Promise.all(
           Array.from({ length: Math.max(0, pages - 1) }, (_, index) =>
-            getMarkets({ page: index + 2, limit: 500, protocol: selectedProtocol }),
+            getMarkets({ page: index + 2, limit: 50, protocol: selectedProtocol }),
           ),
         );
         const payloads: MarketListResponse[] = [firstPage, ...remainingPages];

@@ -14,7 +14,7 @@ import { ExploreMarketSectionsSkeleton } from "@/modules/explore/components/Expl
 import { useExploreYields, type ExploreYieldPool } from "@/modules/explore/hooks/useExploreYields";
 
 type MarketItem = ExploreYieldPool;
-type MarketCategoryFilter = "All" | MarketItem["category"];
+type ChainFilter = "All" | number;
 
 const DEFI_PROTOCOL_SLUGS = [
   "aave", "balancer", "compound", "convex", "eigenlayer", "ethena", "etherfi",
@@ -101,14 +101,17 @@ function ProtocolLogo({ protocol }: { protocol: string }) {
   return fallback;
 }
 
-const categoryFilters: Array<{
-  id: MarketCategoryFilter;
+const chainFilters: Array<{
+  id: ChainFilter;
   label: string;
-  icon: string;
+  logo: string;
 }> = [
-  { id: "All", label: "Semua", icon: "lucide:layers-3" },
-  { id: "Yield", label: "Yield", icon: "solar:wallet-money-bold" },
-  { id: "Risk", label: "Risk", icon: "solar:shield-warning-bold" },
+  { id: "All", label: "All chains", logo: "solar:global-bold" },
+  { id: 42161, label: "Arbitrum", logo: "token-branded:arbitrum" },
+  { id: 8453, label: "Base", logo: "token-branded:base" },
+  { id: 101, label: "Solana", logo: "token-branded:solana" },
+  { id: 1, label: "Ethereum", logo: "cryptocurrency-color:eth" },
+  { id: 137, label: "Polygon", logo: "token-branded:polygon" },
 ];
 
 const marketCategoryStyles: Record<
@@ -287,20 +290,17 @@ function MarketList({
 export default function ExploreView() {
   const [query, setQuery] = React.useState("");
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
-  const [categoryFilter, setCategoryFilter] = React.useState<MarketCategoryFilter>("All");
+  const [chainFilter, setChainFilter] = React.useState<ChainFilter>("All");
   const [selectedProtocol, setSelectedProtocol] = React.useState<string>(EXPLORE_PROTOCOLS[0].id);
   const { yieldPools, riskPools, isLoading, error } = useExploreYields(selectedProtocol);
 
-  const showYield = categoryFilter === "All" || categoryFilter === "Yield";
-  const showRisk = categoryFilter === "All" || categoryFilter === "Risk";
-
   const filteredYield = React.useMemo(
-    () => (showYield ? (query.trim() ? yieldPools.filter((item) => matchesMarket(item, query)) : yieldPools) : []),
-    [yieldPools, query, showYield],
+    () => (query.trim() ? yieldPools.filter((item) => matchesMarket(item, query)) : yieldPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
+    [yieldPools, query, chainFilter],
   );
   const filteredRisk = React.useMemo(
-    () => (showRisk ? (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools) : []),
-    [riskPools, query, showRisk],
+    () => (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
+    [riskPools, query, chainFilter],
   );
 
   const protocolGroups = React.useMemo(() => {
@@ -330,8 +330,7 @@ export default function ExploreView() {
   }, [filteredRisk, filteredYield]);
 
   const hasResults = filteredYield.length > 0 || filteredRisk.length > 0;
-  const selectedCategoryLabel =
-    categoryFilters.find((item) => item.id === categoryFilter)?.label ?? "Semua";
+  const selectedChainLabel = chainFilters.find((item) => item.id === chainFilter)?.label ?? "All chains";
   const headerAction = (
     <Button
       type="button"
@@ -492,18 +491,18 @@ export default function ExploreView() {
           open={filterSheetOpen}
           onOpenChange={setFilterSheetOpen}
           title="Filter"
-          description="Pilih kategori market yang ingin kamu lihat."
+          description="Pilih chain market yang ingin kamu lihat."
           closeLabel="Close explore filters"
           contentClassName="space-y-2"
         >
-          {categoryFilters.map((filter) => {
-            const isActive = filter.id === categoryFilter;
+          {chainFilters.map((filter) => {
+            const isActive = filter.id === chainFilter;
             return (
               <Button
                 key={filter.id}
                 type="button"
                 onClick={() => {
-                  setCategoryFilter(filter.id);
+                  setChainFilter(filter.id);
                   setFilterSheetOpen(false);
                 }}
                 variant="plain"
@@ -516,7 +515,7 @@ export default function ExploreView() {
                 )}
               >
                 <span className="min-w-0 flex items-center gap-3">
-                  <AppIcon icon={filter.icon} aria-hidden="true" width={19} height={19} className="shrink-0" />
+                  <AppIcon icon={filter.logo} aria-hidden="true" width={19} height={19} className="shrink-0" />
                   <span className="truncate text-sm font-bold">{filter.label}</span>
                 </span>
                 {isActive ? (
@@ -525,7 +524,7 @@ export default function ExploreView() {
               </Button>
             );
           })}
-          <p className="pt-2 text-center text-xs font-bold text-[#8E8E93]">Aktif: {selectedCategoryLabel}</p>
+          <p className="pt-2 text-center text-xs font-bold text-[#8E8E93]">Active: {selectedChainLabel}</p>
         </BottomSheet>
     </MobileShell>
   );

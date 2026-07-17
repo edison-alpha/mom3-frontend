@@ -309,12 +309,13 @@ export default function ExploreView() {
     () => (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
     [riskPools, query, chainFilter],
   );
-  const top10DayMarkets = React.useMemo(
-    () => [...filteredYield, ...filteredRisk]
-      .filter((market) => market.apyChange1d !== null && market.apyChange1d !== undefined)
-      .sort((left, right) => (right.apyChange1d ?? -Infinity) - (left.apyChange1d ?? -Infinity))
+  const top10YieldMarkets = React.useMemo(
+    () => [...filteredYield]
+      .sort((left, right) =>
+        (right.opportunityScore ?? right.apy) - (left.opportunityScore ?? left.apy),
+      )
       .slice(0, 10),
-    [filteredRisk, filteredYield],
+    [filteredYield],
   );
 
   const protocolGroups = React.useMemo(() => {
@@ -399,29 +400,32 @@ export default function ExploreView() {
           transition={{ duration: 0.3 }}
           className="mt-4 overflow-hidden"
         >
-          {isLoading ? <ExploreFeatureCardsSkeleton /> : <div className="flex gap-3 overflow-x-auto pb-3">
-            {top10DayMarkets.slice(0, 2).map((market, index) => (
-              <motion.article
+          {isLoading ? <ExploreFeatureCardsSkeleton /> : <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3">
+            {top10YieldMarkets.map((market, index) => (
+              <motion.div
                 key={market.id}
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="min-h-[188px] min-w-[82%] rounded-[24px] bg-[#1C1C1E] p-4"
+                className="min-w-[82%] snap-start"
               >
-                <div className="flex items-start justify-between">
-                  <Link href={marketDetailHref(market)} aria-label={`Open top market ${market.asset} on ${market.protocol}`} className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2A2A3E] focus-visible:ring-2 focus-visible:ring-[#ccff00]"><AssetLogo asset={market.asset} /></Link>
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2A2A3E] text-[#ccff00]"><AppIcon icon="lucide:arrow-right" aria-hidden="true" width={22} height={22} /></span>
-                </div>
-                <div className="mt-5 flex items-center gap-2"><h2 className="text-base font-bold text-white">Top 10 days</h2><span className="rounded-full bg-[#ccff00]/10 px-2 py-0.5 text-[10px] font-black text-[#ccff00]">#{index + 1}</span></div>
-                <div className="mt-2 flex min-w-0 items-center gap-2"><p className="truncate text-sm font-bold text-white">{market.asset}</p><span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{market.protocol}</span></div>
-                <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#8E8E93]"><ProtocolLogo protocol={market.protocol} /><span className="truncate">{market.chain}</span><span className="ml-auto font-black text-[#ccff00]">{(market.apyChange1d ?? 0) >= 0 ? "+" : ""}{(market.apyChange1d ?? 0).toFixed(2)}% 1D</span></div>
-              </motion.article>
+                <Link
+                  href={marketDetailHref(market)}
+                  aria-label={`Open yield market ${market.asset} on ${market.protocol}`}
+                  className="block min-h-[188px] rounded-[24px] bg-[#1C1C1E] p-4 transition-colors hover:bg-[#252529] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  <div className="flex items-start justify-between">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2A2A3E]"><AssetLogo asset={market.asset} /></span>
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2A2A3E] text-[#ccff00]"><AppIcon icon="lucide:arrow-right" aria-hidden="true" width={22} height={22} /></span>
+                  </div>
+                  <div className="mt-5 flex items-center gap-2"><h2 className="text-base font-bold text-white">Top 10 Yield Market</h2><span className="rounded-full bg-[#ccff00]/10 px-2 py-0.5 text-[10px] font-black text-[#ccff00]">#{index + 1}</span></div>
+                  <div className="mt-2 flex min-w-0 items-center gap-2"><p className="truncate text-sm font-bold text-white">{market.asset}</p><span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{market.protocol}</span></div>
+                  <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#8E8E93]"><ProtocolLogo protocol={market.protocol} /><span className="truncate">{market.chain}</span><span className="ml-auto font-black text-[#ccff00]">{market.apy.toFixed(2)}% APY</span></div>
+                </Link>
+              </motion.div>
             ))}
           </div>}
-          <div className="flex justify-center gap-2">
-            <span className="h-2 w-5 rounded-full bg-[#ccff00]" />
-            <span className="h-2 w-2 rounded-full bg-[#242620]" />
-          </div>
+          {!isLoading && top10YieldMarkets.length > 1 ? <p className="text-center text-[10px] font-bold text-[#8E8E93]">Swipe to see all {top10YieldMarkets.length} yield markets</p> : null}
         </motion.section>
 
         <section className="mt-4" aria-label="Protocols">

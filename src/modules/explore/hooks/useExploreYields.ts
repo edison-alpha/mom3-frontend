@@ -75,12 +75,12 @@ export function useExploreYields(selectedProtocol?: string) {
     async function load() {
       setIsLoading(true); setPools([]); setError(null);
       try {
-        const response = await getMarkets({ limit: 5, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 5 : undefined });
+        const response = await getMarkets({ limit: 10, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined });
         if (cancelled) return;
         setPools(mapMarkets((response.markets || []) as YieldMarketEntry[]).sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0)));
         const next: Record<string, boolean> = {};
         if (selectedProtocol === "all" && response.protocol_totals) {
-          for (const [protocol, total] of Object.entries(response.protocol_totals)) next[protocol] = total > 5;
+          for (const [protocol, total] of Object.entries(response.protocol_totals)) next[protocol] = total > 10;
         } else next[selectedProtocol || "all"] = response.pagination?.has_next ?? false;
         setHasMoreByProtocol(next);
       } catch (cause) { if (!cancelled) setError(cause instanceof Error ? cause.message : "Unable to load yield markets."); }
@@ -94,7 +94,7 @@ export function useExploreYields(selectedProtocol?: string) {
     setLoadingMoreProtocol(protocolId);
     try {
       const current = pools.filter((pool) => pool.protocolId === protocolId).length;
-      const response = await getMarkets({ protocol: protocolId, page: Math.floor(current / 5) + 1, limit: 5 });
+      const response = await getMarkets({ protocol: protocolId, page: Math.floor(current / 10) + 1, limit: 10 });
       setPools((previous) => [...previous, ...mapMarkets((response.markets || []) as YieldMarketEntry[])]);
       setHasMoreByProtocol((previous) => ({ ...previous, [protocolId]: response.pagination?.has_next ?? false }));
     } finally { setLoadingMoreProtocol(null); }

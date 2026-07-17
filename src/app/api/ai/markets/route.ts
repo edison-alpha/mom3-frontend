@@ -19,7 +19,7 @@ export async function GET(request: Request) {
     if (protocol) params.set("protocol", protocol);
     const databaseParams = new URLSearchParams(params);
     databaseParams.set("page", new URL(request.url).searchParams.get("page") || "1");
-    databaseParams.set("limit", new URL(request.url).searchParams.get("limit") || "100");
+    databaseParams.set("limit", new URL(request.url).searchParams.get("limit") || "50");
     const response = await fetch(`${backendUrl}/api/markets?${databaseParams.toString()}`, { cache: "no-store" });
     const payload = await response.json();
 

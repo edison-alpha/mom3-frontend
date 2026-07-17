@@ -12,7 +12,7 @@ export async function GET() {
 
   try {
     const response = await fetch(`${backendUrl}/api/execution/markets`, { cache: "no-store" });
-    const payload = await response.json().catch(() => ({ error: "Invalid allowlist response." }));
+    const payload = await response.json().catch(() => ({ error: "Invalid execution market response." }));
     return NextResponse.json(payload, { status: response.status });
   } catch (error) {
     console.error("Execution allowlist proxy failed", error);

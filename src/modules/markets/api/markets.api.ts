@@ -29,7 +29,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function getMarkets(params: MarketListParams = {}) {
-  const query = new URLSearchParams({ page: String(params.page || 1), limit: String(params.limit || 100) });
+  const query = new URLSearchParams({ page: String(params.page || 1), limit: String(params.limit || 50) });
   if (params.chainId) {
     // Send both spellings while older Vercel workers drain; the backend
     // contract remains snake_case.

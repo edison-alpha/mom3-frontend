@@ -74,7 +74,7 @@ export default function MarketDetailView({
     .filter((token) => token.symbol.toUpperCase() === executionAssetSymbol.toUpperCase())
     .reduce((total, token) => total + token.balance, 0);
   // Keep the action panel visible for every canonical market detail. The
-  // Backend remains the execution policy gate; a delayed allowlist response
+  // Backend remains the execution adapter gate; a delayed adapter response
   // must not make the Supply/Withdraw controls disappear from the UI.
   const canExecuteYield = Boolean(executionMarketId);
   const tone = liveMarket.risk === "High" ? "red" : liveMarket.risk === "Medium" ? "yellow" : "green";
@@ -141,7 +141,7 @@ export default function MarketDetailView({
           ) : market.category === "Yield" ? (
             <section className="mt-3 rounded-[22px] border border-white/10 bg-[#111217] p-3.5">
               <Typography as="h2" variant="h4">Deposit and withdraw</Typography>
-              <Typography variant="body-sm" color="muted" className="mt-1.5">This live pool remains available for analysis, but its exact contract has not passed the mom3 execution allowlist.</Typography>
+              <Typography variant="body-sm" color="muted" className="mt-1.5">This live pool remains available for analysis, but no verified execution adapter is available for its exact contract yet.</Typography>
               <Button type="button" color="dark" size="lg" rounded="full" fullWidth className="mt-3" isDisabled label="Execution unavailable" startIcon="lucide:shield-alert" />
             </section>
           ) : null}

@@ -4,13 +4,13 @@ import * as React from "react";
 
 import type { YieldPosition } from "@/modules/yield-execution/types/yield-execution.types";
 
-export function useYieldPosition(marketId?: string, account?: string | null) {
+export function useYieldPosition(marketId?: string, account?: string | null, chainId?: number) {
   const [data, setData] = React.useState<YieldPosition | null>(null);
   const [isLoading, setIsLoading] = React.useState(Boolean(marketId && account));
   const [error, setError] = React.useState<string | null>(null);
 
   const refresh = React.useCallback(async () => {
-    if (!marketId || !account) {
+    if (!marketId || !account || chainId === 101) {
       setData(null);
       setIsLoading(false);
       return null;
@@ -33,7 +33,7 @@ export function useYieldPosition(marketId?: string, account?: string | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [account, marketId]);
+  }, [account, chainId, marketId]);
 
   React.useEffect(() => {
     void refresh();

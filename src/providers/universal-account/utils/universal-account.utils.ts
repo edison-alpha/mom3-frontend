@@ -59,7 +59,7 @@ export async function loadUniversalAccountSnapshot(
   })).filter((deployment) => deployment.chainId > 0);
 
   const targetChain = deployments.find(
-    (deployment: { chainId?: number }) => deployment.chainId === DEFAULT_CHAIN_ID,
+    (deployment: { chainId?: number | string }) => Number(deployment.chainId) === DEFAULT_CHAIN_ID,
   );
 
   return {

@@ -107,6 +107,9 @@ export function useProfileViewModel() {
 
   const ownerAddress = accountInfo.ownerAddress || session?.ownerAddress || "";
   const isAnyChainDelegated = eip7702Deployments.some((deployment) => deployment.isDelegated);
+  const isDefaultChainDelegated = eip7702Deployments.some(
+    (deployment) => deployment.chainId === DEFAULT_CHAIN_ID && deployment.isDelegated,
+  );
 
   const identityRows: ProfileIdentityRow[] = [
     {
@@ -177,7 +180,7 @@ export function useProfileViewModel() {
     isUpgradeDisabled:
       isMagicLoading ||
       !universalAccount ||
-      isDelegated ||
+      isDefaultChainDelegated ||
       delegateMutation.isPending,
     isUpgradePending: delegateMutation.isPending,
     logout,

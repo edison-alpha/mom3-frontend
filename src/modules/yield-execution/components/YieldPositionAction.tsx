@@ -84,7 +84,10 @@ export function YieldPositionAction({
 }: Props) {
   const reduceMotion = useReducedMotion();
   const { accountInfo } = useUniversalAccount();
-  const position = useYieldPosition(marketId, accountInfo.evmSmartAccount);
+  const positionAccount = chainId === 101
+    ? accountInfo.solanaSmartAccount
+    : accountInfo.evmSmartAccount;
+  const position = useYieldPosition(marketId, positionAccount, chainId);
   const supply = useYieldExecution("supply");
   const withdraw = useYieldExecution("withdraw");
   const resetSupply = supply.reset;

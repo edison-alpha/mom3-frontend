@@ -288,7 +288,7 @@ export default function ExploreView() {
   const [query, setQuery] = React.useState("");
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
   const [categoryFilter, setCategoryFilter] = React.useState<MarketCategoryFilter>("All");
-  const [selectedProtocol, setSelectedProtocol] = React.useState(EXPLORE_PROTOCOLS[0].id);
+  const [selectedProtocol, setSelectedProtocol] = React.useState<string>(EXPLORE_PROTOCOLS[0].id);
   const { yieldPools, riskPools, isLoading, error } = useExploreYields(selectedProtocol);
 
   const showYield = categoryFilter === "All" || categoryFilter === "Yield";

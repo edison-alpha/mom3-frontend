@@ -31,6 +31,9 @@ export type ExploreYieldPool = {
   apyChange7d?: number;
   apyChange30d?: number;
   opportunityScore?: number;
+  stablecoin: boolean;
+  strategy: string;
+  estimatedPnl1dPer1k: number;
 };
 
 type PulseEntry = {
@@ -175,6 +178,10 @@ export function useExploreYields(selectedProtocol?: string) {
           const score = rankingScore(apy, tvl, riskScore, Number(market.opportunity_score));
           const pulseScore = Number(pulse?.pulse_score ?? 60);
           const isRisk = pulseScore < 40 || riskScore >= 6 || market.impermanent_loss === true;
+          const stablecoin = market.stablecoin === true;
+          const strategy = market.execution?.enabled === true
+            ? (isRisk ? "Growth yield" : stablecoin ? "Stable yield" : "Balanced yield")
+            : "Watch only";
           built.push({
             id: `dl-${protocol}-${chainId}-${market.pool_id || symbol}`,
             asset: symbol,
@@ -199,6 +206,9 @@ export function useExploreYields(selectedProtocol?: string) {
             apyChange7d: Number(market.apy_change_7d ?? 0),
             apyChange30d: Number(market.apy_change_30d ?? 0),
             opportunityScore: score,
+            stablecoin,
+            strategy,
+            estimatedPnl1dPer1k: (apy / 100) * 1000 / 365,
           });
         }
 

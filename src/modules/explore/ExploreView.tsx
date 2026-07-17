@@ -11,6 +11,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { MobileBottomBar, MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
 import { cn } from "@/lib/utils";
 import { ExploreMarketSectionsSkeleton } from "@/modules/explore/components/ExploreSkeleton";
+import { BestMarket1DCard } from "@/modules/explore/components/BestMarket1DCard";
 import { useExploreYields, type ExploreYieldPool } from "@/modules/explore/hooks/useExploreYields";
 
 type MarketItem = ExploreYieldPool;
@@ -393,11 +394,18 @@ export default function ExploreView() {
         </MobileBottomBar>
       }
     >
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-          <MobilePageHeader title="Explore" backHref="/dashboard" backLabel="Back to dashboard" action={headerAction} />
-        </motion.div>
+         <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+           <MobilePageHeader title="Explore" backHref="/dashboard" backLabel="Back to dashboard" action={headerAction} />
+         </motion.div>
 
-        <motion.section
+        {!isLoading && !error ? (
+          <BestMarket1DCard
+            markets={[...filteredYield, ...filteredRisk]}
+            hrefFor={marketDetailHref}
+          />
+        ) : null}
+
+         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}

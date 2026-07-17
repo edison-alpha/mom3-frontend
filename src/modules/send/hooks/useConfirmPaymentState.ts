@@ -27,6 +27,7 @@ import {
   ZERO_ADDRESS,
 } from "@/modules/send/utils/send.utils";
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
+import { syncHistory } from "@/modules/history/api/history.api";
 
 export function useConfirmPaymentState() {
   const searchParams = useSearchParams();
@@ -39,6 +40,7 @@ export function useConfirmPaymentState() {
 
   const {
     universalAccount,
+    accountInfo,
     primaryAssets,
     isLoading,
     error: accountError,
@@ -193,6 +195,13 @@ export function useConfirmPaymentState() {
       const transactionForSubmit = structuredClone(sendPreview.transaction);
       const result = await signAndSend(transactionForSubmit);
       setTransactionId(result.transactionId ?? sendPreview.transaction.transactionId);
+      const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
+      if (account && universalAccount) {
+        void universalAccount.getTransactions(1, 50).then((response: any) => {
+          const transactions = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : [];
+          return syncHistory(account, transactions);
+        }).catch(() => undefined);
+      }
       await refreshAccount();
     } catch (cause) {
       if (isRetryableParticleTransactionError(cause)) {

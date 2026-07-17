@@ -8,6 +8,7 @@ import { isTransactionQuoteExpired } from "@/modules/send/utils/send.utils";
 import type { YieldAction } from "@/modules/yield-execution/types/yield-execution.types";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
+import { syncHistory } from "@/modules/history/api/history.api";
 
 type ExecutionStatus = "idle" | "preparing" | "signing" | "success" | "error";
 
@@ -96,6 +97,13 @@ export function useYieldExecution(action: YieldAction) {
       const id = result.transactionId ?? transaction.transactionId ?? null;
       setTransactionId(id);
       setStatus("success");
+      const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount;
+      if (account && universalAccount) {
+        void universalAccount.getTransactions(1, 50).then((response: any) => {
+          const transactions = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : [];
+          return syncHistory(account, transactions);
+        }).catch(() => undefined);
+      }
       await refreshAccount();
       return id;
     } catch (cause) {
@@ -103,7 +111,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("error");
       return null;
     }
-  }, [action, refreshAccount, signAndSend, transaction]);
+  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, refreshAccount, signAndSend, transaction, universalAccount]);
 
   const reset = React.useCallback(() => {
     setStatus("idle");

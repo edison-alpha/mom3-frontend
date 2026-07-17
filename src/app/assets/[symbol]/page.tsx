@@ -1,11 +1,4 @@
-import { notFound } from "next/navigation";
-
-import { assetDetails } from "@/lib/portfolio-data";
 import AssetDetailView from "@/modules/asset-detail/AssetDetailView";
-
-export function generateStaticParams() {
-  return assetDetails.map((asset) => ({ symbol: asset.slug }));
-}
 
 export default async function AssetDetailPage({
   params,
@@ -13,9 +6,5 @@ export default async function AssetDetailPage({
   params: Promise<{ symbol: string }>;
 }) {
   const { symbol } = await params;
-  const asset = assetDetails.find((item) => item.slug === symbol);
-
-  if (!asset) notFound();
-
-  return <AssetDetailView asset={asset} />;
+  return <AssetDetailView symbol={decodeURIComponent(symbol)} />;
 }

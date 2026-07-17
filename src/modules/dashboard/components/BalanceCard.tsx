@@ -16,6 +16,9 @@ type BalanceCardProps = {
   mounted: boolean;
   pnlDisplay: string;
   pnlValue: number;
+  pnlPercent: number;
+  performanceHasRealData: boolean;
+  isPerformanceLoading: boolean;
   onToggleBalance: () => void;
 };
 
@@ -39,6 +42,9 @@ export function BalanceCard({
   mounted,
   pnlDisplay,
   pnlValue,
+  pnlPercent,
+  performanceHasRealData,
+  isPerformanceLoading,
   onToggleBalance,
 }: BalanceCardProps) {
   return (
@@ -100,7 +106,7 @@ export function BalanceCard({
           <span>
             {!mounted || balanceHidden || isBalanceLoading
               ? "****"
-              : `${pnlValue >= 0 ? "+" : "-"}${pnlDisplay}`}
+              : performanceHasRealData ? `${pnlValue >= 0 ? "+" : "-"}${pnlDisplay}` : "—"}
           </span>
           <span
             className={cn(
@@ -110,7 +116,7 @@ export function BalanceCard({
                 : "bg-white/10",
             )}
           >
-            {!mounted || balanceHidden || isBalanceLoading ? "***" : "0.00%"}
+            {!mounted || balanceHidden || isBalanceLoading || isPerformanceLoading || !performanceHasRealData ? "—" : `${pnlPercent >= 0 ? "+" : ""}${pnlPercent.toFixed(2)}%`}
           </span>
         </p>
 
@@ -121,8 +127,10 @@ export function BalanceCard({
               <br />
               using mom3
             </>
+          ) : hasAssets && performanceHasRealData ? (
+            pnlValue > 0 ? "Your portfolio received more value today." : pnlValue < 0 ? "Your portfolio has net outflows today." : "Your portfolio is unchanged today."
           ) : hasAssets ? (
-            "Your portfolio is growing today."
+            "Your portfolio performance will appear after activity sync."
           ) : (
             <>
               Add your assets to start

@@ -26,6 +26,8 @@ function mapStoredActivity(raw: any): HistoryItem {
     note: String(raw.note || "Transaction confirmed through Particle Universal Account."),
     icon: String(raw.icon || "solar:transfer-horizontal-bold"),
     tone: raw.tone === "green" || raw.tone === "purple" ? raw.tone : "blue",
+    transactionHash: raw.transactionHash || null,
+    tokenSymbol: amount.symbol || "",
   };
 }
 
@@ -59,8 +61,8 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
       .finally(() => setIsLoading(false));
   }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, activityId, item]);
 
-  if (isLoading) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><p className="mt-6 text-center text-sm text-[#9A9AA2]">Loading activity…</p></MobileShell>;
-  if (error || !liveItem) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><p className="mt-6 text-center text-sm text-[#FF7B7B]">{error || "Activity not found."}</p></MobileShell>;
+  if (isLoading) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><div className="mt-6 animate-pulse rounded-[28px] bg-[#1C1C1E] p-6"><div className="mx-auto h-16 w-16 rounded-full bg-white/10" /><div className="mx-auto mt-5 h-7 w-40 rounded bg-white/10" /><div className="mt-6 h-48 rounded-2xl bg-white/10" /></div></MobileShell>;
+  if (error || !liveItem) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><section className="mt-6 rounded-[24px] border border-red-400/20 bg-red-500/10 p-5 text-center" role="alert"><p className="text-sm font-black text-red-50">Could not load this activity</p><p className="mt-2 text-xs text-red-100/80">{error || "Activity not found."}</p></section></MobileShell>;
 
   const resolvedItem = liveItem;
   const tabLabel = historyTabs.find((tab) => tab.id === resolvedItem.tab)?.label;
@@ -123,6 +125,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
               </span>
             </motion.div>
           ))}
+          {resolvedItem.transactionHash ? <a href={`https://etherscan.io/tx/${resolvedItem.transactionHash}`} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View transaction</span><span className="font-black text-[#ccff00]">{resolvedItem.transactionHash.slice(0, 8)}…</span></a> : null}
         </motion.section>
     </MobileShell>
   );

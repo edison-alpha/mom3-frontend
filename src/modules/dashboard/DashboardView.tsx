@@ -28,6 +28,9 @@ export default function DashboardView() {
     mounted,
     pnlDisplay,
     pnlValue,
+    pnlPercent,
+    performanceHasRealData,
+    isPerformanceLoading,
     handleSelectCurrency,
     activeMode,
     activeModeIndex,
@@ -72,6 +75,9 @@ export default function DashboardView() {
             mounted={mounted}
             pnlDisplay={pnlDisplay}
             pnlValue={pnlValue}
+            pnlPercent={pnlPercent}
+            performanceHasRealData={performanceHasRealData}
+            isPerformanceLoading={isPerformanceLoading}
             onToggleBalance={handleToggleBalance}
           />
         </motion.div>

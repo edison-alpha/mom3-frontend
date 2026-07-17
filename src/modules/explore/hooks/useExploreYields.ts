@@ -5,6 +5,7 @@ import * as React from "react";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
+import { getMarkets } from "@/modules/markets/api/markets.api";
 
 export type ExploreYieldPool = {
   id: string;
@@ -142,14 +143,8 @@ export function useExploreYields(selectedProtocol?: string) {
           // Fetch a sufficiently large supported catalog once. The UI still
           // paginates each protocol section with Show more, while avoiding
           // the old global limit that left only a couple of Aave/other rows.
-          const params = new URLSearchParams({ limit: "100", offset: "0" });
-          if (selectedProtocol && selectedProtocol !== "all") params.set("protocol", selectedProtocol);
-          const catalogResponse = await fetch(`/api/ai/markets?${params.toString()}`, { cache: "no-store" });
-          const catalogPayload = await catalogResponse.json().catch(() => ({}));
-          if (!catalogResponse.ok) {
-            throw new Error(catalogPayload.detail || catalogPayload.error || "Unable to load yield markets.");
-          }
-          markets = Array.isArray(catalogPayload.markets) ? catalogPayload.markets : [];
+          const catalogPayload = await getMarkets({ limit: 100, protocol: selectedProtocol });
+          markets = Array.isArray(catalogPayload.markets) ? catalogPayload.markets as YieldMarketEntry[] : [];
         }
         let pulseMap: Record<string, PulseEntry> = {};
         try {

@@ -3,7 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import type { TokenRow } from "@/modules/send/types/send.types";
-import type { PortfolioAnalysisResponse } from "@/modules/assets/types/portfolio.types";
+import { analyzePortfolio } from "@/modules/assets/api/portfolio.api";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
 
 function assetFingerprint(tokens: TokenRow[]) {
@@ -26,10 +26,7 @@ export function usePortfolioIntelligence(account: string, tokens: TokenRow[]) {
     // last complete response visible so the health gauge never flashes to 0.
     placeholderData: (previousData) => previousData,
     queryFn: async () => {
-      const response = await fetch("/api/ai/portfolio", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      return analyzePortfolio({
           user_address: account,
           wallet_assets: tokens.map((token) => ({
             id: token.id,
@@ -41,14 +38,7 @@ export function usePortfolioIntelligence(account: string, tokens: TokenRow[]) {
             chain_id: token.chainId,
             token_address: token.tokenAddress,
           })),
-        }),
-        cache: "no-store",
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(payload.detail || payload.error || "Portfolio analysis is unavailable.");
-      }
-      return payload as PortfolioAnalysisResponse;
+        });
     },
   });
 }

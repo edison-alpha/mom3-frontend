@@ -6,6 +6,7 @@ import { portfolioModes } from "../constants/dashboard";
 import type { CurrencyCode } from "../types/dashboard.types";
 import { formatCurrency } from "../utils/formatCurrency";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
+import { usePortfolioPerformance } from "./usePortfolioPerformance";
 
 export function useDashboardViewModel() {
   const {
@@ -31,7 +32,8 @@ export function useDashboardViewModel() {
       ? Number(primaryAssets.totalAmountInUSD || 0)
       : 0;
   const hasAssets = balanceValue > 0;
-  const pnlValue = 0;
+  const performance = usePortfolioPerformance(balanceValue);
+  const pnlValue = performance.data?.net_usd ?? 0;
   const balanceDisplay = formatCurrency(balanceValue, currency);
   const pnlDisplay = formatCurrency(Math.abs(pnlValue), currency);
   const isBalanceLoading = mounted && isUniversalAccountLoading && primaryAssets === null;
@@ -70,6 +72,9 @@ export function useDashboardViewModel() {
     mounted,
     pnlDisplay,
     pnlValue,
+    pnlPercent: performance.data?.change_percent ?? 0,
+    performanceHasRealData: Boolean(performance.data?.has_real_data),
+    isPerformanceLoading: performance.isLoading,
     handleSelectCurrency,
     handleSelectMode,
     handleToggleBalance,

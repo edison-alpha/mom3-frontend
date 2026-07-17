@@ -13,6 +13,8 @@ export type HistoryItem = {
   note: string;
   icon: string;
   tone: "green" | "purple" | "blue";
+  transactionHash?: string | null;
+  tokenSymbol?: string;
 };
 
 export const historyTabs: { id: HistoryTab; label: string }[] = [

@@ -6,6 +6,7 @@ import { formatUsdValue } from "@/lib/format";
 import type { MarketDetail, Risk } from "@/lib/portfolio-data";
 import type { TimeRange } from "@/components/ui/mini-chart";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
+import { getMarketDetail } from "@/modules/markets/api/markets.api";
 
 type CatalogMarket = {
   market_id?: string;
@@ -96,9 +97,7 @@ export function useYieldMarketDetail(seed: MarketDetail, marketId?: string) {
     if (!marketId) return;
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/ai/markets/${encodeURIComponent(marketId)}`, { cache: "no-store" });
-      const payload = await response.json();
-      if (!response.ok) throw new Error(payload.detail || payload.error || "Live market data is unavailable.");
+      const payload = await getMarketDetail(marketId);
       const live: CatalogMarket | null = payload.market && typeof payload.market === "object" ? payload.market : null;
       if (!live) throw new Error("This pool is no longer present in the live market catalog.");
 

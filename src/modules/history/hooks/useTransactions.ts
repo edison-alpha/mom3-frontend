@@ -5,6 +5,7 @@ import * as React from "react";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
+import { syncHistory } from "@/modules/history/api/history.api";
 
 export type RealHistoryItem = {
   id: string;
@@ -20,6 +21,8 @@ export type RealHistoryItem = {
   tone: "green" | "purple" | "blue";
   activityType?: string;
   protocol?: string | null;
+  transactionHash?: string | null;
+  tokenSymbol?: string;
 };
 
 function relativeTime(timestamp?: number | string): string {
@@ -97,6 +100,8 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     tone: raw.tone === "green" || raw.tone === "purple" ? raw.tone : "blue",
     activityType: String(raw.activityType || "transaction"),
     protocol: raw.protocol || null,
+    transactionHash: raw.transactionHash || null,
+    tokenSymbol: symbol,
   };
 }
 
@@ -130,13 +135,8 @@ export function useTransactions(limit = 20) {
       }
       const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
       if (account && list.length) {
-        const syncResponse = await fetch("/api/history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ account, transactions: list }),
-          cache: "no-store",
-        });
-        if (syncResponse.ok) {
+        const synced = await syncHistory(account, list);
+        if (synced) {
           const storedResponse = await fetch(`/api/history?account=${encodeURIComponent(account)}&limit=${Math.max(limit, 50)}`, { cache: "no-store" });
           const storedPayload = await storedResponse.json().catch(() => ({}));
           if (storedResponse.ok && Array.isArray(storedPayload?.items)) {

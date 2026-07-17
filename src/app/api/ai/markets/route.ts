@@ -16,8 +16,19 @@ export async function GET(request: Request) {
     if (chainId) params.set("chain_id", chainId);
     if (executionOnly) params.set("execution_only", "true");
     if (protocol) params.set("protocol", protocol);
-    const response = await fetch(`${backendUrl}/api/ai/markets?${params.toString()}`, { cache: "no-store" });
+    const databaseParams = new URLSearchParams(params);
+    databaseParams.set("page", new URL(request.url).searchParams.get("page") || "1");
+    databaseParams.set("limit", new URL(request.url).searchParams.get("limit") || "100");
+    const response = await fetch(`${backendUrl}/api/markets?${databaseParams.toString()}`, { cache: "no-store" });
     const payload = await response.json();
+
+    // Keep the AgentKit path available while PostgreSQL is being migrated or
+    // when the local backend has no DATABASE_URL yet.
+    if (!response.ok) {
+      const legacyResponse = await fetch(`${backendUrl}/api/ai/markets?${params.toString()}`, { cache: "no-store" });
+      const legacyPayload = await legacyResponse.json().catch(() => ({}));
+      return NextResponse.json(legacyPayload, { status: legacyResponse.status });
+    }
 
     // Keep the frontend compatible with an older backend process that only
     // exposes /api/yield-forecast. This can happen while the local service is

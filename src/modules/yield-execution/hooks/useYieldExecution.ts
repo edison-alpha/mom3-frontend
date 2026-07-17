@@ -66,9 +66,7 @@ export function useYieldExecution(action: YieldAction) {
           : [],
         transactions: validated.transactions,
       });
-      const nextTransaction = prepareSponsoredTransaction(particleTransaction, {
-        required: true,
-      });
+      const nextTransaction = prepareSponsoredTransaction(particleTransaction);
       setIntent(validated);
       setTransaction(nextTransaction);
       setStatus("idle");

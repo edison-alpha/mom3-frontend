@@ -160,8 +160,8 @@ export function useSignAndSend(
       throw new Error("Universal Account or Magic wallet is not ready.");
     }
 
-    // Defense in depth: all callers submit the sponsored UserOperation even if
-    // a feature accidentally passes Particle's default user-paid quote.
+    // Normalize the transaction according to the configured gas mode. In
+    // user-paid mode this preserves Particle's default UserOperation.
     const transactionForSubmit = prepareSponsoredTransaction(transaction);
 
     if (

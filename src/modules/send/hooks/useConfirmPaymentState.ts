@@ -216,8 +216,10 @@ export function useConfirmPaymentState() {
     } catch (cause) {
       if (isRetryableParticleTransactionError(cause)) {
         setSendPreview(null);
+        await refreshAccount();
         await prepareTransaction();
-        setError(getSendErrorMessage(cause));
+        setError(null);
+        setNotice("The previous quote could not be verified. A fresh transaction quote is ready for review.");
       } else {
         setError(getSendErrorMessage(cause));
       }

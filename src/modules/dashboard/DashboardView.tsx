@@ -11,7 +11,6 @@ import { DashboardHeader } from "./components/DashboardHeader";
 import { EarnSection } from "./components/EarnSection";
 import { OpportunityGrid } from "./components/OpportunityGrid";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
-import { StrategyModeCard } from "./components/StrategyModeCard";
 import { useDashboardViewModel } from "./hooks/useDashboardViewModel";
 
 export default function DashboardView() {
@@ -34,9 +33,6 @@ export default function DashboardView() {
     performanceHasRealData,
     isPerformanceLoading,
     handleSelectCurrency,
-    activeMode,
-    activeModeIndex,
-    handleSelectMode,
     handleToggleBalance,
     handleToggleCurrencyMenu,
   } = useDashboardViewModel();
@@ -85,12 +81,6 @@ export default function DashboardView() {
             onToggleBalance={handleToggleBalance}
           />
         </motion.div>
-
-        <StrategyModeCard
-          activeMode={activeMode}
-          activeModeIndex={activeModeIndex}
-          onSelectMode={handleSelectMode}
-        />
 
         <motion.div
           variants={fadeUp}

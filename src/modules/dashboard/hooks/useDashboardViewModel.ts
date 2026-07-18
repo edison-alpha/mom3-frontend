@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { portfolioModes } from "../constants/dashboard";
 import type { CurrencyCode } from "../types/dashboard.types";
 import { formatCurrency } from "../utils/formatCurrency";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
@@ -18,7 +17,6 @@ export function useDashboardViewModel() {
   } = useUniversalAccount();
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [activeModeIndex, setActiveModeIndex] = useState(0);
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const usernameQuery = useQuery({
@@ -31,12 +29,8 @@ export function useDashboardViewModel() {
 
   useEffect(() => {
     setMounted(true);
-    const savedMode = window.localStorage.getItem("mom3-risk-tolerance");
-    const savedIndex = savedMode === "aggressive" ? 0 : savedMode === "conservative" ? 2 : 1;
-    setActiveModeIndex(savedIndex);
   }, []);
 
-  const activeMode = portfolioModes[activeModeIndex] ?? portfolioModes[0];
   const balanceValue =
     primaryAssets && "totalAmountInUSD" in primaryAssets
       ? Number(primaryAssets.totalAmountInUSD || 0)
@@ -62,15 +56,7 @@ export function useDashboardViewModel() {
     setCurrencyOpen(false);
   }
 
-  function handleSelectMode(index: number) {
-    setActiveModeIndex(index);
-    const riskTolerance = index === 0 ? "aggressive" : index === 2 ? "conservative" : "moderate";
-    window.localStorage.setItem("mom3-risk-tolerance", riskTolerance);
-  }
-
   return {
-    activeMode,
-    activeModeIndex,
     balanceDisplay,
     balanceHidden,
     balanceValue,
@@ -88,7 +74,6 @@ export function useDashboardViewModel() {
     performanceHasRealData: Boolean(performance.data?.has_real_data),
     isPerformanceLoading: performance.isLoading,
     handleSelectCurrency,
-    handleSelectMode,
     handleToggleBalance,
     handleToggleCurrencyMenu,
   };

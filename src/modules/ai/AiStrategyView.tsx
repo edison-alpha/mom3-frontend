@@ -13,6 +13,8 @@ import { useMarketAnalysisInfinite } from "./hooks/useMarketAnalysisInfinite";
 import type { MarketAnalysisItem } from "./types/market-analysis.types";
 import { fallbackOpportunities } from "./components/StrategyResponse";
 import type { AiStrategy, StrategyOpportunity } from "./types/ai.types";
+import { StrategyModeCard } from "@/modules/dashboard/components/StrategyModeCard";
+import { portfolioModes } from "@/modules/dashboard/constants/dashboard";
 
 export type StrategySelection = {
   marketId?: string;
@@ -226,9 +228,23 @@ export default function AiStrategyView({ selection }: { selection?: StrategySele
     ) ?? null;
   }, [selection, strategy]);
 
+  const activeModeIndex = riskTolerance === "aggressive" ? 0 : riskTolerance === "conservative" ? 2 : 1;
+  const handleSelectMode = (index: number) => {
+    const nextRisk = index === 0 ? "aggressive" : index === 2 ? "conservative" : "moderate";
+    setRiskTolerance(nextRisk);
+    window.localStorage.setItem("mom3-risk-tolerance", nextRisk);
+  };
+
   return (
     <MobileShell>
       <MobilePageHeader title="Strategy detail" backHref="/ai" backLabel="Back to AI strategies" />
+
+      <StrategyModeCard
+        compact
+        activeMode={portfolioModes[activeModeIndex] ?? portfolioModes[1]}
+        activeModeIndex={activeModeIndex}
+        onSelectMode={handleSelectMode}
+      />
 
       {isLoading ? (
         <section className="mt-5 animate-pulse rounded-3xl border border-white/10 bg-[#111217] p-5" aria-busy="true">

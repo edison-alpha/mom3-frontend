@@ -59,9 +59,9 @@ export function ProfileEip7702Sheet({
     <BottomSheet
       open={open}
       onOpenChange={onOpenChange}
-      title="EIP-7702"
-      description="Delegate your Universal Account on each compatible chain."
-      closeLabel="Close EIP-7702 delegation"
+      title="Wallet networks"
+      description="Prepare your wallet to use supported networks."
+      closeLabel="Close wallet networks"
       className="max-h-[90vh]"
       contentClassName="space-y-3"
     >
@@ -70,7 +70,7 @@ export function ProfileEip7702Sheet({
           <AppIcon icon="solar:shield-check-bold" aria-hidden="true" width={21} height={21} />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-black text-white">Chain delegation</p>
+          <p className="text-sm font-black text-white">Network access</p>
           <p className="mt-0.5 text-xs font-medium leading-relaxed text-[#9A9AA2]">
             Delegation is stored per chain. Your account can be ready on one chain while another still needs approval.
           </p>

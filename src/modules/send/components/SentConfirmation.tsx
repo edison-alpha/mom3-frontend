@@ -56,10 +56,10 @@ export function SentConfirmation({
         </Typography>
         <Typography variant="body-sm" color="muted" align="center" className="mt-2 max-w-xs">
           {transactionStatus.state === "completed"
-            ? "Your payment is confirmed on-chain."
+            ? "Your payment has been confirmed."
             : transactionStatus.state === "failed"
               ? "The transaction could not be completed. Open the activity details for more information."
-              : "Your payment was submitted and is being confirmed on-chain."}
+              : "Your payment was sent and is being confirmed."}
         </Typography>
       </div>
 

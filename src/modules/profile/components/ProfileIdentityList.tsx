@@ -50,11 +50,11 @@ export function ProfileIdentityList({
                 bordered={bordered}
                 onOpen={onOpenUniversalAccount}
               />
-            ) : row.label === "EIP-7702" ? (
+            ) : row.label === "Wallet status" ? (
               <button
                 type="button"
                 onClick={onOpenEip7702}
-                aria-label="Open EIP-7702 delegation status"
+              aria-label="Open wallet network status"
                 className={`flex min-h-[64px] w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/[0.04] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#3B33BD] ${
                   bordered ? "border-b border-white/5" : ""
                 }`}

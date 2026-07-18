@@ -98,7 +98,7 @@ function summarizeTransaction(raw: any): RealHistoryItem {
     reference: refShort,
     note: isReceive
       ? "Funds are available in your universal balance."
-      : "Transfer confirmed on-chain via Particle Universal Account.",
+      : "Your transfer was processed successfully.",
     icon: isReceive ? "solar:wallet-money-bold" : "solar:transfer-horizontal-bold",
     tone: isReceive ? "green" : "blue",
     action: isReceive ? "receive" : "transaction",
@@ -122,7 +122,7 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     status: normalizeStatus(raw.status),
     network: String(raw.network || "Universal"),
     reference: String(raw.reference || raw.transactionId),
-    note: String(raw.note || "Transaction confirmed through Particle Universal Account."),
+    note: String(raw.note || "Your transaction was processed successfully."),
     icon: presentation.icon,
     tone: presentation.tone,
     activityType: String(raw.activityType || "transaction"),

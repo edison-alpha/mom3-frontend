@@ -36,14 +36,14 @@ function delegationErrorMessage(error: unknown, chainId: number) {
   const chain = chainNameFromId(chainId);
 
   if (/insufficient funds|have 0 want/i.test(message)) {
-    return `Add a small amount of ${nativeGasToken(chainId)} to the owner wallet on ${chain} to pay EIP-7702 delegation gas, then try again.`;
+    return `Add a small amount of ${nativeGasToken(chainId)} to your wallet on ${chain}, then try again.`;
   }
 
   if (/does not provide an EIP-7702 deployment|did not return EIP-7702 authorization|not supported by universal account version/i.test(message)) {
-    return `${chain} is available in Particle, but EIP-7702 delegation is not deployed for this chain in the current Particle account configuration.`;
+    return `${chain} is not ready for this wallet yet. Please choose another network.`;
   }
 
-  return `EIP-7702 could not be enabled on ${chain}. Check your network and try again.`;
+  return `Your wallet could not be prepared on ${chain}. Check your connection and try again.`;
 }
 
 export function useProfileViewModel() {
@@ -147,7 +147,7 @@ export function useProfileViewModel() {
     },
     {
       icon: "solar:shield-check-bold",
-      label: "EIP-7702",
+      label: "Wallet status",
       value: isAnyChainDelegated ? "Delegated" : "Ready to upgrade",
     },
     {

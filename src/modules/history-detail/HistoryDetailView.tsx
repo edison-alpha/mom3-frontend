@@ -24,7 +24,7 @@ function mapStoredActivity(raw: any): HistoryItem {
     status: String(raw.status || "Completed"),
     network: String(raw.network || "Universal"),
     reference: String(raw.reference || raw.transactionId),
-    note: String(raw.note || "Transaction confirmed through Particle Universal Account."),
+    note: String(raw.note || "Your transaction was processed successfully."),
     icon: String(raw.icon || "solar:transfer-horizontal-bold"),
     tone: raw.tone === "green" || raw.tone === "purple" ? raw.tone : "blue",
     transactionHash: raw.transactionHash || null,
@@ -121,7 +121,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
               </span>
             </motion.div>
           ))}
-          {resolvedItem.explorerUrl ? <a href={resolvedItem.explorerUrl} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View on Particle Explorer</span><span className="font-black text-[#ccff00]">Open ↗</span></a> : null}
+          {resolvedItem.explorerUrl ? <a href={resolvedItem.explorerUrl} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View transaction details</span><span className="font-black text-[#ccff00]">Open ↗</span></a> : null}
         </motion.section>
     </MobileShell>
   );

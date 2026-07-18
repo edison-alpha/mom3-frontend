@@ -458,7 +458,7 @@ export default function ExploreView() {
           >
             <AppIcon icon="lucide:loader-circle" aria-hidden="true" width={36} height={36} className="animate-spin text-[#9A9AA2]" />
             <p className="mt-4 text-base font-bold text-white">Loading live yields</p>
-            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Loading live yield markets across Particle-supported chains…</p>
+            <p className="mt-1 text-sm font-medium text-[#9A9AA2]">Loading the latest yield opportunities…</p>
           </motion.div>
             </div>
           </>

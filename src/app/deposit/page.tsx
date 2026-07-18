@@ -4,10 +4,9 @@ import DepositView from "@/modules/deposit/DepositView";
 
 export const metadata: Metadata = {
   title: "Deposit",
-  description: "Deposit supported assets into your Particle Universal Account.",
+  description: "Add supported assets to your wallet.",
 };
 
 export default function DepositPage() {
   return <DepositView />;
 }
-

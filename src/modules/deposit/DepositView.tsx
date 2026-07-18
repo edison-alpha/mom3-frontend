@@ -97,7 +97,7 @@ export default function DepositView() {
             Fund one balance from any supported chain.
           </Typography>
           <Typography variant="body-sm" color="muted" className="mt-2">
-            Your EIP-7702 account keeps the same wallet identity. Choose the exact network and asset before sending.
+            Your wallet keeps the same identity across networks. Choose the network and asset before sending.
           </Typography>
         </div>
 
@@ -157,7 +157,7 @@ export default function DepositView() {
             <div className="flex items-center gap-2 text-red-200">
               <CircleAlert className="h-4 w-4" aria-hidden="true" />
               <Typography variant="body-sm" color="danger">
-                Could not refresh your Universal Account.
+                Could not refresh your wallet balance.
               </Typography>
             </div>
             <Typography variant="caption" color="muted" className="mt-1 block">
@@ -278,7 +278,7 @@ export default function DepositView() {
             One balance, three actions
           </Typography>
           <Typography variant="body-sm" color="muted" className="mt-1">
-            Deposited primary assets become available to send or convert through the same Particle transaction pipeline.
+            Deposited assets become available to send or convert from your wallet.
           </Typography>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Link

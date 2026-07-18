@@ -283,13 +283,6 @@ export default function AssetsView() {
               </button>
             </div>
 
-            {portfolio.coverage && portfolio.coverage.failed_market_reads > 0 ? (
-              <div className="flex items-start gap-2 rounded-2xl bg-amber-400/10 px-3 py-2.5" role="status">
-                <AppIcon icon="lucide:circle-alert" aria-hidden="true" width={17} height={17} className="mt-0.5 shrink-0 text-amber-200" />
-                <p className="text-xs font-semibold leading-relaxed text-amber-100">Some networks did not respond. Available positions are still shown.</p>
-              </div>
-            ) : null}
-
             {portfolio.isPortfolioLoading ? <PositionListSkeleton /> : portfolio.analysisError && portfolio.positions.length === 0 ? (
               <section className="rounded-[22px] border border-red-400/20 bg-red-500/10 p-4" role="alert">
                 <p className="text-sm font-black text-red-50">Could not scan positions</p>

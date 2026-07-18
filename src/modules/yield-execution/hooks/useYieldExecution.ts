@@ -24,7 +24,7 @@ function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
 type ExecutionStatus = "idle" | "preparing" | "signing" | "success" | "error";
 
 export function useYieldExecution(action: YieldAction) {
-  const { accountInfo, universalAccount, ensureDelegated, signAndSend, refreshAccount } = useUniversalAccount();
+  const { accountInfo, universalAccount, signAndSend, refreshAccount } = useUniversalAccount();
   const [status, setStatus] = React.useState<ExecutionStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
   const [transaction, setTransaction] = React.useState<any>(null);
@@ -77,7 +77,6 @@ export function useYieldExecution(action: YieldAction) {
         );
       }
 
-      if (chainId !== 101) await ensureDelegated(chainId);
       const particleTransaction = await universalAccount.createUniversalTransaction({
         chainId,
           expectTokens: action === "supply"
@@ -98,7 +97,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("error");
       return null;
     }
-  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, ensureDelegated, universalAccount]);
+  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, universalAccount]);
 
   const execute = React.useCallback(async () => {
     if (!transaction) return null;

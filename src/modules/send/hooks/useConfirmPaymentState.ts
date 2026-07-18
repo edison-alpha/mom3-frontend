@@ -20,9 +20,7 @@ import {
   normalizeAssetQuery,
   resolveRecipient,
   normalizePrimaryAssetTokens,
-  ZERO_ADDRESS,
 } from "@/modules/send/utils/send.utils";
-import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 import { syncHistory } from "@/modules/history/api/history.api";
 import { resolveUsername } from "@/modules/username/utils/username.api";
 
@@ -41,7 +39,6 @@ export function useConfirmPaymentState() {
     primaryAssets,
     isLoading,
     error: accountError,
-    ensureDelegated,
     refreshAccount,
     signAndSend,
   } = useUniversalAccount();
@@ -126,7 +123,17 @@ export function useConfirmPaymentState() {
         amount: amount.trim(),
         receiver: recipient.address,
       });
-      const transaction = prepareSponsoredTransaction(particleTransaction);
+      // A same-chain transfer must preserve Particle's original transaction
+      // exactly. The SDK already returns the correct UserOperation and root
+      // hash for direct transfers; rebuilding it as a gasless route can turn
+      // an Arb-to-Arb payment into an invalid quote.
+      const transaction = {
+        ...structuredClone(particleTransaction),
+        additionalData: {
+          ...particleTransaction.additionalData,
+          mom3DirectTransfer: true,
+        },
+      };
 
       if (!transaction.transactionId || !transaction.rootHash || transaction.userOps.length === 0) {
         throw new Error("Particle returned an incomplete transfer quote.");
@@ -181,24 +188,6 @@ export function useConfirmPaymentState() {
     setNotice(null);
 
     try {
-      const isNativeEvmAsset =
-        sendPreview.token.chainId !== CHAIN_ID.SOLANA_MAINNET &&
-        sendPreview.token.tokenAddress.toLowerCase() === ZERO_ADDRESS;
-
-      if (isNativeEvmAsset) {
-        setSendStatus("delegating");
-        const didDelegate = await ensureDelegated(sendPreview.token.chainId);
-
-        if (didDelegate) {
-          setSendPreview(null);
-          await prepareTransaction();
-          setNotice(
-            "EIP-7702 upgrade completed. Review the refreshed quote and confirm again.",
-          );
-          return;
-        }
-      }
-
       setSendStatus("signing");
       // Particle injects signatures into the transaction object before submit.
       // Keep React state immutable so a retry never resubmits a mutated quote.

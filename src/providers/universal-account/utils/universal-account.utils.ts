@@ -47,12 +47,13 @@ export async function loadUniversalAccountSnapshot(
   universalAccount: UniversalAccount,
   ownerAddress: string,
 ): Promise<UniversalAccountSnapshot> {
-  const [options, assets, deployments] = await Promise.all([
+  const [options, assets, rawDeployments] = await Promise.all([
     universalAccount.getSmartAccountOptions(),
     universalAccount.getPrimaryAssets(),
     universalAccount.getEIP7702Deployments(),
   ]);
 
+  const deployments = Array.isArray(rawDeployments) ? rawDeployments : [];
   const eip7702Deployments = (deployments as Array<{
     chainId?: number;
     delegationAddress?: string;

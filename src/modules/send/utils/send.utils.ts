@@ -353,7 +353,9 @@ export function getSendErrorMessage(cause: unknown) {
     normalized.includes("no eip-7702 deployment") ||
     normalized.includes("did not return eip-7702 authorization")
   ) {
-    return "This network is not available for this Universal Account action. Choose another supported network.";
+    const chainMatch = message.match(/chain(?:\s+id)?\s*[:=]?\s*(\d+)/i);
+    const chainSuffix = chainMatch?.[1] ? ` (chain ${chainMatch[1]})` : "";
+    return `This network is not available for this Universal Account action${chainSuffix}. Choose another supported network.`;
   }
   if (
     normalized.includes("timeout") ||

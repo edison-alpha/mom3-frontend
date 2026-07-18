@@ -36,7 +36,10 @@ async function isDelegatedOnChain(
   universalAccount: NonNullable<ReturnType<typeof useUniversalAccountInstanceQuery>["data"]>,
   chainId: number,
 ) {
-  const deployments = (await universalAccount.getEIP7702Deployments()) as Eip7702Deployment[];
+  const rawDeployments = await universalAccount.getEIP7702Deployments();
+  const deployments = Array.isArray(rawDeployments)
+    ? (rawDeployments as Eip7702Deployment[])
+    : [];
   const deployment = deployments.find((item) => Number(item.chainId) === chainId);
   if (!deployment) {
     throw new Error(`Particle does not provide an EIP-7702 deployment for chain ${chainId}.`);
@@ -170,7 +173,9 @@ export function useSignAndSend(
 
     // Normalize the transaction according to the configured gas mode. In
     // user-paid mode this preserves Particle's default UserOperation.
-    const transactionForSubmit = prepareSponsoredTransaction(transaction);
+    const transactionForSubmit = transaction.additionalData?.mom3DirectTransfer
+      ? structuredClone(transaction)
+      : prepareSponsoredTransaction(transaction);
 
     if (isTransactionQuoteExpired(transactionForSubmit)) {
       throw new Error("This Particle quote expired before signing. Request a fresh quote and try again.");

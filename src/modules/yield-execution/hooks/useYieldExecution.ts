@@ -123,6 +123,9 @@ export function useYieldExecution(action: YieldAction) {
       void refreshAccount();
       return id;
     } catch (cause) {
+      // Particle quotes are single-use and must never be re-submitted after a
+      // failed signing/submission attempt. Force a fresh quote on re-entry.
+      setTransaction(null);
       setError(cause instanceof Error ? cause.message : `We couldn't submit this ${action}.`);
       setStatus("error");
       return null;

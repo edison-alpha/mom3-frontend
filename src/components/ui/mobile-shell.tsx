@@ -21,14 +21,14 @@ export function MobileShell({
   return (
     <main
       className={cn(
-        "min-h-screen w-full bg-black font-sans text-white antialiased",
+        "min-h-screen min-h-dvh w-full min-w-0 overflow-x-hidden bg-black font-sans text-white antialiased",
         className,
       )}
       {...props}
     >
       <div
         className={cn(
-          "mx-auto flex min-h-screen w-full flex-col px-5 pt-4 pb-28 sm:max-w-md",
+          "mx-auto flex min-h-screen min-h-dvh w-full min-w-0 max-w-full flex-col px-5 pt-4 pb-28 sm:max-w-md",
           contentClassName,
         )}
       >

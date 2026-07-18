@@ -39,8 +39,8 @@ export default function OnboardingView() {
 
   return (
     <MobileShell
-      className="overflow-hidden bg-[#3B33BD]"
-      contentClassName="relative pb-7 pt-5"
+      className="min-h-dvh overflow-hidden bg-[#3B33BD]"
+      contentClassName="relative min-h-dvh pb-7 pt-5"
     >
         <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,#201B8F_0%,#3B33BD_42%,#6F7CFF_100%)]" />
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_16%_18%,rgba(204,255,0,0.18),transparent_22%),radial-gradient(circle_at_84%_6%,rgba(126,120,234,0.78),transparent_26%),radial-gradient(circle_at_94%_48%,rgba(59,51,189,0.62),transparent_24%),radial-gradient(circle_at_10%_82%,rgba(8,7,34,0.45),transparent_18%)]" />

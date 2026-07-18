@@ -14,6 +14,7 @@ export type HistoryItem = {
   icon: string;
   tone: "green" | "purple" | "blue";
   transactionHash?: string | null;
+  explorerUrl?: string | null;
   tokenSymbol?: string;
 };
 

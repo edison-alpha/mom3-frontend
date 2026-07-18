@@ -28,6 +28,7 @@ function mapStoredActivity(raw: any): HistoryItem {
     tone: raw.tone === "green" || raw.tone === "purple" ? raw.tone : "blue",
     transactionHash: raw.transactionHash || null,
     tokenSymbol: amount.symbol || "",
+    explorerUrl: raw.explorerUrl || `https://universalx.app/activity/details?id=${encodeURIComponent(String(raw.transactionId))}`,
   };
 }
 
@@ -45,7 +46,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
 
   React.useEffect(() => {
     if (item || !activityId) return;
-    const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
+    const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount || accountInfo.ownerAddress;
     if (!account) {
       setIsLoading(false);
       setError("Connect your wallet to view this activity.");
@@ -59,7 +60,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
       })
       .catch((cause) => setError(cause instanceof Error ? cause.message : "Activity unavailable."))
       .finally(() => setIsLoading(false));
-  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, activityId, item]);
+  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, accountInfo.solanaSmartAccount, activityId, item]);
 
   if (isLoading) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><div className="mt-6 animate-pulse rounded-[28px] bg-[#1C1C1E] p-6"><div className="mx-auto h-16 w-16 rounded-full bg-white/10" /><div className="mx-auto mt-5 h-7 w-40 rounded bg-white/10" /><div className="mt-6 h-48 rounded-2xl bg-white/10" /></div></MobileShell>;
   if (error || !liveItem) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><section className="mt-6 rounded-[24px] border border-red-400/20 bg-red-500/10 p-5 text-center" role="alert"><p className="text-sm font-black text-red-50">Could not load this activity</p><p className="mt-2 text-xs text-red-100/80">{error || "Activity not found."}</p></section></MobileShell>;
@@ -125,7 +126,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
               </span>
             </motion.div>
           ))}
-          {resolvedItem.transactionHash ? <a href={`https://etherscan.io/tx/${resolvedItem.transactionHash}`} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View transaction</span><span className="font-black text-[#ccff00]">{resolvedItem.transactionHash.slice(0, 8)}…</span></a> : null}
+          {resolvedItem.explorerUrl ? <a href={resolvedItem.explorerUrl} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View on Particle Explorer</span><span className="font-black text-[#ccff00]">Open ↗</span></a> : null}
         </motion.section>
     </MobileShell>
   );

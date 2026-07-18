@@ -5,7 +5,7 @@ import * as React from "react";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
-import { syncHistory } from "@/modules/history/api/history.api";
+import { syncHistory, type HistoryStatus } from "@/modules/history/api/history.api";
 
 export type RealHistoryItem = {
   id: string;
@@ -23,7 +23,19 @@ export type RealHistoryItem = {
   protocol?: string | null;
   transactionHash?: string | null;
   tokenSymbol?: string;
+  action?: string;
+  explorerUrl?: string | null;
 };
+
+function normalizeStatus(value: unknown): HistoryStatus {
+  const text = String(value ?? "").toLowerCase();
+  const numeric = Number(value);
+  if ([6, 10, 14].includes(numeric)) return "failed";
+  if ([7, 11].includes(numeric)) return "success";
+  if (/fail|reject|cancel|error/.test(text)) return "failed";
+  if (/success|finish|complete|confirm/.test(text)) return "success";
+  return "pending";
+}
 
 function relativeTime(timestamp?: number | string): string {
   if (!timestamp) return "Recently";
@@ -42,7 +54,7 @@ function relativeTime(timestamp?: number | string): string {
 
 function summarizeTransaction(raw: any): RealHistoryItem {
   const id = String(raw?.transactionId || raw?.id || raw?.hash || Math.random());
-  const status = String(raw?.status || raw?.transactionStatus || "Completed");
+  const status = normalizeStatus(raw?.status ?? raw?.transactionStatus);
   const chainId = Number(raw?.chainId || raw?.originChainId || 0);
   const network = chainNameFromId(chainId) || (chainId ? `Chain ${chainId}` : "Universal");
 
@@ -77,6 +89,8 @@ function summarizeTransaction(raw: any): RealHistoryItem {
       : "Transfer confirmed on-chain via Particle Universal Account.",
     icon: isReceive ? "solar:wallet-money-bold" : "solar:transfer-horizontal-bold",
     tone: isReceive ? "green" : "blue",
+    action: isReceive ? "receive" : "transaction",
+    explorerUrl: `https://universalx.app/activity/details?id=${encodeURIComponent(id)}`,
   };
 }
 
@@ -92,7 +106,7 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     description: String(raw.description || raw.network || "Universal"),
     amount: value ? `${direction}${value.toFixed(4)} ${symbol}`.trim() : usd ? `${direction}${formatUsdValue(usd)}` : "—",
     time: relativeTime(raw.occurredAt),
-    status: String(raw.status || "Completed"),
+    status: normalizeStatus(raw.status),
     network: String(raw.network || "Universal"),
     reference: String(raw.reference || raw.transactionId),
     note: String(raw.note || "Transaction confirmed through Particle Universal Account."),
@@ -102,6 +116,8 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     protocol: raw.protocol || null,
     transactionHash: raw.transactionHash || null,
     tokenSymbol: symbol,
+    action: String(raw.action || raw.activityType || "transaction"),
+    explorerUrl: raw.explorerUrl || `https://universalx.app/activity/details?id=${encodeURIComponent(String(raw.transactionId))}`,
   };
 }
 
@@ -116,7 +132,7 @@ export function useTransactions(limit = 20) {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const load = React.useCallback(async () => {
+  const load = React.useCallback(async (full = true) => {
     if (!universalAccount) {
       setIsLoading(false);
       setError("Connect your wallet to load transaction history.");
@@ -125,15 +141,16 @@ export function useTransactions(limit = 20) {
     setIsLoading(true);
     setError(null);
     try {
-      const pageSize = Math.max(limit, 50);
+      const pageSize = full ? Math.max(limit, 50) : Math.max(limit, 20);
       const list: any[] = [];
-      for (let page = 1; page <= 20; page += 1) {
+      const maxPages = full ? 20 : 1;
+      for (let page = 1; page <= maxPages; page += 1) {
         const response = await universalAccount.getTransactions(page, pageSize);
         const pageItems = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : [];
         list.push(...pageItems);
         if (pageItems.length < pageSize) break;
       }
-      const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
+      const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount || accountInfo.ownerAddress;
       if (account && list.length) {
         const synced = await syncHistory(account, list);
         if (synced) {
@@ -151,11 +168,13 @@ export function useTransactions(limit = 20) {
     } finally {
       setIsLoading(false);
     }
-  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, universalAccount, limit]);
+  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, accountInfo.solanaSmartAccount, universalAccount, limit]);
 
   React.useEffect(() => {
     void load();
+    const timer = window.setInterval(() => void load(false), 8_000);
+    return () => window.clearInterval(timer);
   }, [load]);
 
-  return { items, isLoading, error, reload: load };
+  return { items, isLoading, error, reload: () => load(true) };
 }

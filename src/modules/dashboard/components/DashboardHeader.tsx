@@ -12,6 +12,7 @@ type DashboardHeaderProps = {
   currencyOpen: boolean;
   profileAddress?: string;
   profileFallback?: string;
+  profileImageUrl?: string | null;
   username?: string | null;
   onSelectCurrency: (code: CurrencyCode) => void;
   onToggleCurrencyMenu: () => void;
@@ -22,6 +23,7 @@ export function DashboardHeader({
   currencyOpen,
   profileAddress,
   profileFallback,
+  profileImageUrl,
   username,
   onSelectCurrency,
   onToggleCurrencyMenu,
@@ -31,6 +33,7 @@ export function DashboardHeader({
       <div className="flex items-center gap-2.5">
         <WalletAvatar
           address={profileAddress}
+          imageUrl={profileImageUrl}
           label="Profile"
           fallback={profileFallback || "Wallet"}
           size="sm"

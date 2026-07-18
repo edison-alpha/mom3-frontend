@@ -1,6 +1,6 @@
 "use client";
 
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import * as React from "react";
@@ -16,6 +16,7 @@ import type {
   UniversalAccountRow,
 } from "@/modules/profile/types/profile.types";
 import { getMyUsername } from "@/modules/username/utils/username.api";
+import { getUserProfile, uploadProfileAvatar } from "../utils/profile.api";
 
 function nativeGasToken(chainId: number) {
   if (chainId === 56) return "BNB";
@@ -65,6 +66,18 @@ export function useProfileViewModel() {
   const [delegatingChainId, setDelegatingChainId] = React.useState<number | null>(null);
   const [delegationError, setDelegationError] = React.useState<string | null>(null);
   const [username, setUsername] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const profileQuery = useQuery({
+    queryKey: ["profile", session?.ownerAddress || null],
+    queryFn: () => getUserProfile(session?.ownerAddress as string),
+    enabled: Boolean(session?.ownerAddress),
+    staleTime: 300_000,
+  });
+  const avatarMutation = useMutation({
+    mutationKey: ["profile", "avatar"],
+    mutationFn: uploadProfileAvatar,
+    onSuccess: (profile) => queryClient.setQueryData(["profile", session?.ownerAddress || null], profile),
+  });
 
   useEffect(() => {
     if (!isMagicLoading && !session?.ownerAddress) {
@@ -173,6 +186,19 @@ export function useProfileViewModel() {
     window.setTimeout(() => setCopiedAddress(null), 1200);
   };
 
+  const uploadAvatar = async (file: File) => {
+    if (!ownerAddress) throw new Error("Connect your wallet first.");
+    if (!file.type.startsWith("image/")) throw new Error("Please choose an image file.");
+    if (file.size > 5 * 1024 * 1024) throw new Error("Profile image must be smaller than 5 MB.");
+    const data = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(new Error("Unable to read profile image."));
+      reader.readAsDataURL(file);
+    });
+    return avatarMutation.mutateAsync({ ownerAddress, data, contentType: file.type, fileName: file.name });
+  };
+
   const openUniversalAccountSheet = () => setUniversalAccountOpen(true);
 
   return {
@@ -206,6 +232,9 @@ export function useProfileViewModel() {
     ownerAddress,
     profileEmail: session?.email || null,
     username,
+    avatarUrl: profileQuery.data?.avatar_url || null,
+    isAvatarUploading: avatarMutation.isPending,
+    uploadAvatar,
     setUniversalAccountOpen,
     onEip7702OpenChange: handleEip7702OpenChange,
     universalAccountError,

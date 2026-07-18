@@ -13,6 +13,7 @@ export function RecipientHeader({ recipient }: { recipient: Recipient }) {
     <div className="rounded-[32px] bg-[#111217] p-5 shadow-[0_12px_44px_-24px_rgba(59,51,189,0.6)]">
       <WalletAvatar
         address={recipient.address}
+        imageUrl={recipient.avatarUrl}
         label={recipient.name}
         fallback={recipient.name}
         size="xl"

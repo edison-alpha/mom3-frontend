@@ -104,8 +104,9 @@ export default function ConfirmPaymentView() {
         <div className="rounded-[32px] bg-[#111217] p-5 shadow-[0_12px_44px_-24px_rgba(59,51,189,0.6)]">
           {state.recipient ? (
             <>
-              <WalletAvatar
-                address={state.recipient.address}
+            <WalletAvatar
+              address={state.recipient.address}
+              imageUrl={state.recipient.avatarUrl}
                 label={state.recipient.name}
                 fallback={state.recipient.name}
                 size="xl"
@@ -149,9 +150,9 @@ export default function ConfirmPaymentView() {
               ≈ {formatUsd(estimatedUsd)}
             </p>
           ) : null}
-          <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4 text-sm">
-            <span className="text-[#9A9AA2]">Network</span>
-            <span className="font-bold text-white">{state.selectedToken?.chainName ?? "---"}</span>
+          <div className="mt-4 flex items-start justify-between border-t border-white/5 pt-4 text-sm">
+            <span className="text-[#9A9AA2]">Recipient address</span>
+            <span className="max-w-[62%] truncate text-right font-mono text-xs font-bold text-white">{state.recipient?.address || "---"}</span>
           </div>
           <div className="mt-3 flex items-center justify-between text-sm">
             <span className="text-[#9A9AA2]">Recipient receives</span>
@@ -192,7 +193,7 @@ export default function ConfirmPaymentView() {
                   <div className="border-t border-white/10 pt-2.5">
                     {feeTokenRows.map((row) => (
                       <div key={row.label} className="flex items-start justify-between gap-3">
-                        <dt className="text-[#9A9AA2]">Fee paid with</dt>
+                        <dt className="text-[#9A9AA2]">Fee token</dt>
                         <dd className="text-right font-mono text-xs font-bold tabular-nums text-white">
                           {row.label}
                         </dd>

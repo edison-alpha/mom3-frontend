@@ -5,6 +5,7 @@ export type ProfileStat = {
 };
 
 export type ProfileUsername = { username: string; owner_address: string; address: string | null; addresses: Record<string, string> };
+export type UserProfile = { owner_address: string; avatar_cid: string | null; avatar_url: string | null };
 
 export type ProfileActionRow = {
   icon: string;

@@ -80,7 +80,7 @@ export function useConfirmPaymentState() {
     let cancelled = false;
     if (to.trim().startsWith("@") && selectedToken) {
       void resolveUsername(to.trim(), selectedToken.chainId).then((identity) => {
-        if (!cancelled && identity.address) setRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: selectedToken.chainName, status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]" });
+        if (!cancelled && identity.address) setRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: selectedToken.chainName, status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]", avatarUrl: identity.avatar_url });
       }).catch(() => { if (!cancelled) setError("Username was not found on the selected chain."); });
     }
     void getRecentRecipients(accountInfo.ownerAddress)

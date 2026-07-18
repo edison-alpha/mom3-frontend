@@ -6,6 +6,7 @@ export type Recipient = {
   network: string;
   status: "Friend" | "Recent" | "Verified" | "External";
   color: string;
+  avatarUrl?: string | null;
 };
 
 export type TokenRow = {

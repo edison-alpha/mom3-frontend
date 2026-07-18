@@ -25,7 +25,13 @@ export async function resolveUsername(username: string, chainId: number) {
   const response = await fetch(`/api/usernames/${encodeURIComponent(username)}?chain_id=${chainId}`, { cache: "no-store" });
   const payload = await readPayload(response);
   if (!response.ok) throw new Error(payload.error || "Username was not found on this chain.");
-  return payload.identity as UsernameIdentity;
+  const identity = payload.identity as UsernameIdentity;
+  try {
+    const profileResponse = await fetch(`/api/profile/${encodeURIComponent(identity.owner_address)}`, { cache: "no-store" });
+    const profilePayload = await profileResponse.json().catch(() => ({}));
+    identity.avatar_url = profilePayload.profile?.avatar_url || null;
+  } catch { identity.avatar_url = null; }
+  return identity;
 }
 
 export async function getMyUsername(ownerAddress: string) {

@@ -52,6 +52,7 @@ export function SendPreviewCard({
             </span>
             <WalletAvatar
               address={sendPreview.recipient.address}
+              imageUrl={sendPreview.recipient.avatarUrl}
               label={sendPreview.recipient.name}
               fallback={sendPreview.recipient.name}
               size="sm"

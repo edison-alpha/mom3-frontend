@@ -9,6 +9,7 @@ type WalletAvatarSize = "sm" | "md" | "lg" | "xl";
 
 type WalletAvatarProps = {
   address?: string;
+  imageUrl?: string | null;
   label?: string;
   fallback?: string;
   size?: WalletAvatarSize;
@@ -33,6 +34,7 @@ const fallbackTextClassName: Record<WalletAvatarSize, string> = {
 
 export function WalletAvatar({
   address,
+  imageUrl,
   label = "Wallet",
   fallback,
   size = "md",
@@ -64,9 +66,9 @@ export function WalletAvatar({
       >
         {fallbackLabel}
       </span>
-      {avatarUrl ? (
+      {imageUrl || avatarUrl ? (
         <img
-          src={avatarUrl}
+          src={imageUrl || avatarUrl || undefined}
           alt={`${label} wallet avatar`}
           className={cn("relative h-full w-full object-cover", imageClassName)}
         />

@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronLeft, CircleHelp } from 'lucide-react';
 import { MobileShell } from '@/components/ui/mobile-shell';
@@ -12,14 +15,31 @@ import ConfirmHandle from "./components/confirm-handle";
 import CompleteView from "./components/complete-view";
 import { useClaimUsername } from "./hooks/useClaimUsername";
 import { DEFAULT_CHAIN_ID } from "@/providers/shared/constants/chain.constants";
+import { getMyUsername } from "@/modules/username/utils/username.api";
 
 export default function ClaimUsernameView() {
   const { session } = useMagic();
   const { accountInfo } = useUniversalAccount();
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [handle, setHandle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const claimMutation = useClaimUsername();
+  const ownerAddress = session?.ownerAddress || "";
+  const usernameQuery = useQuery({
+    queryKey: ["username", "owner", ownerAddress || null],
+    queryFn: () => getMyUsername(ownerAddress),
+    enabled: Boolean(ownerAddress),
+    staleTime: 300_000,
+  });
+
+  useEffect(() => {
+    if (usernameQuery.data?.username) router.replace("/dashboard");
+  }, [router, usernameQuery.data?.username]);
+
+  useEffect(() => {
+    if (!handle && ownerAddress) setHandle(ownerAddress.replace(/^0x/i, "").slice(0, 4).toLowerCase());
+  }, [handle, ownerAddress]);
 
   const handleBack = useCallback(() => {
     if (step > 1) setStep(step - 1);
@@ -30,7 +50,7 @@ export default function ClaimUsernameView() {
   }, []);
 
   const handleConfirm = useCallback(async () => {
-    if (!session?.ownerAddress) return;
+  if (!session?.ownerAddress || usernameQuery.data?.username) return;
     setError(null);
     try {
       const address = accountInfo.evmSmartAccount || session.ownerAddress;
@@ -57,8 +77,10 @@ export default function ClaimUsernameView() {
     }
   }, [handle]);
 
+  if (!ownerAddress || usernameQuery.isPending || usernameQuery.data?.username) return null;
+
   return (
-    <MobileShell>
+      <MobileShell>
         <div className="sticky top-0 z-10 -mx-5 bg-black/90 px-5 backdrop-blur-lg">
           <div className="flex items-center justify-between py-1">
             <motion.button

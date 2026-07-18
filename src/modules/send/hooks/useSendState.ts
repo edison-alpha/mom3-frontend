@@ -192,7 +192,7 @@ export function useSendState(
           staleTime: 60_000,
         });
         if (identity.address) {
-          selectRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: initialChain || "Universal", status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]" });
+          selectRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: initialChain || "Universal", status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]", avatarUrl: identity.avatar_url });
           return;
         }
       } catch (cause) {

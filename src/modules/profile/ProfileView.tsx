@@ -51,6 +51,9 @@ export default function ProfileView() {
         ownerAddress={profile.ownerAddress}
         stats={[]}
         username={profile.username}
+        avatarUrl={profile.avatarUrl}
+        isAvatarUploading={profile.isAvatarUploading}
+        onAvatarChange={(file) => { void profile.uploadAvatar(file); }}
       />
 
       <ProfileUpgradeSection

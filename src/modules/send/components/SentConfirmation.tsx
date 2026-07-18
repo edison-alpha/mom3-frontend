@@ -88,31 +88,16 @@ export function SentConfirmation({
               </span>
             </dd>
           </div>
-          <div className="flex items-center justify-between gap-4">
-            <dt className="text-[#9A9AA2]">Network</dt>
-            <dd className="font-bold text-white">{chainName}</dd>
+          <div className="flex items-start justify-between gap-4">
+            <dt className="text-[#9A9AA2]">Recipient address</dt>
+            <dd className="max-w-[65%] truncate text-right font-mono text-xs font-bold text-white">{recipientAddress}</dd>
           </div>
           <div className="flex items-center justify-between gap-4">
             <dt className="text-[#9A9AA2]">Total fee</dt>
             <dd className="font-mono font-bold tabular-nums text-white">{feeLabel}</dd>
           </div>
-          <div className="flex items-center justify-between gap-4">
-            <dt className="text-[#9A9AA2]">Transaction ID</dt>
-            <dd className="font-mono text-xs font-bold text-white">
-              {truncateAddress(transactionId, 6)}
-            </dd>
-          </div>
         </dl>
 
-        <a
-          href={`https://universalx.app/activity/details?id=${transactionId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-5 flex min-h-11 w-full items-center justify-center gap-2 rounded-full bg-white/[0.06] px-4 text-sm font-bold text-white transition-colors hover:bg-white/[0.1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ccff00]"
-        >
-          View transaction details
-          <AppIcon icon="lucide:external-link" aria-hidden="true" width={16} height={16} />
-        </a>
       </div>
 
       <div className="mt-auto grid gap-3 pt-6">

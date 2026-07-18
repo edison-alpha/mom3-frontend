@@ -32,6 +32,7 @@ export function RecipientRow({
     >
       <WalletAvatar
         address={recipient.address}
+        imageUrl={recipient.avatarUrl}
         label={recipient.name}
         fallback={recipient.name}
         fallbackClassName={recipient.color}

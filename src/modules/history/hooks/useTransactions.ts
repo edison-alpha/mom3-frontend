@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { chainNameFromId } from "@/lib/chain";
-import { formatUsdValue } from "@/lib/format";
+import { formatUsdValue, parseDecimalish } from "@/lib/format";
 import { syncHistory, type HistoryStatus } from "@/modules/history/api/history.api";
 
 export type RealHistoryItem = {
@@ -71,7 +71,11 @@ function summarizeTransaction(raw: any): RealHistoryItem {
   const firstChange = Array.isArray(changes) ? changes[0] : undefined;
   const amountIn = Number(firstChange?.amountInUSD ?? raw?.amountInUSD ?? 0) || 0;
   const symbol = String(firstChange?.token?.symbol || firstChange?.token?.type || "");
-  const amountNum = Number(firstChange?.amount ?? 0) || 0;
+  const decimals = Number(firstChange?.token?.realDecimals ?? firstChange?.token?.decimals ?? 18);
+  const rawAmount = firstChange?.amount ?? 0;
+  const amountNum = typeof rawAmount === "number" && Number.isInteger(rawAmount) && Math.abs(rawAmount) >= 10 ** decimals
+    ? rawAmount / 10 ** decimals
+    : parseDecimalish(rawAmount, decimals);
 
   const isReceive = amountIn > 0 && (raw?.receiveTokens?.length || firstChange?.amount > 0);
   const amount = amountNum

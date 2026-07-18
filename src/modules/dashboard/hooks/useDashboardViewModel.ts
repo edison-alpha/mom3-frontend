@@ -7,17 +7,31 @@ import type { CurrencyCode } from "../types/dashboard.types";
 import { formatCurrency } from "../utils/formatCurrency";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { usePortfolioPerformance } from "./usePortfolioPerformance";
+import { getMyUsername } from "@/modules/username/api/username.api";
 
 export function useDashboardViewModel() {
   const {
     isLoading: isUniversalAccountLoading,
     primaryAssets,
+    accountInfo,
   } = useUniversalAccount();
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeModeIndex, setActiveModeIndex] = useState(0);
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+
+  useEffect(() => {
+    const ownerAddress = accountInfo.ownerAddress;
+    if (!ownerAddress) {
+      setUsername(null);
+      return;
+    }
+    void getMyUsername(ownerAddress)
+      .then((identity) => setUsername(identity?.username || null))
+      .catch(() => setUsername(null));
+  }, [accountInfo.ownerAddress]);
 
   useEffect(() => {
     setMounted(true);
@@ -73,6 +87,7 @@ export function useDashboardViewModel() {
     pnlDisplay,
     pnlValue,
     pnlPercent: performance.data?.change_percent ?? 0,
+    username,
     performanceHasRealData: Boolean(performance.data?.has_real_data),
     isPerformanceLoading: performance.isLoading,
     handleSelectCurrency,

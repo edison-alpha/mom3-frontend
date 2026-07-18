@@ -12,6 +12,7 @@ type DashboardHeaderProps = {
   currencyOpen: boolean;
   profileAddress?: string;
   profileFallback?: string;
+  username?: string | null;
   onSelectCurrency: (code: CurrencyCode) => void;
   onToggleCurrencyMenu: () => void;
 };
@@ -21,6 +22,7 @@ export function DashboardHeader({
   currencyOpen,
   profileAddress,
   profileFallback,
+  username,
   onSelectCurrency,
   onToggleCurrencyMenu,
 }: DashboardHeaderProps) {
@@ -30,19 +32,19 @@ export function DashboardHeader({
         <WalletAvatar
           address={profileAddress}
           label="Profile"
-          fallback={profileFallback || "@ubayy"}
+          fallback={profileFallback || "Wallet"}
           size="sm"
         />
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-base font-black">@ubayy</span>
-            <AppIcon
+            <span className="text-base font-black">{username || "Username not claimed"}</span>
+            {username ? <AppIcon
               icon="material-symbols:verified-rounded"
               aria-hidden="true"
               width={20}
               height={20}
               className="text-[#ccff00]"
-            />
+            /> : null}
           </div>
         </div>
       </div>

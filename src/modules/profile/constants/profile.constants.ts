@@ -1,17 +1,11 @@
 import type { ProfileActionRow, ProfileStat } from "@/modules/profile/types/profile.types";
 
-export const profileStats: ProfileStat[] = [
-  { label: "Score", value: "92", sub: "Trusted" },
-  { label: "Streak", value: "14d", sub: "Active" },
-  { label: "Rewards", value: "0.00", sub: "MOM" },
-];
-
 export const profileActionRows: ProfileActionRow[] = [
   {
     icon: "solar:user-id-bold",
     label: "Public profile",
-    value: "mom3/u/ubayy",
-    href: "#",
+    value: "Live username profile",
+    href: "/profile",
   },
   {
     icon: "solar:chart-2-bold",

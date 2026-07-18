@@ -17,7 +17,7 @@ export default function ClaimUsernameView() {
   const { session } = useMagic();
   const { accountInfo } = useUniversalAccount();
   const [step, setStep] = useState(1);
-  const [handle, setHandle] = useState('ubayy');
+  const [handle, setHandle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
 

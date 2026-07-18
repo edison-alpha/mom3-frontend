@@ -126,9 +126,8 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
     },
     {
       label: "Service fee",
-      value: feeQuote.fees.freeServiceFee
-        ? "Free"
-        : formatUsdValue(totals.transactionServiceFeeTokenAmountInUSD),
+      value: "Free",
+      originalValue: "$0.50",
     },
     {
       label: "LP / settlement",

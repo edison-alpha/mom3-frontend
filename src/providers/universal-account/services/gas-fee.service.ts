@@ -29,7 +29,8 @@ export function getFeeBreakdownRows(transaction: ITransaction | null): FeeBreakd
     originalValue: feeQuote.fees.freeGasFee && parseUsdDecimalish(originalGasFee) > 0 ? formatUsdValue(originalGasFee) : undefined,
   }, {
     label: "Service fee",
-    value: feeQuote.fees.freeServiceFee ? "Free" : formatUsdValue(totals.transactionServiceFeeTokenAmountInUSD),
+    value: "Free",
+    originalValue: "$0.50",
   }, {
     label: "LP / settlement",
     value: formatUsdValue(totals.transactionLPFeeTokenAmountInUSD),

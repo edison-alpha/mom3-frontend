@@ -210,7 +210,6 @@ function MarketList({
   const category = items[0]?.category ?? "Yield";
   const styles = marketCategoryStyles[category];
   const visibleItems = items.slice(0, visibleCount);
-  React.useEffect(() => setVisibleCount(pageSize), [items]);
 
   return (
     <motion.section

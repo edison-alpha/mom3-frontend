@@ -35,25 +35,27 @@ export function ProfileHeroCard({
         <WalletAvatar
           address={ownerAddress}
           label="Profile"
-          fallback={email || "@ubayy"}
+          fallback={email || "Wallet"}
           size="lg"
           className="mx-auto shadow-[0_14px_34px_-14px_rgba(59,51,189,0.9)] ring-4 ring-black/25"
         />
         <div className="mt-3 flex items-center justify-center gap-1.5">
-          <h2 className="text-xl font-black tracking-tight text-white">{username || "@username"}</h2>
-          <AppIcon
-            icon="material-symbols:verified-rounded"
-            aria-hidden="true"
-            width={20}
-            height={20}
-            className="text-[#ccff00]"
-          />
+          {username ? <>
+            <h2 className="text-xl font-black tracking-tight text-white">{username}</h2>
+            <AppIcon
+              icon="material-symbols:verified-rounded"
+              aria-hidden="true"
+              width={20}
+              height={20}
+              className="text-[#ccff00]"
+            />
+          </> : <h2 className="text-xl font-black tracking-tight text-white">Username not claimed</h2>}
         </div>
         <p className="mt-1 text-xs font-medium text-[#B8B8C5]">
           {email || "Universal wallet profile on mom3"}
         </p>
 
-        <div className="mt-4 grid grid-cols-3 gap-1.5">
+        {stats.length > 0 ? <div className="mt-4 grid grid-cols-3 gap-1.5">
           {stats.map((item) => (
             <motion.div
               key={item.label}
@@ -73,7 +75,7 @@ export function ProfileHeroCard({
               </p>
             </motion.div>
           ))}
-        </div>
+        </div> : null}
       </div>
     </motion.section>
   );

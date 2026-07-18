@@ -12,6 +12,7 @@ export function RecipientSearch({
   error,
   filteredRecipients,
   showRecentLabel,
+  isSearchingUsername,
   onQueryChange,
   onSearchSubmit,
   onSelectRecipient,
@@ -20,6 +21,7 @@ export function RecipientSearch({
   error: string | null;
   filteredRecipients: Recipient[];
   showRecentLabel: boolean;
+  isSearchingUsername: boolean;
   onQueryChange: (value: string) => void;
   onSearchSubmit: () => void;
   onSelectRecipient: (recipient: Recipient) => void;
@@ -49,6 +51,16 @@ export function RecipientSearch({
           aria-describedby={error ? "recipient-search-error" : undefined}
           className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-[#8E8E93] focus:outline-none"
         />
+        {query ? (
+          <button
+            type="button"
+            onClick={() => onQueryChange("")}
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#9A9AA2] transition-colors hover:bg-white/5 hover:text-white focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
+            aria-label="Clear recipient search"
+          >
+            <AppIcon icon="lucide:x" aria-hidden="true" width={18} height={18} />
+          </button>
+        ) : null}
       </div>
       {error ? (
         <p id="recipient-search-error" className="mt-2 text-xs font-semibold text-red-200">
@@ -64,7 +76,19 @@ export function RecipientSearch({
           </span>
         </div>
 
-        {filteredRecipients.length > 0 ? (
+        {isSearchingUsername ? (
+          <div className="mt-3 space-y-2 rounded-[28px] bg-[#1C1C1E] p-3" aria-busy="true" aria-label="Searching username">
+            {[1, 2].map((item) => (
+              <div key={item} className="flex min-h-[68px] items-center gap-3 rounded-2xl bg-white/[0.03] p-3">
+                <span className="h-11 w-11 animate-pulse rounded-full bg-white/10" />
+                <span className="flex-1 space-y-2">
+                  <span className="block h-3 w-2/5 animate-pulse rounded bg-white/10" />
+                  <span className="block h-2.5 w-3/5 animate-pulse rounded bg-white/10" />
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : filteredRecipients.length > 0 ? (
           <div className="mt-3 overflow-hidden rounded-[28px] bg-[#1C1C1E]">
             {filteredRecipients.map((recipient, index) => (
               <div

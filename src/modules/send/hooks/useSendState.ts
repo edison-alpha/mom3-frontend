@@ -253,6 +253,7 @@ export function useSendState(
     selectedTokenIsPrefilled,
     filteredRecipients,
     showRecentLabel,
+    isSearchingUsername: usernameQuery.isFetching && !usernameRecipient,
     canSend,
     // actions
     resetCompose,

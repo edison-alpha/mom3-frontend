@@ -177,6 +177,7 @@ export default function SendView() {
           error={state.error}
           filteredRecipients={state.filteredRecipients}
           showRecentLabel={state.showRecentLabel}
+          isSearchingUsername={state.isSearchingUsername}
           onQueryChange={(value) => {
             state.setQuery(value);
             state.setError(null);

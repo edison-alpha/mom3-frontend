@@ -27,10 +27,12 @@ export function useParticleTrade() {
   const [transaction, setTransaction] = React.useState<ITransaction | null>(null);
   const submitInFlightRef = React.useRef(false);
   const lastRequestRef = React.useRef<ConvertRequest | null>(null);
+  const prepareRequestRef = React.useRef(0);
 
   const prepare = React.useCallback(
     async (request: ConvertRequest) => {
       lastRequestRef.current = request;
+      const requestId = ++prepareRequestRef.current;
       if (!universalAccount) {
         setError("Your Universal Account is not ready. Reconnect and try again.");
         setStatus("error");
@@ -54,6 +56,7 @@ export function useParticleTrade() {
           },
           chainId: request.chainId,
         });
+        if (requestId !== prepareRequestRef.current) return null;
         const nextTransaction = structuredClone(particleTransaction);
 
         if (
@@ -69,8 +72,10 @@ export function useParticleTrade() {
         setStatus("idle");
         return nextTransaction;
       } catch (cause) {
-        setError(getSendErrorMessage(cause));
-        setStatus("error");
+        if (requestId === prepareRequestRef.current) {
+          setError(getSendErrorMessage(cause));
+          setStatus("error");
+        }
         return null;
       }
     },
@@ -95,13 +100,12 @@ export function useParticleTrade() {
         const nextTransactionId = result.transactionId ?? preparedTransaction.transactionId;
         setTransactionId(nextTransactionId);
         setStatus("success");
-        await refreshAccount();
+        void refreshAccount();
         return nextTransactionId;
       } catch (cause) {
         if (isRetryableParticleTransactionError(cause) && lastRequestRef.current) {
           setTransaction(null);
           setError(null);
-          await refreshAccount();
           await prepare(lastRequestRef.current);
         } else {
           setError(getSendErrorMessage(cause));
@@ -116,6 +120,10 @@ export function useParticleTrade() {
   );
 
   const reset = React.useCallback(() => {
+    // Invalidate any quote request that is still resolving. Without this,
+    // pressing reset while Particle is preparing can restore the old quote.
+    prepareRequestRef.current += 1;
+    lastRequestRef.current = null;
     setStatus("idle");
     setError(null);
     setTransactionId(null);

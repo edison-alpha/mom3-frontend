@@ -146,12 +146,6 @@ export default function MarketDetailView({
               universalAssetBalance={universalAssetBalance}
               onRefresh={refreshAll}
             />
-          ) : market.category === "Yield" ? (
-            <section className="mt-3 rounded-[22px] border border-white/10 bg-[#111217] p-3.5">
-              <Typography as="h2" variant="h4">Deposit and withdraw</Typography>
-              <Typography variant="body-sm" color="muted" className="mt-1.5">This live pool remains available for analysis, but no verified execution adapter is available for its exact contract yet.</Typography>
-              <Button type="button" color="dark" size="lg" rounded="full" fullWidth className="mt-3" isDisabled label="Execution unavailable" startIcon="lucide:shield-alert" />
-            </section>
           ) : null}
 
           {hasApyChart || hasTvlChart ? (

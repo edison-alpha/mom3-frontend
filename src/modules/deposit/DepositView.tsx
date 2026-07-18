@@ -91,13 +91,13 @@ export default function DepositView() {
     <MobileShell>
       <MobilePageHeader title="Deposit" backHref="/dashboard" backLabel="Back to dashboard" />
 
-      <section className="mt-5 space-y-5">
+      <section className="mt-4 space-y-4 pb-2">
         <div>
           <Typography as="h2" variant="h1" balance>
-            Fund one balance from any supported chain.
+            Add funds to your balance.
           </Typography>
           <Typography variant="body-sm" color="muted" className="mt-2">
-            Your wallet keeps the same identity across networks. Choose the network and asset before sending.
+            Choose a network and token, then send it to the address below.
           </Typography>
         </div>
 
@@ -119,6 +119,7 @@ export default function DepositView() {
                   aria-pressed={isSelected}
                   startIcon={<AppIcon icon={network.icon} width={20} height={20} aria-hidden="true" />}
                   label={network.shortName}
+                  className="shrink-0"
                   onClick={() => setSelectedChainId(network.chainId)}
                 />
               );
@@ -192,10 +193,10 @@ export default function DepositView() {
 
           {depositAddress ? (
             <>
-              <div className="mx-auto mt-5 w-fit rounded-3xl bg-white p-3">
+              <div className="mx-auto mt-4 w-fit max-w-full rounded-3xl bg-white p-2.5">
                 <QRCodeSVG
                   value={depositAddress}
-                  size={176}
+                  size={156}
                   level="M"
                   marginSize={1}
                   title={`${selectedNetwork.name} deposit address`}
@@ -228,7 +229,7 @@ export default function DepositView() {
           <div className="mt-4 flex gap-3 rounded-2xl bg-amber-400/10 p-3 text-amber-100">
             <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <Typography variant="caption" color="inherit">
-              Send only {selectedAsset.symbol} using {selectedNetwork.name}. Choosing another network can make the deposit unavailable.
+              Send only {selectedAsset.symbol} on {selectedNetwork.name} to avoid losing the deposit.
             </Typography>
           </div>
         </div>
@@ -278,7 +279,7 @@ export default function DepositView() {
             One balance, three actions
           </Typography>
           <Typography variant="body-sm" color="muted" className="mt-1">
-            Deposited assets become available to send or convert from your wallet.
+            Use your balance to send or convert.
           </Typography>
           <div className="mt-4 grid grid-cols-2 gap-2">
             <Link

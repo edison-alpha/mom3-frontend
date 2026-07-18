@@ -1,4 +1,4 @@
-import { Skeleton, SkeletonCircle, SkeletonText } from "@/components/ui/skeleton";
+import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 
 export function MarketDetailSkeleton() {
   return (
@@ -55,19 +55,7 @@ export function MarketDetailSkeleton() {
         </div>
       </section>
 
-      <section className="mt-3 rounded-[22px] border border-white/10 bg-[#111217] p-3.5">
-        <div className="flex items-center gap-3">
-          <SkeletonCircle className="h-9 w-9" />
-          <div className="flex-1 space-y-2">
-            <SkeletonText className="h-4 w-32" />
-            <SkeletonText className="h-3 w-48" />
-          </div>
-        </div>
-        <Skeleton className="mt-4 h-12 w-full rounded-xl" />
-        <Skeleton className="mt-3 h-12 w-full rounded-full" />
-      </section>
-
-      <span className="sr-only">Fetching live APY, TVL, risk, and transaction availability</span>
+      <span className="sr-only">Fetching live APY, TVL, risk, and market analysis</span>
     </div>
   );
 }

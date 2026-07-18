@@ -110,7 +110,7 @@ export default function ConvertView() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <Typography variant="label" color="muted">From</Typography>
-              <Typography as="p" variant="h3" className="mt-1">Your universal balance</Typography>
+            <Typography as="p" variant="h3" className="mt-1">Universal balance</Typography>
             </div>
             <AppIcon icon="solar:wallet-money-bold" className="h-6 w-6 text-[#ccff00]" aria-hidden="true" />
           </div>
@@ -118,15 +118,15 @@ export default function ConvertView() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <Typography variant="label" color="muted">To</Typography>
-              <Typography as="p" variant="h3" className="mt-1">{selectedAsset?.name ?? "Supported token"}</Typography>
+            <Typography as="p" variant="h3" className="mt-1">{selectedAsset?.name ?? "Token"}</Typography>
             </div>
             <span className="rounded-full bg-[#3B33BD]/20 px-3 py-1.5 text-sm font-black text-[#8F89FF]">{selectedAsset?.symbol ?? "—"}</span>
           </div>
         </div>
 
         <fieldset className="space-y-2">
-          <Typography as="legend" variant="label" color="muted">Network</Typography>
-          <div className="grid grid-cols-3 gap-2">
+          <Typography as="legend" variant="label" color="muted">Receive on</Typography>
+          <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {targetNetworks.map((network) => {
               const isSelected = network.chainId === targetChainId;
 
@@ -140,7 +140,7 @@ export default function ConvertView() {
                   aria-pressed={isSelected}
                   startIcon={<AppIcon icon={network.icon} width={18} height={18} aria-hidden="true" />}
                   label={network.label}
-                  className="w-full px-2"
+                  className="w-auto shrink-0 px-3"
                   onClick={() => {
                     setTargetChainId(network.chainId);
                     trade.reset();
@@ -152,7 +152,7 @@ export default function ConvertView() {
         </fieldset>
 
         <fieldset className="space-y-2">
-          <Typography as="legend" variant="label" color="muted">Receive token</Typography>
+          <Typography as="legend" variant="label" color="muted">Token</Typography>
           <div className="grid grid-cols-2 gap-2">
             {targetAssets.map((asset) => {
               const isSelected = asset.type === selectedAsset?.type;
@@ -209,7 +209,7 @@ export default function ConvertView() {
           <Typography id="convert-amount-help" variant="caption" color={amount.length > 0 && !amountIsValid ? "danger" : "muted"} className="mt-3 block">
             {amount.length > 0 && !amountIsValid
               ? "Enter an amount greater than zero."
-              : `You will receive the requested amount on ${selectedNetwork.label}; fees and source assets appear in the preview.`}
+              : `Fees and source assets appear after preview.`}
           </Typography>
         </div>
 
@@ -274,7 +274,7 @@ export default function ConvertView() {
           </div>
         ) : null}
 
-        <div className="mt-auto pt-3">
+        <div className="mt-4 pt-1">
           {trade.transaction ? (
             <Button
               type="button"

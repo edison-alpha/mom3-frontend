@@ -44,10 +44,10 @@ export function ProfileHeroCard({
           className="mx-auto shadow-[0_14px_34px_-14px_rgba(59,51,189,0.9)] ring-4 ring-black/25"
         />
         </div>
-        <div className="mt-3 flex min-h-7 items-center justify-center gap-1.5">
+        <div className="mt-3 flex min-h-7 items-center justify-center gap-1.5" aria-label="Username">
           {isUsernameLoading ? <span className="h-5 w-24 animate-pulse rounded bg-white/10" aria-label="Loading username" /> : null}
           {username ? <>
-            <h2 className="text-xl font-black tracking-tight text-white">{username}</h2>
+            <h2 className="block max-w-full truncate text-xl font-black tracking-tight text-white">{username}</h2>
             <AppIcon
               icon="material-symbols:verified-rounded"
               aria-hidden="true"

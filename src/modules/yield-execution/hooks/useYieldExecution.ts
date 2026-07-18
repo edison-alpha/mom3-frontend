@@ -120,7 +120,7 @@ export function useYieldExecution(action: YieldAction) {
           return syncHistory(account, transactions);
         }).catch(() => undefined);
       }
-      await refreshAccount();
+      void refreshAccount();
       return id;
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : `We couldn't submit this ${action}.`);

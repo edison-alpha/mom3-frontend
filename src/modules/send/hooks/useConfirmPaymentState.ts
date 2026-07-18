@@ -49,6 +49,7 @@ export function useConfirmPaymentState() {
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const submitInFlightRef = React.useRef(false);
+  const prepareRequestRef = React.useRef(0);
 
   const tokenRows = React.useMemo(
     () => normalizePrimaryAssetTokens(primaryAssets),
@@ -75,11 +76,15 @@ export function useConfirmPaymentState() {
 
   React.useEffect(() => {
     let cancelled = false;
-    if (to.trim().startsWith("@") && selectedToken) {
+    const isUsernameLookup = to.trim().startsWith("@");
+    if (isUsernameLookup && selectedToken) {
       void resolveUsername(to.trim(), selectedToken.chainId).then((identity) => {
         const chainAddress = identity.addresses?.[String(selectedToken.chainId)] || identity.address;
         if (!cancelled && chainAddress) setRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: chainAddress, network: selectedToken.chainName, status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]", avatarUrl: identity.avatar_url });
       }).catch(() => { if (!cancelled) setError("Username was not found on the selected chain."); });
+    }
+    if (isUsernameLookup) {
+      return () => { cancelled = true; };
     }
     void getRecentRecipients(accountInfo.ownerAddress)
       .catch(() => [])
@@ -110,6 +115,10 @@ export function useConfirmPaymentState() {
       return;
     }
 
+    const requestId = ++prepareRequestRef.current;
+    const requestRecipient = recipient;
+    const requestToken = selectedToken;
+    const requestAmount = amount.trim();
     setError(null);
     setNotice(null);
     setSendStatus("preparing");
@@ -117,12 +126,13 @@ export function useConfirmPaymentState() {
     try {
       const particleTransaction = await universalAccount.createTransferTransaction({
         token: {
-          chainId: selectedToken.chainId,
-          address: selectedToken.tokenAddress,
+          chainId: requestToken.chainId,
+          address: requestToken.tokenAddress,
         },
-        amount: amount.trim(),
-        receiver: recipient.address,
+        amount: requestAmount,
+        receiver: requestRecipient.address,
       });
+      if (requestId !== prepareRequestRef.current) return;
       // Preserve Particle's exact quote. The SDK already includes the final
       // UserOperation, fee route, and root hash for direct transfers.
       const transaction = structuredClone(particleTransaction);
@@ -133,16 +143,16 @@ export function useConfirmPaymentState() {
 
       setSendPreview({
         transaction,
-        amount: amount.trim(),
-        token: selectedToken,
-        recipient,
+        amount: requestAmount,
+        token: requestToken,
+        recipient: requestRecipient,
       });
     } catch (cause) {
-      if (!isUserRejectedError(cause)) {
+      if (requestId === prepareRequestRef.current && !isUserRejectedError(cause)) {
         setError(getSendErrorMessage(cause));
       }
     } finally {
-      setSendStatus("idle");
+      if (requestId === prepareRequestRef.current) setSendStatus("idle");
     }
   }, [
     universalAccount,
@@ -194,11 +204,10 @@ export function useConfirmPaymentState() {
           return syncHistory(account, transactions);
         }).catch(() => undefined);
       }
-      await refreshAccount();
+      void refreshAccount();
     } catch (cause) {
       if (isRetryableParticleTransactionError(cause)) {
         setSendPreview(null);
-        await refreshAccount();
         await prepareTransaction();
         setError(null);
         setNotice("Transaction details have been refreshed. Please review them before confirming.");

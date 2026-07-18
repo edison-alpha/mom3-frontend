@@ -54,6 +54,28 @@ export function useSendState(
     onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["recipients", "recent", accountInfo.ownerAddress || null] }); },
   });
   const recentRecipients = recentRecipientsQuery.data || [];
+  const usernameSearch = query.trim().replace(/^@/, "").toLowerCase();
+  const usernameQuery = useQuery({
+    queryKey: ["username", "search", usernameSearch, Number(initialChain) || DEFAULT_CHAIN_ID],
+    queryFn: () => resolveUsername(usernameSearch, Number(initialChain) || DEFAULT_CHAIN_ID),
+    enabled: /^[a-z0-9_]{3,20}$/.test(usernameSearch),
+    staleTime: 60_000,
+    retry: false,
+  });
+  const usernameRecipient = React.useMemo(() => {
+    const identity = usernameQuery.data;
+    if (!identity?.address) return null;
+    return {
+      id: identity.username,
+      handle: identity.username,
+      name: "mom3 user",
+      address: identity.address,
+      network: initialChain || "Universal",
+      status: "Verified" as const,
+      color: "from-[#3B33BD] to-[#7E78EA]",
+      avatarUrl: identity.avatar_url,
+    };
+  }, [initialChain, usernameQuery.data]);
 
   /* â”€â”€ Derived token rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -120,11 +142,12 @@ export function useSendState(
     );
     const filtered = combined.filter((recipient) => matchesRecipient(recipient, query));
 
+    if (usernameRecipient) return [usernameRecipient, ...filtered.filter((item) => item.address !== usernameRecipient.address)];
     if (filtered.length > 0) return filtered;
 
     const resolved = resolveRecipient(query, recentRecipients);
     return resolved ? [resolved] : [];
-  }, [query, recentRecipients]);
+  }, [query, recentRecipients, usernameRecipient]);
 
   const showRecentLabel = !query.trim() && recentRecipients.length > 0;
 
@@ -182,24 +205,7 @@ export function useSendState(
       selectRecipient(resolved);
       return;
     }
-    if (query.trim().startsWith("@")) {
-      try {
-        const username = query.trim();
-        const chainId = Number(initialChain) || DEFAULT_CHAIN_ID;
-        const identity = await queryClient.fetchQuery({
-          queryKey: ["username", "resolve", username.toLowerCase(), chainId],
-          queryFn: () => resolveUsername(username, chainId),
-          staleTime: 60_000,
-        });
-        if (identity.address) {
-          selectRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: initialChain || "Universal", status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]", avatarUrl: identity.avatar_url });
-          return;
-        }
-      } catch (cause) {
-        setError(cause instanceof Error ? cause.message : "Username was not found.");
-        return;
-      }
-    }
+    if (usernameRecipient) return;
     if (!resolved) {
       setError("Recipient not found. Enter a valid mom3 tag or wallet address.");
     }

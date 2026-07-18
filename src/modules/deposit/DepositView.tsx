@@ -76,7 +76,20 @@ export default function DepositView() {
     if (!depositAddress) return;
 
     try {
-      await navigator.clipboard.writeText(depositAddress);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(depositAddress);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = depositAddress;
+        textarea.setAttribute("readonly", "");
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        const copied = document.execCommand("copy");
+        textarea.remove();
+        if (!copied) throw new Error("Clipboard unavailable");
+      }
       setCopyState("copied");
     } catch {
       setCopyState("error");
@@ -88,7 +101,7 @@ export default function DepositView() {
   }
 
   return (
-    <MobileShell>
+    <MobileShell className="overflow-x-hidden">
       <MobilePageHeader title="Deposit" backHref="/dashboard" backLabel="Back to dashboard" />
 
       <section className="mt-4 space-y-4 pb-2">
@@ -105,7 +118,7 @@ export default function DepositView() {
           <Typography as="legend" variant="label" color="muted">
             Deposit network
           </Typography>
-          <div className="-mx-5 flex gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="-mx-5 flex min-w-0 max-w-[calc(100%+2.5rem)] gap-2 overflow-x-auto px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {depositNetworks.map((network) => {
               const isSelected = network.chainId === selectedChainId;
 
@@ -193,7 +206,7 @@ export default function DepositView() {
 
           {depositAddress ? (
             <>
-              <div className="mx-auto mt-4 w-fit max-w-full rounded-3xl bg-white p-2.5">
+              <div className="mx-auto mt-4 w-fit max-w-full overflow-hidden rounded-3xl bg-white p-2.5">
                 <QRCodeSVG
                   value={depositAddress}
                   size={156}

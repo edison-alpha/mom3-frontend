@@ -334,8 +334,16 @@ export function getSendErrorMessage(cause: unknown) {
   ) {
     return "Gas sponsorship is temporarily unavailable. No funds were moved. Please try again later.";
   }
-  if (normalized.includes("insufficient")) {
-    return "Insufficient balance to cover the amount and transaction fees.";
+  if (
+    normalized.includes("insufficient") ||
+    normalized.includes("insufficient balance") ||
+    normalized.includes("cover the fee") ||
+    normalized.includes("-32676")
+  ) {
+    const feeShortfall = message.match(/need(?:ed)?\s+\$([0-9]+(?:\.[0-9]+)?)\s+more/i);
+    return feeShortfall
+      ? `Insufficient balance to cover the network fee. You need $${feeShortfall[1]} more in the fee token.`
+      : "Insufficient balance to cover the amount and network fee.";
   }
   if (normalized.includes("blockhash")) {
     return "The network state changed before submission. Review the refreshed quote and try again.";

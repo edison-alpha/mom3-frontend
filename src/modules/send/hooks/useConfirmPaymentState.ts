@@ -49,6 +49,7 @@ export function useConfirmPaymentState() {
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
   const submitInFlightRef = React.useRef(false);
+  const prepareInFlightRef = React.useRef(false);
   const prepareRequestRef = React.useRef(0);
 
   const tokenRows = React.useMemo(
@@ -100,6 +101,9 @@ export function useConfirmPaymentState() {
 
   const prepareTransaction = React.useCallback(async () => {
     if (!universalAccount || !recipient || !selectedToken) return;
+    // The confirm page auto-prepares on mount. React may replay effects in
+    // development, but a Particle quote is still a remote single-use request.
+    if (prepareInFlightRef.current) return;
 
     if (!isRecipientValidForToken(recipient, selectedToken)) {
       setError(
@@ -119,6 +123,7 @@ export function useConfirmPaymentState() {
     const requestRecipient = recipient;
     const requestToken = selectedToken;
     const requestAmount = amount.trim();
+    prepareInFlightRef.current = true;
     setError(null);
     setNotice(null);
     setSendStatus("preparing");
@@ -152,6 +157,7 @@ export function useConfirmPaymentState() {
         setError(getSendErrorMessage(cause));
       }
     } finally {
+      prepareInFlightRef.current = false;
       if (requestId === prepareRequestRef.current) setSendStatus("idle");
     }
   }, [
@@ -208,6 +214,8 @@ export function useConfirmPaymentState() {
     } catch (cause) {
       if (isRetryableParticleTransactionError(cause)) {
         setSendPreview(null);
+        // Never prepare a replacement quote from a stale balance snapshot.
+        await refreshAccount();
         await prepareTransaction();
         setError(null);
         setNotice("Transaction details have been refreshed. Please review them before confirming.");
@@ -242,7 +250,10 @@ export function useConfirmPaymentState() {
   const handleRetry = async () => {
     setError(null);
     setNotice(null);
-    if (!sendPreview) await prepareTransaction();
+    // Every re-entry gets a fresh balance and a fresh single-use quote.
+    setSendPreview(null);
+    await refreshAccount();
+    await prepareTransaction();
   };
 
   const isReady = Boolean(recipient && selectedToken && !isLoading && !amountValidationMessage);

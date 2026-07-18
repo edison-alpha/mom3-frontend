@@ -295,14 +295,14 @@ export function useRefreshAccount(ownerAddress?: string) {
   const queryClient = useQueryClient();
 
   return async () => {
-    // Account refresh is deliberately background-only. Waiting for balances
-    // while a quote is being retried can cause the next quote to race with a
-    // snapshot refetch and make an otherwise valid UserOperation stale.
+    // A retry must not prepare a quote against the previous balance snapshot.
+    // Invalidate first, then await the active refetch before the caller creates
+    // another UserOperation.
     await queryClient.invalidateQueries({
       queryKey: universalAccountQueryKeys.snapshot(ownerAddress),
       refetchType: "none",
     });
-    void queryClient.refetchQueries({
+    await queryClient.refetchQueries({
       queryKey: universalAccountQueryKeys.snapshot(ownerAddress),
       type: "active",
     });

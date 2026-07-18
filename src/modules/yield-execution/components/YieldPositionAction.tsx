@@ -393,7 +393,7 @@ export function YieldPositionAction({
         {transaction ? (
           <div className="mt-auto pt-6">
             {active.error ? <p className="mb-3 text-center text-xs font-semibold text-red-200" role="alert">{active.error}</p> : null}
-            <Button type="submit" color="warning" size="lg" rounded="full" fullWidth label={`Confirm ${actionLabel.toLowerCase()}`} startIcon="solar:check-circle-bold" isLoading={active.isSigning} isDisabled={!validAmount} aria-busy={active.isSigning} />
+            <Button type="submit" color="warning" size="lg" rounded="full" fullWidth label={`Confirm ${actionLabel.toLowerCase()}`} startIcon="solar:check-circle-bold" isLoading={active.isSigning} isDisabled={!validAmount || active.isSigning} aria-busy={active.isSigning} />
           </div>
         ) : null}
       </form>

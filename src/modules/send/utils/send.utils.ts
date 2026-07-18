@@ -15,6 +15,7 @@ import {
   formatUsd,
   formatUsdValue,
   parseDecimalish,
+  parseUsdDecimalish,
 } from "@/lib/format";
 import { chainNameFromId, tokenIcon } from "@/lib/chain";
 import { getActiveFeeQuote } from "@/providers/universal-account/utils/gas-sponsorship.utils";
@@ -68,7 +69,7 @@ export function normalizePrimaryAssetTokens(
           entry.amount,
           Number(entry.token.realDecimals ?? entry.token.decimals ?? 18),
         ),
-        amountInUSD: parseDecimalish(entry.amountInUSD),
+        amountInUSD: parseUsdDecimalish(entry.amountInUSD),
         icon: tokenIcon(tokenSymbol),
         chainName: chainNameFromId(chainId),
         chainId,
@@ -119,7 +120,7 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
         ? "Sponsored by mom3"
         : formatUsdValue(totals.gasFeeTokenAmountInUSD),
       originalValue:
-        feeQuote.fees.freeGasFee && parseDecimalish(originalGasFee) > 0
+        feeQuote.fees.freeGasFee && parseUsdDecimalish(originalGasFee) > 0
           ? formatUsdValue(originalGasFee)
           : undefined,
     },
@@ -136,11 +137,11 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
   ];
 
   const solanaRentFee = totals.solanaRentFeeInUSD ?? totals.solanaRentFeeAmountInUSD;
-  if (parseDecimalish(solanaRentFee) > 0) {
+  if (parseUsdDecimalish(solanaRentFee) > 0) {
     rows.push({ label: "Solana rent", value: formatUsdValue(solanaRentFee) });
   }
 
-  if (parseDecimalish(totals.solanaMevTipFeeInUSD) > 0) {
+  if (parseUsdDecimalish(totals.solanaMevTipFeeInUSD) > 0) {
     rows.push({ label: "Solana MEV tip", value: formatUsdValue(totals.solanaMevTipFeeInUSD) });
   }
 

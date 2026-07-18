@@ -12,6 +12,7 @@ import {
   loadUniversalAccountSnapshot,
 } from "@/providers/universal-account/utils/universal-account.utils";
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
+import { isTransactionQuoteExpired } from "@/modules/send/utils/send.utils";
 
 type Eip7702Deployment = {
   chainId?: number;
@@ -170,6 +171,10 @@ export function useSignAndSend(
     // Normalize the transaction according to the configured gas mode. In
     // user-paid mode this preserves Particle's default UserOperation.
     const transactionForSubmit = prepareSponsoredTransaction(transaction);
+
+    if (isTransactionQuoteExpired(transactionForSubmit)) {
+      throw new Error("This Particle quote expired before signing. Request a fresh quote and try again.");
+    }
 
     if (
       !transactionForSubmit.transactionId ||

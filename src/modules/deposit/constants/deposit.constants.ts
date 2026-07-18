@@ -65,9 +65,8 @@ export function getDepositAssetsForChain(chainId: number) {
   return depositAssets.filter((asset) => asset.chainId === chainId);
 }
 
-// Convert is intentionally limited to networks where Particle supports both
-// Universal Account v2 and a USDC destination asset. This prevents showing a
-// network that the SDK can execute on but cannot quote for this conversion.
+// Convert can target any primary asset exposed by the installed Particle SDK.
+// Keep only chains with at least one concrete SDK asset.
 export const convertNetworks: DepositNetwork[] = depositNetworks.filter((network) =>
-  getDepositAssetsForChain(network.chainId).some((asset) => asset.symbol === "USDC"),
+  getDepositAssetsForChain(network.chainId).length > 0,
 );

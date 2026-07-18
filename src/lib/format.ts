@@ -24,7 +24,9 @@ export function formatUsd(value: number): string {
   }).format(value);
 }
 
-export function parseDecimalish(value: string | number | bigint | null | undefined, decimals = 18) {
+export type Decimalish = string | number | bigint | null | undefined;
+
+export function parseDecimalish(value: Decimalish, decimals = 18) {
   if (value === null || value === undefined || value === "") return 0;
 
   if (typeof value === "bigint") {
@@ -60,6 +62,23 @@ export function parseDecimalish(value: string | number | bigint | null | undefin
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
-export function formatUsdValue(value: string | number | null | undefined): string {
-  return formatUsd(parseDecimalish(value));
+export function formatUsdValue(value: Decimalish): string {
+  return formatUsd(parseUsdDecimalish(value));
+}
+
+/** Normalize Particle USD fields without treating decimal strings as raw token units. */
+export function parseUsdDecimalish(value: Decimalish): number {
+  if (value === null || value === undefined || value === "") return 0;
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "bigint") {
+    try { return Number(formatUnits(value, 18)); } catch { return 0; }
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+  if (/^0x[0-9a-fA-F]+$/.test(trimmed)) {
+    try { return Number(formatUnits(BigInt(trimmed), 18)); } catch { return 0; }
+  }
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : 0;
 }

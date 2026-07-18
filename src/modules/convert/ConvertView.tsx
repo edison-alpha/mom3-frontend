@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CheckCircle, ExternalLink } from "lucide-react";
+import { SUPPORTED_TOKEN_TYPE } from "@particle-network/universal-account-sdk";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ import { formatUsd } from "@/lib/format";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { useUniversalTransactionStatus } from "@/providers/universal-account/hooks/useUniversalTransactionStatus";
 import { useParticleTrade } from "./hooks/useParticleTrade";
-import { convertNetworks } from "@/modules/deposit/constants/deposit.constants";
+import { convertNetworks, getDepositAssetsForChain } from "@/modules/deposit/constants/deposit.constants";
 
 const targetNetworks = convertNetworks
   .map((network) => ({ chainId: network.chainId, label: network.shortName, icon: network.icon }));
@@ -28,17 +29,21 @@ export default function ConvertView() {
   const transactionStatus = useUniversalTransactionStatus(trade.transactionId);
   const [amount, setAmount] = React.useState("");
   const [targetChainId, setTargetChainId] = React.useState<number>(targetNetworks[0]?.chainId ?? 101);
+  const [targetTokenType, setTargetTokenType] = React.useState<SUPPORTED_TOKEN_TYPE>(SUPPORTED_TOKEN_TYPE.USDC);
   const numericAmount = Number(amount);
   const amountIsValid = Number.isFinite(numericAmount) && numericAmount > 0;
   const unifiedBalance = Number(primaryAssets?.totalAmountInUSD ?? 0);
   const selectedNetwork = targetNetworks.find((network) => network.chainId === targetChainId)!;
+  const targetAssets = getDepositAssetsForChain(targetChainId);
+  const selectedAsset = targetAssets.find((asset) => asset.type === targetTokenType) ?? targetAssets[0];
   const fundingRows = getFundingRows(trade.transaction);
   const feeRows = getFeeBreakdownRows(trade.transaction);
 
   const handlePrepare = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!amountIsValid || isAccountLoading) return;
-    await trade.prepare({ chainId: targetChainId, amount });
+    if (!selectedAsset) return;
+    await trade.prepare({ chainId: targetChainId, amount, tokenType: selectedAsset.type as SUPPORTED_TOKEN_TYPE });
   };
 
   if (trade.status === "success" && trade.transactionId) {
@@ -56,10 +61,10 @@ export default function ConvertView() {
           </Typography>
           <Typography variant="body-sm" color="muted" className="mt-2 max-w-xs">
             {transactionStatus.state === "completed"
-              ? `${amount} USDC is now confirmed on ${selectedNetwork.label}.`
+              ? `${amount} ${selectedAsset?.symbol ?? "token"} is now confirmed on ${selectedNetwork.label}.`
               : transactionStatus.state === "failed"
                 ? "The conversion could not be completed. Open activity details for more information."
-                : `Your assets are being converted into ${amount} USDC on ${selectedNetwork.label}.`}
+                : `Your assets are being converted into ${amount} ${selectedAsset?.symbol ?? "token"} on ${selectedNetwork.label}.`}
           </Typography>
           <span className="mt-4 rounded-full bg-white/[0.08] px-3 py-1 text-xs font-bold text-white" aria-live="polite">
             {transactionStatus.state === "completed"
@@ -112,9 +117,9 @@ export default function ConvertView() {
           <div className="flex items-center justify-between gap-3">
             <div>
               <Typography variant="label" color="muted">To</Typography>
-              <Typography as="p" variant="h3" className="mt-1">USDC</Typography>
+              <Typography as="p" variant="h3" className="mt-1">{selectedAsset?.name ?? "Supported token"}</Typography>
             </div>
-            <span className="rounded-full bg-[#3B33BD]/20 px-3 py-1.5 text-sm font-black text-[#8F89FF]">USDC</span>
+            <span className="rounded-full bg-[#3B33BD]/20 px-3 py-1.5 text-sm font-black text-[#8F89FF]">{selectedAsset?.symbol ?? "—"}</span>
           </div>
         </div>
 
@@ -145,10 +150,36 @@ export default function ConvertView() {
           </div>
         </fieldset>
 
+        <fieldset className="space-y-2">
+          <Typography as="legend" variant="label" color="muted">Receive token</Typography>
+          <div className="grid grid-cols-2 gap-2">
+            {targetAssets.map((asset) => {
+              const isSelected = asset.type === selectedAsset?.type;
+              return (
+                <Button
+                  key={asset.id}
+                  type="button"
+                  variant={isSelected ? "lime" : "dark"}
+                  size="lg"
+                  rounded="lg"
+                  aria-pressed={isSelected}
+                  startIcon={<AppIcon icon={asset.icon} width={18} height={18} aria-hidden="true" />}
+                  label={asset.symbol}
+                  className="w-full px-2"
+                  onClick={() => {
+                    setTargetTokenType(asset.type as SUPPORTED_TOKEN_TYPE);
+                    trade.reset();
+                  }}
+                />
+              );
+            })}
+          </div>
+        </fieldset>
+
         <div className="rounded-[28px] bg-[#111217] p-5">
           <div className="flex items-center justify-between gap-3">
             <label htmlFor="convert-amount" className="text-xs font-black uppercase tracking-[0.08em] text-[#9A9AA2]">
-              USDC to receive
+              {selectedAsset?.symbol ?? "Token"} to receive
             </label>
             <Typography variant="caption" color="muted">
               Balance {formatUsd(unifiedBalance)}
@@ -171,7 +202,7 @@ export default function ConvertView() {
               className="min-w-0 flex-1 bg-transparent font-mono text-4xl font-black tabular-nums text-white outline-none placeholder:text-[#66666D] focus-visible:ring-0"
             />
             <span className="rounded-full bg-[#3B33BD]/20 px-3 py-1.5 text-sm font-black text-[#8F89FF]">
-              USDC
+              {selectedAsset?.symbol ?? "—"}
             </span>
           </div>
           <Typography id="convert-amount-help" variant="caption" color={amount.length > 0 && !amountIsValid ? "danger" : "muted"} className="mt-3 block">
@@ -230,7 +261,7 @@ export default function ConvertView() {
             <div className="flex items-center justify-between rounded-2xl bg-black/25 p-3">
               <span className="text-sm font-bold text-[#A7A7B7]">You receive</span>
               <span className="font-mono text-sm font-black tabular-nums text-white">
-                {amount} USDC · {selectedNetwork.label}
+                {amount} {selectedAsset?.symbol ?? "token"} · {selectedNetwork.label}
               </span>
             </div>
           </div>

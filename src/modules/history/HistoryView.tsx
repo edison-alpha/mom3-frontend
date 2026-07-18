@@ -26,26 +26,26 @@ export default function HistoryView() {
 
   // Real on-chain transactions replace the mock "me" list.
   const myHistoryItems: RealHistoryItem[] = realItems;
-  const networkOptions = React.useMemo(
-    () => ["all", ...Array.from(new Set(myHistoryItems.map((item) => item.network)))],
+  const typeOptions = React.useMemo(
+    () => ["all", ...Array.from(new Set(myHistoryItems.map((item) => item.action || item.activityType || "transaction")))],
     [myHistoryItems],
   );
-  const networkParam = searchParams.get("network") ?? "all";
-  const selectedNetwork = networkOptions.includes(networkParam) ? networkParam : "all";
+  const typeParam = searchParams.get("type") ?? "all";
+  const selectedType = typeOptions.includes(typeParam) ? typeParam : "all";
   const activeItems = React.useMemo(
     () =>
-      selectedNetwork === "all"
+      selectedType === "all"
         ? myHistoryItems
-        : myHistoryItems.filter((item) => item.network === selectedNetwork),
-    [myHistoryItems, selectedNetwork],
+        : myHistoryItems.filter((item) => (item.action || item.activityType || "transaction") === selectedType),
+    [myHistoryItems, selectedType],
   );
 
-  const selectNetwork = (network: string) => {
+  const selectType = (type: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    if (network === "all") {
-      params.delete("network");
+    if (type === "all") {
+      params.delete("type");
     } else {
-      params.set("network", network);
+      params.set("type", type);
     }
 
     const query = params.toString();
@@ -53,8 +53,8 @@ export default function HistoryView() {
     setFilterSheetOpen(false);
   };
 
-  const selectedNetworkLabel =
-    selectedNetwork === "all" ? "Semua" : selectedNetwork;
+  const typeLabels: Record<string, string> = { all: "Semua", receive: "Deposit", send: "Send", supply: "Yield", withdraw: "Withdraw", convert: "Convert", fee: "Fee", transaction: "Transaction" };
+  const selectedTypeLabel = typeLabels[selectedType] || selectedType;
 
   const networkHeaderAction = (
     <Button
@@ -65,7 +65,7 @@ export default function HistoryView() {
       rounded="full"
       startIcon="solar:global-bold"
       className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1C1C1E] text-white transition-colors hover:bg-[#262628] focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-      aria-label="Filter by network"
+      aria-label="Filter by activity type"
       aria-expanded={filterSheetOpen}
       aria-haspopup="dialog"
     />
@@ -99,7 +99,7 @@ export default function HistoryView() {
             aria-haspopup="dialog"
           >
             <span className="truncate text-xs font-black">
-              {selectedNetworkLabel}
+              {selectedTypeLabel}
             </span>
             <AppIcon
               icon="lucide:chevron-down"
@@ -144,7 +144,7 @@ export default function HistoryView() {
 
           <AnimatePresence mode="wait">
             <motion.div
-              key={selectedNetwork}
+              key={selectedType}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
@@ -256,19 +256,19 @@ export default function HistoryView() {
           open={filterSheetOpen}
           onOpenChange={setFilterSheetOpen}
           title="Filter"
-          description="Pilih jaringan untuk history wallet kamu."
+          description="Pilih jenis aktivitas yang ingin kamu lihat."
           closeLabel="Close history filters"
           contentClassName="space-y-2"
         >
-          {networkOptions.map((network) => {
-            const isActive = network === selectedNetwork;
-            const label = network === "all" ? "Semua" : network;
+          {typeOptions.map((type) => {
+            const isActive = type === selectedType;
+            const label = typeLabels[type] || type;
 
             return (
               <Button
-                key={network}
+                key={type}
                 type="button"
-                onClick={() => selectNetwork(network)}
+                onClick={() => selectType(type)}
                 variant="plain"
                 size="lg"
                 rounded="lg"
@@ -281,7 +281,7 @@ export default function HistoryView() {
               >
                 <span className="min-w-0 flex items-center gap-3">
                   <AppIcon
-                    icon={network === "all" ? "solar:global-bold" : "lucide:network"}
+                    icon={type === "all" ? "solar:global-bold" : "solar:transfer-horizontal-bold"}
                     aria-hidden="true"
                     width={19}
                     height={19}

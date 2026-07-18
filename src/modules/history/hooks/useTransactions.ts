@@ -1,11 +1,11 @@
 "use client";
 
-import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
-import { syncHistory } from "@/modules/history/api/history.api";
+import { syncHistory, type HistoryStatus } from "@/modules/history/api/history.api";
 
 export type RealHistoryItem = {
   id: string;
@@ -23,7 +23,19 @@ export type RealHistoryItem = {
   protocol?: string | null;
   transactionHash?: string | null;
   tokenSymbol?: string;
+  action?: string;
+  explorerUrl?: string | null;
 };
+
+function normalizeStatus(value: unknown): HistoryStatus {
+  const text = String(value ?? "").toLowerCase();
+  const numeric = Number(value);
+  if ([6, 10, 14].includes(numeric)) return "failed";
+  if ([7, 11].includes(numeric)) return "success";
+  if (/fail|reject|cancel|error/.test(text)) return "failed";
+  if (/success|finish|complete|confirm/.test(text)) return "success";
+  return "pending";
+}
 
 function relativeTime(timestamp?: number | string): string {
   if (!timestamp) return "Recently";
@@ -42,7 +54,7 @@ function relativeTime(timestamp?: number | string): string {
 
 function summarizeTransaction(raw: any): RealHistoryItem {
   const id = String(raw?.transactionId || raw?.id || raw?.hash || Math.random());
-  const status = String(raw?.status || raw?.transactionStatus || "Completed");
+  const status = normalizeStatus(raw?.status ?? raw?.transactionStatus);
   const chainId = Number(raw?.chainId || raw?.originChainId || 0);
   const network = chainNameFromId(chainId) || (chainId ? `Chain ${chainId}` : "Universal");
 
@@ -77,6 +89,8 @@ function summarizeTransaction(raw: any): RealHistoryItem {
       : "Transfer confirmed on-chain via Particle Universal Account.",
     icon: isReceive ? "solar:wallet-money-bold" : "solar:transfer-horizontal-bold",
     tone: isReceive ? "green" : "blue",
+    action: isReceive ? "receive" : "transaction",
+    explorerUrl: `https://universalx.app/activity/details?id=${encodeURIComponent(id)}`,
   };
 }
 
@@ -92,7 +106,7 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     description: String(raw.description || raw.network || "Universal"),
     amount: value ? `${direction}${value.toFixed(4)} ${symbol}`.trim() : usd ? `${direction}${formatUsdValue(usd)}` : "—",
     time: relativeTime(raw.occurredAt),
-    status: String(raw.status || "Completed"),
+    status: normalizeStatus(raw.status),
     network: String(raw.network || "Universal"),
     reference: String(raw.reference || raw.transactionId),
     note: String(raw.note || "Transaction confirmed through Particle Universal Account."),
@@ -102,6 +116,8 @@ function mapStoredActivity(raw: any): RealHistoryItem {
     protocol: raw.protocol || null,
     transactionHash: raw.transactionHash || null,
     tokenSymbol: symbol,
+    action: String(raw.action || raw.activityType || "transaction"),
+    explorerUrl: raw.explorerUrl || `https://universalx.app/activity/details?id=${encodeURIComponent(String(raw.transactionId))}`,
   };
 }
 
@@ -112,19 +128,12 @@ function mapStoredActivity(raw: any): RealHistoryItem {
  */
 export function useTransactions(limit = 20) {
   const { universalAccount, accountInfo } = useUniversalAccount();
-  const [items, setItems] = React.useState<RealHistoryItem[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const load = React.useCallback(async () => {
-    if (!universalAccount) {
-      setIsLoading(false);
-      setError("Connect your wallet to load transaction history.");
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
+  const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount || accountInfo.ownerAddress;
+  const query = useQuery({
+    queryKey: ["history", "transactions", account || null, limit],
+    enabled: Boolean(universalAccount && account),
+    queryFn: async () => {
+      if (!universalAccount || !account) throw new Error("Connect your wallet to load transaction history.");
       const pageSize = Math.max(limit, 50);
       const list: any[] = [];
       for (let page = 1; page <= 20; page += 1) {
@@ -133,29 +142,22 @@ export function useTransactions(limit = 20) {
         list.push(...pageItems);
         if (pageItems.length < pageSize) break;
       }
-      const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
-      if (account && list.length) {
-        const synced = await syncHistory(account, list);
-        if (synced) {
-          const storedResponse = await fetch(`/api/history?account=${encodeURIComponent(account)}&limit=${Math.max(limit, 50)}`, { cache: "no-store" });
-          const storedPayload = await storedResponse.json().catch(() => ({}));
-          if (storedResponse.ok && Array.isArray(storedPayload?.items)) {
-            setItems(storedPayload.items.map(mapStoredActivity));
-            return;
-          }
-        }
+      const synced = list.length ? await syncHistory(account, list) : false;
+      if (synced) {
+        const storedResponse = await fetch(`/api/history?account=${encodeURIComponent(account)}&limit=${pageSize}`, { cache: "no-store" });
+        const storedPayload = await storedResponse.json().catch(() => ({}));
+        if (storedResponse.ok && Array.isArray(storedPayload?.items)) return storedPayload.items.map(mapStoredActivity);
       }
-      setItems(list.map(summarizeTransaction));
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to load transactions.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, universalAccount, limit]);
+      return list.map(summarizeTransaction);
+    },
+    staleTime: 5_000,
+    refetchInterval: 8_000,
+  });
 
-  React.useEffect(() => {
-    void load();
-  }, [load]);
-
-  return { items, isLoading, error, reload: load };
+  return {
+    items: query.data || [],
+    isLoading: query.isPending,
+    error: !account && !universalAccount ? "Connect your wallet to load transaction history." : query.error instanceof Error ? query.error.message : null,
+    reload: () => query.refetch(),
+  };
 }

@@ -6,10 +6,7 @@ import {
 } from "@particle-network/universal-account-sdk";
 
 import {
-  addressBook,
-  recentRecipients,
   receiveTokenTemplates,
-  scannedRecipient,
   ZERO_ADDRESS,
 } from "@/modules/send/constants/send.constants";
 import type { Recipient, TokenRow } from "@/modules/send/types/send.types";
@@ -18,6 +15,7 @@ import {
   formatUsd,
   formatUsdValue,
   parseDecimalish,
+  parseUsdDecimalish,
 } from "@/lib/format";
 import { chainNameFromId, tokenIcon } from "@/lib/chain";
 import { getActiveFeeQuote } from "@/providers/universal-account/utils/gas-sponsorship.utils";
@@ -71,7 +69,7 @@ export function normalizePrimaryAssetTokens(
           entry.amount,
           Number(entry.token.realDecimals ?? entry.token.decimals ?? 18),
         ),
-        amountInUSD: parseDecimalish(entry.amountInUSD),
+        amountInUSD: parseUsdDecimalish(entry.amountInUSD),
         icon: tokenIcon(tokenSymbol),
         chainName: chainNameFromId(chainId),
         chainId,
@@ -122,15 +120,14 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
         ? "Sponsored by mom3"
         : formatUsdValue(totals.gasFeeTokenAmountInUSD),
       originalValue:
-        feeQuote.fees.freeGasFee && parseDecimalish(originalGasFee) > 0
+        feeQuote.fees.freeGasFee && parseUsdDecimalish(originalGasFee) > 0
           ? formatUsdValue(originalGasFee)
           : undefined,
     },
     {
       label: "Service fee",
-      value: feeQuote.fees.freeServiceFee
-        ? "Free"
-        : formatUsdValue(totals.transactionServiceFeeTokenAmountInUSD),
+      value: "Free",
+      originalValue: "$0.50",
     },
     {
       label: "LP / settlement",
@@ -139,11 +136,11 @@ export function getFeeBreakdownRows(transaction: ITransaction | null) {
   ];
 
   const solanaRentFee = totals.solanaRentFeeInUSD ?? totals.solanaRentFeeAmountInUSD;
-  if (parseDecimalish(solanaRentFee) > 0) {
+  if (parseUsdDecimalish(solanaRentFee) > 0) {
     rows.push({ label: "Solana rent", value: formatUsdValue(solanaRentFee) });
   }
 
-  if (parseDecimalish(totals.solanaMevTipFeeInUSD) > 0) {
+  if (parseUsdDecimalish(totals.solanaMevTipFeeInUSD) > 0) {
     rows.push({ label: "Solana MEV tip", value: formatUsdValue(totals.solanaMevTipFeeInUSD) });
   }
 
@@ -341,6 +338,14 @@ export function getSendErrorMessage(cause: unknown) {
     return "Your wallet needs a one-time network upgrade before this payment can be sent. Complete the upgrade and try again.";
   }
   if (
+    normalized.includes("does not support chain") ||
+    normalized.includes("unsupported chain") ||
+    normalized.includes("no eip-7702 deployment") ||
+    normalized.includes("did not return eip-7702 authorization")
+  ) {
+    return "This network is not available for this Universal Account action. Choose another supported network.";
+  }
+  if (
     normalized.includes("timeout") ||
     normalized.includes("network error") ||
     normalized.includes("failed to fetch") ||
@@ -378,11 +383,24 @@ export function matchesRecipient(recipient: Recipient, query: string) {
   );
 }
 
-export function resolveRecipient(query: string): Recipient | null {
+export function createExternalRecipient(address: string): Recipient {
+  const isSolana = isValidSolanaAddress(address);
+  return {
+    id: `external-${address}`,
+    handle: "Wallet address",
+    name: "External wallet",
+    address,
+    network: isSolana ? "Solana" : "EVM",
+    status: "External",
+    color: "from-[#1C1C1E] to-[#3B33BD]",
+  };
+}
+
+export function resolveRecipient(query: string, candidates: Recipient[] = []): Recipient | null {
   const trimmed = query.trim();
   if (!trimmed) return null;
 
-  const known = [...addressBook, ...recentRecipients].find((recipient) => {
+  const known = candidates.find((recipient) => {
     return (
       recipient.handle.toLowerCase() === trimmed.toLowerCase() ||
       recipient.handle.toLowerCase().includes(trimmed.toLowerCase()) ||
@@ -393,14 +411,7 @@ export function resolveRecipient(query: string): Recipient | null {
   if (known) return known;
 
   if (isValidAddress(trimmed) || isValidSolanaAddress(trimmed)) {
-    return {
-      ...scannedRecipient,
-      id: "typed-address",
-      handle: "Wallet address",
-      name: "External wallet",
-      address: trimmed,
-      network: isValidSolanaAddress(trimmed) ? "Solana" : "EVM",
-    };
+    return createExternalRecipient(trimmed);
   }
 
   return null;

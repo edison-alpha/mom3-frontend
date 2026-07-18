@@ -32,7 +32,11 @@ export const MAGIC_CHAIN_CONFIGS = [
   },
   {
     chainId: 56,
-    rpcUrl: process.env.NEXT_PUBLIC_BSC_RPC_URL || "https://bsc-dataseed.binance.org",
+    rpcUrl: process.env.NEXT_PUBLIC_BSC_RPC_URL || "https://bsc.drpc.org",
+  },
+  {
+    chainId: 196,
+    rpcUrl: process.env.NEXT_PUBLIC_XLAYER_RPC_URL || "https://rpc.xlayer.tech",
   },
 ].map((chain) => ({
   ...chain,

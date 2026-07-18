@@ -10,6 +10,17 @@ import { useUniversalAccount } from "@/providers/universal-account/components/Un
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 import { syncHistory } from "@/modules/history/api/history.api";
 
+function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
+  switch (symbol.trim().toUpperCase()) {
+    case "ETH": return SUPPORTED_TOKEN_TYPE.ETH;
+    case "USDT": return SUPPORTED_TOKEN_TYPE.USDT;
+    case "USDC": return SUPPORTED_TOKEN_TYPE.USDC;
+    case "BNB": return SUPPORTED_TOKEN_TYPE.BNB;
+    case "SOL": return SUPPORTED_TOKEN_TYPE.SOL;
+    default: return null;
+  }
+}
+
 type ExecutionStatus = "idle" | "preparing" | "signing" | "success" | "error";
 
 export function useYieldExecution(action: YieldAction) {
@@ -59,11 +70,18 @@ export function useYieldExecution(action: YieldAction) {
         throw new Error("The validated transaction does not match this market.");
       }
 
+      const expectedTokenType = particleTokenType(validated.asset?.symbol || "");
+      if (!expectedTokenType) {
+        throw new Error(
+          `${validated.asset?.symbol || "This asset"} is not a Particle Universal Account primary token. This market needs a verified swap adapter before it can be executed cross-chain.`,
+        );
+      }
+
       if (chainId !== 101) await ensureDelegated(chainId);
       const particleTransaction = await universalAccount.createUniversalTransaction({
         chainId,
-          expectTokens: action === "supply" && chainId !== 101
-          ? [{ type: SUPPORTED_TOKEN_TYPE.USDC, amount: validated.amount }]
+          expectTokens: action === "supply"
+          ? [{ type: expectedTokenType, amount: validated.amount }]
           : [],
         transactions: validated.transactions,
       });

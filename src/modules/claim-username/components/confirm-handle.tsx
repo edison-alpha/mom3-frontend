@@ -7,6 +7,8 @@ interface ConfirmHandleProps {
   handleValue: string;
   onBack: () => void;
   onConfirm: () => void;
+  isClaiming?: boolean;
+  error?: string | null;
 }
 
 const benefits = [
@@ -19,7 +21,7 @@ const benefits = [
 export default function ConfirmHandle({
   handleValue,
   onBack,
-  onConfirm,
+  onConfirm, isClaiming = false, error,
 }: ConfirmHandleProps) {
   return (
     <motion.div
@@ -112,12 +114,14 @@ export default function ConfirmHandle({
       </div>
 
       {/* Actions */}
+      {error ? <p role="alert" className="mb-3 rounded-xl bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-200">{error}</p> : null}
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onConfirm}
-        className="mt-auto w-full py-4 bg-[#3B33BD] text-[#ccff00] rounded-2xl text-lg font-bold mb-3 shadow-[0_0_20px_rgba(59,51,189,0.3)]"
+        disabled={isClaiming}
+        className="mt-auto w-full py-4 bg-[#3B33BD] text-[#ccff00] rounded-2xl text-lg font-bold mb-3 shadow-[0_0_20px_rgba(59,51,189,0.3)] disabled:cursor-wait disabled:opacity-60"
       >
-        Confirm & Claim
+        {isClaiming ? "Claiming..." : "Confirm & Claim"}
       </motion.button>
       <motion.button
         whileTap={{ scale: 0.97 }}

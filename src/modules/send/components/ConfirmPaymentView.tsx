@@ -12,7 +12,7 @@ import { truncateAddress } from "@/utils/address.utils";
 import { SentConfirmation } from "@/modules/send/components/SentConfirmation";
 import { FailedConfirmation } from "@/modules/send/components/FailedConfirmation";
 import { useConfirmPaymentState } from "@/modules/send/hooks/useConfirmPaymentState";
-import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/modules/send/utils/send.utils";
+import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/providers/universal-account/services/gas-fee.service";
 
 export default function ConfirmPaymentView() {
   const state = useConfirmPaymentState();

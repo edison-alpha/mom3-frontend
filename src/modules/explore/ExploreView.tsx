@@ -210,7 +210,6 @@ function MarketList({
   const category = items[0]?.category ?? "Yield";
   const styles = marketCategoryStyles[category];
   const visibleItems = items.slice(0, visibleCount);
-  React.useEffect(() => setVisibleCount(pageSize), [items]);
 
   return (
     <motion.section
@@ -299,7 +298,7 @@ export default function ExploreView() {
   const [filterSheetOpen, setFilterSheetOpen] = React.useState(false);
   const [chainFilter, setChainFilter] = React.useState<ChainFilter>("All");
   const [selectedProtocol, setSelectedProtocol] = React.useState<string>("all");
-  const { yieldPools, riskPools, isLoading, error, hasMoreByProtocol, loadingMoreProtocol, loadMoreProtocol } = useExploreYields(selectedProtocol);
+  const { yieldPools, riskPools, topYieldPools, isLoading, isTopLoading, error, topError, hasMoreByProtocol, loadingMoreProtocol, loadMoreProtocol } = useExploreYields(selectedProtocol);
 
   const filteredYield = React.useMemo(
     () => (query.trim() ? yieldPools.filter((item) => matchesMarket(item, query)) : yieldPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
@@ -309,15 +308,6 @@ export default function ExploreView() {
     () => (query.trim() ? riskPools.filter((item) => matchesMarket(item, query)) : riskPools).filter((item) => chainFilter === "All" || item.chainId === chainFilter),
     [riskPools, query, chainFilter],
   );
-  const top10YieldMarkets = React.useMemo(
-    () => [...filteredYield]
-      .sort((left, right) =>
-        (right.opportunityScore ?? right.apy) - (left.opportunityScore ?? left.apy),
-      )
-      .slice(0, 10),
-    [filteredYield],
-  );
-
   const protocolGroups = React.useMemo(() => {
     const groups = new Map<string, MarketItem[]>();
 
@@ -400,8 +390,14 @@ export default function ExploreView() {
           transition={{ duration: 0.3 }}
           className="mt-4 overflow-hidden"
         >
-          {isLoading ? <ExploreFeatureCardsSkeleton /> : <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3">
-            {top10YieldMarkets.map((market, index) => (
+          {isTopLoading ? <ExploreFeatureCardsSkeleton /> : topError ? (
+            <div className="rounded-[24px] border border-[#FF7B7B]/20 bg-[#1C1C1E] px-5 py-6 text-center">
+              <p className="text-sm font-bold text-white">Ranked yields unavailable</p>
+              <p className="mt-1 text-xs font-medium text-[#A7A7B7]">{topError}</p>
+              <button type="button" onClick={() => window.location.reload()} className="mt-4 min-h-10 rounded-full bg-[#ccff00] px-4 text-xs font-black text-black focus-visible:ring-2 focus-visible:ring-[#ccff00]">Retry</button>
+            </div>
+          ) : topYieldPools.length ? <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3">
+            {topYieldPools.map((market, index) => (
               <motion.div
                 key={market.id}
                 initial={{ opacity: 0, x: 20 }}
@@ -416,16 +412,15 @@ export default function ExploreView() {
                 >
                   <div className="flex items-start justify-between">
                     <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2A2A3E]"><AssetLogo asset={market.asset} /></span>
-                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2A2A3E] text-[#ccff00]"><AppIcon icon="lucide:arrow-right" aria-hidden="true" width={22} height={22} /></span>
+                    <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#ccff00]/10 px-2 text-sm font-black text-[#ccff00]" aria-label={`Rank ${market.rank ?? index + 1}`}>#{market.rank ?? index + 1}</span>
                   </div>
-                  <div className="mt-5 flex items-center gap-2"><h2 className="text-base font-bold text-white">Top 10 Yield Market</h2><span className="rounded-full bg-[#ccff00]/10 px-2 py-0.5 text-[10px] font-black text-[#ccff00]">#{index + 1}</span></div>
-                  <div className="mt-2 flex min-w-0 items-center gap-2"><p className="truncate text-sm font-bold text-white">{market.asset}</p><span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{market.protocol}</span></div>
+                  <div className="mt-5 flex min-w-0 items-center gap-2"><p className="truncate text-base font-bold text-white">{market.asset}</p><span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{market.protocol}</span></div>
                   <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#8E8E93]"><ProtocolLogo protocol={market.protocol} /><span className="truncate">{market.chain}</span><span className="ml-auto font-black text-[#ccff00]">{market.apy.toFixed(2)}% APY</span></div>
                 </Link>
               </motion.div>
             ))}
-          </div>}
-          {!isLoading && top10YieldMarkets.length > 1 ? <p className="text-center text-[10px] font-bold text-[#8E8E93]">Swipe to see all {top10YieldMarkets.length} yield markets</p> : null}
+          </div> : <div className="rounded-[24px] bg-[#1C1C1E] px-5 py-8 text-center text-sm font-medium text-[#A7A7B7]">No ranked yields available yet.</div>}
+          {!isTopLoading && !topError && topYieldPools.length > 1 ? <p className="text-center text-[10px] font-bold text-[#8E8E93]">Swipe to see all {topYieldPools.length} ranked yields</p> : null}
         </motion.section>
 
         <section className="mt-4" aria-label="Protocols">

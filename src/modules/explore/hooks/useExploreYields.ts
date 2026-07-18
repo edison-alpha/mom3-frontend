@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
-import { getMarkets } from "@/modules/markets/api/markets.api";
+import { getMarkets, getTopYields } from "@/modules/markets/api/markets.api";
 
 export type ExploreYieldPool = {
   id: string; asset: string; protocol: string; protocolId?: string; primary: string; secondary: string;
@@ -12,14 +13,14 @@ export type ExploreYieldPool = {
   utilization: string; risk: "Low" | "Medium" | "High"; description: string; apy: number; tvlValue: number;
   chainId: number; chain: string; marketId?: string; executionEnabled: boolean; apyChange1d?: number;
   apyChange7d?: number; apyChange30d?: number; opportunityScore?: number; stablecoin: boolean;
-  strategy: string; estimatedPnl1dPer1k: number;
+  strategy: string; estimatedPnl1dPer1k: number; rank?: number;
 };
 
 type YieldMarketEntry = {
   market_id?: string; pool_id?: string; project?: string; protocol?: string; symbol?: string; chain?: string;
   chain_id?: number; apy?: number; apy_change_1d?: number; apy_change_7d?: number; apy_change_30d?: number;
   tvl?: number; stablecoin?: boolean; impermanent_loss?: boolean | null; trend?: string; risk_score?: number;
-  opportunity_score?: number; execution?: { enabled?: boolean };
+  opportunity_score?: number; execution?: { enabled?: boolean }; rank?: number;
 };
 
 function iconFor(symbol: string) {
@@ -40,11 +41,10 @@ function rankingScore(apy: number, tvl: number, risk: number, opportunity?: numb
 
 export function useExploreYields(selectedProtocol?: string) {
   const { marketRevision } = useRealtime();
-  const [pools, setPools] = React.useState<ExploreYieldPool[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
   const [hasMoreByProtocol, setHasMoreByProtocol] = React.useState<Record<string, boolean>>({});
   const [loadingMoreProtocol, setLoadingMoreProtocol] = React.useState<string | null>(null);
+  const [extraMarkets, setExtraMarkets] = React.useState<Record<string, ExploreYieldPool[]>>({});
+  const queryClient = useQueryClient();
 
   const mapMarkets = React.useCallback((markets: YieldMarketEntry[]) => markets.flatMap((market) => {
     const protocol = String(market.protocol || "Unknown protocol");
@@ -66,42 +66,68 @@ export function useExploreYields(selectedProtocol?: string) {
       apyChange1d: Number(market.apy_change_1d ?? 0), apyChange7d: Number(market.apy_change_7d ?? 0),
       apyChange30d: Number(market.apy_change_30d ?? 0), opportunityScore: rankingScore(apy, tvl, riskScore, Number(market.opportunity_score)),
       stablecoin, strategy: market.execution?.enabled === true ? (isRisk ? "Growth yield" : stablecoin ? "Stable yield" : "Balanced yield") : "Watch only",
-      estimatedPnl1dPer1k: (apy / 100) * 1000 / 365,
+      estimatedPnl1dPer1k: (apy / 100) * 1000 / 365, rank: market.rank,
     }];
   }) as ExploreYieldPool[], []);
 
-  React.useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      setIsLoading(true); setPools([]); setError(null);
-      try {
-        const response = await getMarkets({ limit: 10, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined });
-        if (cancelled) return;
-        setPools(mapMarkets((response.markets || []) as YieldMarketEntry[]).sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0)));
-        const next: Record<string, boolean> = {};
-        if (selectedProtocol === "all" && response.protocol_totals) {
-          for (const [protocol, total] of Object.entries(response.protocol_totals)) next[protocol] = total > 10;
-        } else next[selectedProtocol || "all"] = response.pagination?.has_next ?? false;
-        setHasMoreByProtocol(next);
-      } catch (cause) { if (!cancelled) setError(cause instanceof Error ? cause.message : "Unable to load yield markets."); }
-      finally { if (!cancelled) setIsLoading(false); }
-    }
-    void load(); return () => { cancelled = true; };
-  }, [marketRevision, mapMarkets, selectedProtocol]);
+  const marketQuery = useQuery({
+    queryKey: ["markets", "explore", selectedProtocol || "all", marketRevision],
+    queryFn: () => getMarkets({ limit: 10, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined }),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  });
+  const topQuery = useQuery({
+    queryKey: ["markets", "top-yields", marketRevision],
+    queryFn: () => getTopYields({ limit: 10 }),
+    placeholderData: keepPreviousData,
+    staleTime: 60_000,
+  });
+  const pageKey = selectedProtocol || "all";
+  const basePools = React.useMemo(
+    () => mapMarkets((marketQuery.data?.markets || []) as YieldMarketEntry[]).sort((a, b) => (b.opportunityScore ?? 0) - (a.opportunityScore ?? 0)),
+    [mapMarkets, marketQuery.data],
+  );
+  const pools = React.useMemo(
+    () => [...basePools, ...(extraMarkets[pageKey] || [])].filter((pool, index, list) => list.findIndex((item) => item.id === pool.id) === index),
+    [basePools, extraMarkets, pageKey],
+  );
+  const topYieldPools = React.useMemo(() => mapMarkets((topQuery.data?.markets || []) as YieldMarketEntry[]), [mapMarkets, topQuery.data]);
 
   const loadMoreProtocol = React.useCallback(async (protocolId: string) => {
     if (loadingMoreProtocol || !hasMoreByProtocol[protocolId]) return;
     setLoadingMoreProtocol(protocolId);
     try {
       const current = pools.filter((pool) => pool.protocolId === protocolId).length;
-      const response = await getMarkets({ protocol: protocolId, page: Math.floor(current / 10) + 1, limit: 10 });
-      setPools((previous) => [...previous, ...mapMarkets((response.markets || []) as YieldMarketEntry[])]);
+      const page = Math.floor(current / 10) + 1;
+      const response = await queryClient.fetchQuery({
+        queryKey: ["markets", "explore-page", protocolId, page, marketRevision],
+        queryFn: () => getMarkets({ protocol: protocolId, page, limit: 10 }),
+        staleTime: 60_000,
+      });
+      const nextMarkets = mapMarkets((response.markets || []) as YieldMarketEntry[]);
+      setExtraMarkets((previous) => ({ ...previous, [protocolId]: [...(previous[protocolId] || []), ...nextMarkets] }));
       setHasMoreByProtocol((previous) => ({ ...previous, [protocolId]: response.pagination?.has_next ?? false }));
     } finally { setLoadingMoreProtocol(null); }
-  }, [hasMoreByProtocol, loadingMoreProtocol, mapMarkets, pools]);
+  }, [hasMoreByProtocol, loadingMoreProtocol, mapMarkets, marketRevision, pools, queryClient]);
+
+  React.useEffect(() => {
+    const next: Record<string, boolean> = {};
+    if (selectedProtocol === "all" && marketQuery.data?.protocol_totals) {
+      for (const [protocol, total] of Object.entries(marketQuery.data.protocol_totals)) next[protocol] = total > 10;
+    } else next[pageKey] = marketQuery.data?.pagination?.has_next ?? false;
+    setHasMoreByProtocol(next);
+  }, [marketQuery.data, pageKey, selectedProtocol]);
 
   const yieldPools = pools.filter((p) => p.category === "Yield");
   const riskPools = pools.filter((p) => p.category === "Risk");
   const chains = Array.from(new Set(pools.map((p) => p.chainId))).filter(Boolean);
-  return { pools, yieldPools, riskPools, chains, isLoading, error, hasMoreByProtocol, loadingMoreProtocol, loadMoreProtocol };
+  return {
+    pools, yieldPools, riskPools, chains, topYieldPools,
+    isLoading: marketQuery.isPending,
+    error: marketQuery.error instanceof Error ? marketQuery.error.message : null,
+    topError: topQuery.error instanceof Error ? topQuery.error.message : null,
+    isTopLoading: topQuery.isPending,
+    isFetching: marketQuery.isFetching || topQuery.isFetching,
+    hasMoreByProtocol, loadingMoreProtocol, loadMoreProtocol,
+  };
 }

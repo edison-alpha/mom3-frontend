@@ -1,43 +1,28 @@
 "use client";
 
-import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import type { YieldPosition } from "@/modules/yield-execution/types/yield-execution.types";
 
-export function useYieldPosition(marketId?: string, account?: string | null) {
-  const [data, setData] = React.useState<YieldPosition | null>(null);
-  const [isLoading, setIsLoading] = React.useState(Boolean(marketId && account));
-  const [error, setError] = React.useState<string | null>(null);
-
-  const refresh = React.useCallback(async () => {
-    if (!marketId || !account) {
-      setData(null);
-      setIsLoading(false);
-      return null;
-    }
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams({ account });
-      const response = await fetch(
-        `/api/ai/markets/${encodeURIComponent(marketId)}/position?${params}`,
-        { cache: "no-store" },
-      );
+export function useYieldPosition(marketId?: string, account?: string | null, chainId?: number) {
+  const query = useQuery<YieldPosition>({
+    queryKey: ["yield-position", marketId || null, account || null, chainId || null],
+    enabled: Boolean(marketId && account && chainId !== 101),
+    queryFn: async () => {
+      const params = new URLSearchParams({ account: account as string });
+      const response = await fetch(`/api/ai/markets/${encodeURIComponent(marketId as string)}/position?${params}`, { cache: "no-store" });
       const payload = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(payload.detail || payload.error || "Position data is unavailable.");
-      setData(payload as YieldPosition);
-      setError(null);
       return payload as YieldPosition;
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Position data is unavailable.");
-      return null;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [account, marketId]);
+    },
+    staleTime: 30_000,
+  });
 
-  React.useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  return { data, isLoading, error, refresh };
+  return {
+    data: query.data ?? null,
+    isLoading: query.isPending,
+    isFetching: query.isFetching,
+    error: query.error instanceof Error ? query.error.message : null,
+    refresh: async () => (await query.refetch()).data ?? null,
+  };
 }

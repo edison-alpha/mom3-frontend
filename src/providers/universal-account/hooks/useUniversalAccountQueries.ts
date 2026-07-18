@@ -12,6 +12,7 @@ import {
   loadUniversalAccountSnapshot,
 } from "@/providers/universal-account/utils/universal-account.utils";
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
+import { isTransactionQuoteExpired } from "@/modules/send/utils/send.utils";
 
 type Eip7702Deployment = {
   chainId?: number;
@@ -36,9 +37,11 @@ async function isDelegatedOnChain(
   chainId: number,
 ) {
   const deployments = (await universalAccount.getEIP7702Deployments()) as Eip7702Deployment[];
-  return Boolean(
-    deployments.find((deployment) => Number(deployment.chainId) === chainId)?.isDelegated,
-  );
+  const deployment = deployments.find((item) => Number(item.chainId) === chainId);
+  if (!deployment) {
+    throw new Error(`Particle does not provide an EIP-7702 deployment for chain ${chainId}.`);
+  }
+  return deployment.isDelegated === true;
 }
 
 export function useUniversalAccountInstanceQuery(ownerAddress?: string) {
@@ -103,8 +106,13 @@ export function useEnsureDelegatedMutation(
       const [auth] = (await universalAccount.getEIP7702Auth([chainId])) as Eip7702Auth[];
       const authNonce = Number(auth?.nonce);
 
-      if (!auth?.address || !Number.isSafeInteger(authNonce) || authNonce < 0) {
-        throw new Error("Particle returned an invalid EIP-7702 authorization.");
+      if (
+        Number(auth?.chainId) !== chainId ||
+        !auth?.address ||
+        !Number.isSafeInteger(authNonce) ||
+        authNonce < 0
+      ) {
+        throw new Error(`Particle did not return EIP-7702 authorization for chain ${chainId}.`);
       }
 
       // For an explicit Type-4 transaction the EOA is both the transaction
@@ -163,6 +171,10 @@ export function useSignAndSend(
     // Normalize the transaction according to the configured gas mode. In
     // user-paid mode this preserves Particle's default UserOperation.
     const transactionForSubmit = prepareSponsoredTransaction(transaction);
+
+    if (isTransactionQuoteExpired(transactionForSubmit)) {
+      throw new Error("This Particle quote expired before signing. Request a fresh quote and try again.");
+    }
 
     if (
       !transactionForSubmit.transactionId ||

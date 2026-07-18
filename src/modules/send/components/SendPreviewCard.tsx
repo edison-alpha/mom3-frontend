@@ -7,11 +7,7 @@ import * as React from "react";
 import { WalletAvatar } from "@/components/ui/wallet-avatar";
 import { truncateAddress } from "@/utils/address.utils";
 import type { SendPreview } from "@/modules/send/types/send.types";
-import {
-  getFeeBreakdownRows,
-  getFeeTokenRows,
-  getTotalFeeLabel,
-} from "@/modules/send/utils/send.utils";
+import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/providers/universal-account/services/gas-fee.service";
 
 export function SendPreviewCard({
   sendPreview,

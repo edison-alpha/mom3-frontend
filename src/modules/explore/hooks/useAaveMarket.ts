@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import type { TimeRange } from "@/components/ui/mini-chart";
 
@@ -18,37 +18,26 @@ export type AaveMarketData = {
 };
 
 export function useAaveMarket(account?: string, chainId = 42161, enabled = true) {
-  const [data, setData] = React.useState<AaveMarketData | null>(null);
-  const [isLoading, setIsLoading] = React.useState(enabled);
-  const [error, setError] = React.useState<string | null>(null);
-
-  const refresh = React.useCallback(async () => {
-    if (!enabled) {
-      setIsLoading(false);
-      return null;
-    }
-    setIsLoading(true);
-    try {
+  const query = useQuery<AaveMarketData>({
+    queryKey: ["aave-market", account || null, chainId],
+    enabled,
+    queryFn: async () => {
       const params = new URLSearchParams({ chainId: String(chainId) });
       if (account) params.set("account", account);
       const response = await fetch(`/api/aave/market?${params.toString()}`, { cache: "no-store" });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.error || "Aave market data unavailable.");
-      setData(payload);
-      setError(null);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Aave market data unavailable.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [account, chainId, enabled]);
+      return payload as AaveMarketData;
+    },
+    staleTime: 60_000,
+    refetchInterval: enabled ? 300_000 : false,
+  });
 
-  React.useEffect(() => {
-    if (!enabled) return;
-    void refresh();
-    const timer = window.setInterval(() => void refresh(), 300_000);
-    return () => window.clearInterval(timer);
-  }, [enabled, refresh]);
-
-  return { data, error, isLoading, refresh };
+  return {
+    data: query.data ?? null,
+    error: query.error instanceof Error ? query.error.message : null,
+    isLoading: query.isPending,
+    isFetching: query.isFetching,
+    refresh: query.refetch,
+  };
 }

@@ -129,6 +129,13 @@ export default function MarketDetailView({
             </div>
           </section>
 
+          {/* Legacy analysis block moved into the compact Risk overview and View analysis sections.
+                {[["Base APY", catalogDetail.metadata.apyBase !== null ? `${catalogDetail.metadata.apyBase.toFixed(2)}%` : "Unavailable"], ["Reward APY", catalogDetail.metadata.apyReward !== null ? `${catalogDetail.metadata.apyReward.toFixed(2)}%` : "Unavailable"], ["Outlook", catalogDetail.metadata.analysis.market_outlook.label], ["Confidence", `${catalogDetail.metadata.analysis.confidence.percent}% · ${catalogDetail.metadata.analysis.confidence.label}`]].map(([label, value]) => <div key={label} className="rounded-xl bg-white/[0.04] p-3"><p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8E8E93]">{label}</p><p className="mt-1 text-sm font-black text-white">{value}</p></div>)}
+              </div>
+              <div className="mt-4 space-y-3">{catalogDetail.metadata.analysis.sections.map((section) => <div key={section.title}><h3 className="text-xs font-black text-[#ccff00]">{section.title}</h3><ul className="mt-1 space-y-1">{section.points.map((point) => <li key={point} className="text-xs leading-relaxed text-[#A7A7B7]">• {point}</li>)}</ul></div>)}</div>
+            </> : <p className="mt-3 text-sm text-[#A7A7B7]">Analysis is temporarily unavailable. Live APY and risk data are still shown below.</p>}
+          </section> */}
+
           {canExecuteYield && executionMarketId ? (
             <YieldPositionAction
               chainId={chainId}
@@ -168,20 +175,30 @@ export default function MarketDetailView({
           <section className="mt-3 rounded-[22px] border border-white/10 bg-[#111217] p-3.5" aria-labelledby="risk-overview-title">
             <h2 id="risk-overview-title" className="text-sm font-black text-white">Risk overview</h2>
             <dl className="mt-3 grid grid-cols-3 overflow-hidden rounded-[18px] bg-white/[0.04] text-xs">
-              {[["Risk", liveMarket.risk], ["Utilization", liveMarket.utilization], ["Outlook", catalogDetail.metadata.predictionClass || liveMarket.secondary]].map(([label, value], index) => (
+              {[["Risk", liveMarket.risk], ["Utilization", liveMarket.utilization], ["Outlook", catalogDetail.metadata.analysis?.market_outlook.label || catalogDetail.metadata.predictionClass || liveMarket.secondary]].map(([label, value], index) => (
                 <div key={label} className={cn("p-3", index < 2 && "border-r border-white/10")}><dt className="font-medium text-[#A7A7B7]">{label}</dt><dd className="mt-1.5 font-mono font-black text-white">{value}</dd></div>
               ))}
             </dl>
-            {hasCatalogData ? (
-              <details className="group mt-3 border-t border-white/10 pt-2">
-                <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl px-1 text-sm font-bold text-[#C8C8CE] focus-visible:ring-2 focus-visible:ring-[#ccff00]">View full analysis<AppIcon icon="lucide:chevron-down" aria-hidden="true" width={18} height={18} className="transition-transform group-open:rotate-180" /></summary>
-                <dl className="space-y-3 px-1 pb-1 pt-2 text-sm">
-                  <div className="flex justify-between gap-4"><dt className="text-[#A7A7B7]">Risk score</dt><dd className="font-mono font-bold text-white">{catalogDetail.metadata.riskScore === null ? "Unavailable" : `${catalogDetail.metadata.riskScore.toFixed(1)}/10`}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-[#A7A7B7]">Market outlook</dt><dd className="text-right font-bold text-white">{catalogDetail.metadata.predictionClass || "Unavailable"}</dd></div>
-                  <div className="flex justify-between gap-4"><dt className="text-[#A7A7B7]">Confidence</dt><dd className="font-mono font-bold text-white">{catalogDetail.metadata.predictionProbability === null ? "Unavailable" : `${catalogDetail.metadata.predictionProbability.toFixed(0)}%`}</dd></div>
-                </dl>
-              </details>
-            ) : null}
+            <div className="mt-3 rounded-[18px] border border-white/10 bg-[#111217] p-3" aria-labelledby="compact-analysis-title">
+              <div className="flex items-center justify-between gap-3">
+                <div><h3 id="compact-analysis-title" className="text-xs font-black text-white">AgentKit market analyst</h3><p className="mt-1 text-[11px] text-[#A7A7B7]">Compact signal from the canonical catalog.</p></div>
+                {catalogDetail.metadata.analysis ? <span className="rounded-full bg-[#ccff00]/10 px-2 py-1 text-[10px] font-black uppercase text-[#ccff00]">{catalogDetail.metadata.analysis.recommendation}</span> : null}
+              </div>
+              {catalogDetail.metadata.analysis ? <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs"><div className="flex justify-between gap-2"><span className="text-[#8E8E93]">Base APY</span><strong className="text-white">{catalogDetail.metadata.apyBase?.toFixed(2) ?? "—"}%</strong></div><div className="flex justify-between gap-2"><span className="text-[#8E8E93]">Reward APY</span><strong className="text-white">{catalogDetail.metadata.apyReward?.toFixed(2) ?? "—"}%</strong></div><div className="flex justify-between gap-2"><span className="text-[#8E8E93]">Outlook</span><strong className="text-white">{catalogDetail.metadata.analysis.market_outlook.label}</strong></div><div className="flex justify-between gap-2"><span className="text-[#8E8E93]">Confidence</span><strong className="text-white">{catalogDetail.metadata.analysis.confidence.percent}%</strong></div></div> : <p className="mt-3 text-xs text-[#A7A7B7]">Analysis is temporarily unavailable.</p>}
+            </div>
+          </section>
+
+          <section className="mt-3 rounded-[22px] border border-white/10 bg-[#111217] p-3.5" aria-labelledby="detail-analysis-title">
+            <div className="flex items-center justify-between gap-3"><div><h2 id="detail-analysis-title" className="text-sm font-black text-white">View analysis</h2><p className="mt-1 text-xs text-[#A7A7B7]">Detailed review of yield, liquidity, risk, and execution.</p></div><AppIcon icon="solar:chart-2-bold" aria-hidden="true" width={20} height={20} className="text-[#ccff00]" /></div>
+            {catalogDetail.metadata.analysis ? <details className="group mt-3 overflow-hidden rounded-[18px] border border-white/10 bg-[#15161D]">
+              <summary className="flex min-h-12 cursor-pointer list-none items-center justify-between gap-3 px-3 text-xs font-black text-[#C8C8CE] focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span>Open senior analyst report</span><AppIcon icon="lucide:chevron-down" aria-hidden="true" width={18} height={18} className="transition-transform group-open:rotate-180" /></summary>
+              <div className="border-t border-white/10 p-3">
+                <p className="text-sm font-semibold leading-relaxed text-[#E8E8EC]">{catalogDetail.metadata.analysis.summary}</p>
+                <p className="mt-3 text-xs leading-relaxed text-[#A7A7B7]">{catalogDetail.metadata.analysis.confidence.explanation}</p>
+                <div className="mt-4 space-y-4">{catalogDetail.metadata.analysis.sections.map((section) => <div key={section.title}><h3 className="text-xs font-black text-[#ccff00]">{section.title}</h3><ul className="mt-2 space-y-1.5">{section.points.map((point) => <li key={point} className="text-xs leading-relaxed text-[#A7A7B7]">- {point}</li>)}</ul></div>)}</div>
+                <div className="mt-4 rounded-xl bg-white/[0.04] p-3"><p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8E8E93]">7-day outlook</p><p className="mt-1 text-xs leading-relaxed text-white">{catalogDetail.metadata.analysis.market_outlook.reasoning}</p></div>
+              </div>
+            </details> : <p className="mt-3 rounded-xl border border-white/10 bg-[#15161D] p-3 text-xs text-[#A7A7B7]">Detailed analysis is temporarily unavailable. Try refreshing the market data.</p>}
           </section>
         </>
       )}

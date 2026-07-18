@@ -1,13 +1,12 @@
 "use client";
 
 import * as React from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
-import {
-  recentRecipients,
-  addressBook,
-  scannedRecipient,
-} from "@/modules/send/constants/send.constants";
+import { getRecentRecipients, saveRecentRecipient } from "@/modules/send/api/recent-recipients.api";
+import { resolveUsername } from "@/modules/username/utils/username.api";
+import { DEFAULT_CHAIN_ID } from "@/providers/shared/constants/chain.constants";
 import type { Recipient, TokenRow } from "@/modules/send/types/send.types";
 import {
   findPreferredToken,
@@ -28,6 +27,7 @@ export function useSendState(
 ) {
   const {
     universalAccount,
+    accountInfo,
     primaryAssets,
     isLoading,
     error: accountError,
@@ -38,10 +38,22 @@ export function useSendState(
   const [selectedRecipient, setSelectedRecipient] = React.useState<Recipient | null>(null);
   const [selectedTokenId, setSelectedTokenId] = React.useState<string | null>(null);
   const [amount, setAmount] = React.useState(() => sanitizeAmountInput(initialAmount));
-  const [scanOpen, setScanOpen] = React.useState(false);
   const [step, setStep] = React.useState<"recipient" | "token" | "amount">("recipient");
   const [error, setError] = React.useState<string | null>(null);
   const appliedInitialAsset = React.useRef<string | null>(null);
+  const queryClient = useQueryClient();
+  const recentRecipientsQuery = useQuery({
+    queryKey: ["recipients", "recent", accountInfo.ownerAddress || null],
+    queryFn: () => getRecentRecipients(accountInfo.ownerAddress as string),
+    enabled: Boolean(accountInfo.ownerAddress),
+    staleTime: 300_000,
+  });
+  const saveRecipientMutation = useMutation({
+    mutationKey: ["recipients", "save"],
+    mutationFn: ({ recipient, chainId }: { recipient: Recipient; chainId?: number }) => saveRecentRecipient(accountInfo.ownerAddress, recipient, chainId),
+    onSuccess: () => { void queryClient.invalidateQueries({ queryKey: ["recipients", "recent", accountInfo.ownerAddress || null] }); },
+  });
+  const recentRecipients = recentRecipientsQuery.data || [];
 
   /* â”€â”€ Derived token rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
@@ -73,13 +85,13 @@ export function useSendState(
 
   React.useEffect(() => {
     if (!initialTo) return;
-    const resolved = resolveRecipient(initialTo);
+    const resolved = resolveRecipient(initialTo, recentRecipients);
     if (resolved) {
       setSelectedRecipient(resolved);
       setQuery(resolved.handle.startsWith("@") ? resolved.handle : resolved.address);
       setStep("token");
     }
-  }, [initialTo]);
+  }, [initialTo, recentRecipients]);
 
   React.useEffect(() => {
     if (!selectedRecipient || selectedTokenId || tokenRows.length === 0) return;
@@ -97,31 +109,22 @@ export function useSendState(
     }
   }, [initialAmount, initialAsset, initialChain, selectedRecipient, selectedTokenId, tokenRows]);
 
-  React.useEffect(() => {
-    if (!scanOpen) return;
-    const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setScanOpen(false);
-    };
-    window.addEventListener("keydown", handleEscape);
-    return () => window.removeEventListener("keydown", handleEscape);
-  }, [scanOpen]);
-
   /* â”€â”€ Filtered recipients â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const filteredRecipients = React.useMemo(() => {
     if (!query.trim()) return recentRecipients;
 
-    const combined = [...recentRecipients, ...addressBook].filter(
+    const combined = recentRecipients.filter(
       (recipient, index, self) =>
-        index === self.findIndex((item) => item.handle === recipient.handle),
+        index === self.findIndex((item) => item.address === recipient.address),
     );
     const filtered = combined.filter((recipient) => matchesRecipient(recipient, query));
 
     if (filtered.length > 0) return filtered;
 
-    const resolved = resolveRecipient(query);
+    const resolved = resolveRecipient(query, recentRecipients);
     return resolved ? [resolved] : [];
-  }, [query]);
+  }, [query, recentRecipients]);
 
   const showRecentLabel = !query.trim() && recentRecipients.length > 0;
 
@@ -159,6 +162,11 @@ export function useSendState(
     setError(null);
     setStep("token");
     setQuery(recipient.handle.startsWith("@") ? recipient.handle : recipient.address);
+    queryClient.setQueryData<Recipient[]>(["recipients", "recent", accountInfo.ownerAddress || null], (current = []) => [
+      { ...recipient, status: "Recent" as const },
+      ...current.filter((item) => item.address.toLowerCase() !== recipient.address.toLowerCase()),
+    ].slice(0, 20));
+    void saveRecipientMutation.mutateAsync({ recipient });
   };
 
   const selectToken = (token: TokenRow) => {
@@ -168,18 +176,33 @@ export function useSendState(
     setStep("amount");
   };
 
-  const handleScan = () => {
-    setScanOpen(false);
-    selectRecipient(scannedRecipient);
-  };
-
-  const handleSearchSubmit = () => {
-    const resolved = resolveRecipient(query);
-    if (!resolved) {
-      setError("Recipient not found. Enter a valid mom3 tag or wallet address.");
+  const handleSearchSubmit = async () => {
+    const resolved = resolveRecipient(query, recentRecipients);
+    if (resolved) {
+      selectRecipient(resolved);
       return;
     }
-    selectRecipient(resolved);
+    if (query.trim().startsWith("@")) {
+      try {
+        const username = query.trim();
+        const chainId = Number(initialChain) || DEFAULT_CHAIN_ID;
+        const identity = await queryClient.fetchQuery({
+          queryKey: ["username", "resolve", username.toLowerCase(), chainId],
+          queryFn: () => resolveUsername(username, chainId),
+          staleTime: 60_000,
+        });
+        if (identity.address) {
+          selectRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: initialChain || "Universal", status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]" });
+          return;
+        }
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : "Username was not found.");
+        return;
+      }
+    }
+    if (!resolved) {
+      setError("Recipient not found. Enter a valid mom3 tag or wallet address.");
+    }
   };
 
   const handleAmountChange = (value: string) => {
@@ -214,8 +237,6 @@ export function useSendState(
     selectedToken,
     selectedTokenId,
     amount,
-    scanOpen,
-    setScanOpen,
     step,
     error,
     setError,
@@ -232,7 +253,6 @@ export function useSendState(
     goBack,
     selectRecipient,
     selectToken,
-    handleScan,
     handleSearchSubmit,
     handleAmountChange,
     handleMaxAmount,

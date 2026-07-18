@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import * as React from "react";
+import { useMutation } from "@tanstack/react-query";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
@@ -56,10 +57,19 @@ function SearchingStrategyOverlay() {
 }
 
 export default function AiChatView() {
-  const [strategy, setStrategy] = React.useState<AiStrategy | null>(null);
-  const [isSearching, setIsSearching] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
   const [riskTolerance, setRiskTolerance] = React.useState<RiskTolerance>("moderate");
+  const strategyMutation = useMutation<AiStrategy, Error, RiskTolerance>({
+    mutationKey: ["ai", "strategy"],
+    mutationFn: async (risk) => {
+      const response = await fetch("/api/ai/strategy", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ risk_tolerance: risk }) });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.detail || payload.error || "Unable to search strategies.");
+      return payload as AiStrategy;
+    },
+  });
+  const strategy = strategyMutation.data ?? null;
+  const isSearching = strategyMutation.isPending;
+  const error = strategyMutation.error?.message ?? null;
 
   React.useEffect(() => {
     const savedMode = window.localStorage.getItem("mom3-risk-tolerance");
@@ -68,26 +78,9 @@ export default function AiChatView() {
     }
   }, []);
 
-  const searchStrategies = React.useCallback(async () => {
-    if (isSearching) return;
-
-    setIsSearching(true);
-    setError(null);
-    try {
-      const response = await fetch("/api/ai/strategy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ risk_tolerance: riskTolerance }),
-      });
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.detail || payload.error || "Unable to search strategies.");
-      setStrategy(payload as AiStrategy);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Unable to search strategies.");
-    } finally {
-      setIsSearching(false);
-    }
-  }, [isSearching, riskTolerance]);
+  const searchStrategies = React.useCallback(() => {
+    if (!strategyMutation.isPending) strategyMutation.mutate(riskTolerance);
+  }, [riskTolerance, strategyMutation]);
 
   return (
     <MobileShell contentClassName="pb-10 pt-20">

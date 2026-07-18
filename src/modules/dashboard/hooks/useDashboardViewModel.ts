@@ -1,23 +1,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { portfolioModes } from "../constants/dashboard";
 import type { CurrencyCode } from "../types/dashboard.types";
 import { formatCurrency } from "../utils/formatCurrency";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { usePortfolioPerformance } from "./usePortfolioPerformance";
+import { getMyUsername } from "@/modules/username/utils/username.api";
 
 export function useDashboardViewModel() {
   const {
     isLoading: isUniversalAccountLoading,
     primaryAssets,
+    accountInfo,
   } = useUniversalAccount();
   const [balanceHidden, setBalanceHidden] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [activeModeIndex, setActiveModeIndex] = useState(0);
   const [currency, setCurrency] = useState<CurrencyCode>("USD");
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const usernameQuery = useQuery({
+    queryKey: ["username", "owner", accountInfo.ownerAddress || null],
+    queryFn: () => getMyUsername(accountInfo.ownerAddress as string),
+    enabled: Boolean(accountInfo.ownerAddress),
+    staleTime: 300_000,
+  });
+  const username = usernameQuery.data?.username || null;
 
   useEffect(() => {
     setMounted(true);
@@ -73,6 +83,7 @@ export function useDashboardViewModel() {
     pnlDisplay,
     pnlValue,
     pnlPercent: performance.data?.change_percent ?? 0,
+    username,
     performanceHasRealData: Boolean(performance.data?.has_real_data),
     isPerformanceLoading: performance.isLoading,
     handleSelectCurrency,

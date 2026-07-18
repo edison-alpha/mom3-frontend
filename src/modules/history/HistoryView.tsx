@@ -9,11 +9,10 @@ import * as React from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { FloatingMenuButton } from "@/components/ui/menu-button";
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
-import { historyItems, type HistoryItem } from "@/lib/history";
 import { useTransactions, type RealHistoryItem } from "./hooks/useTransactions";
 import { cn } from "@/lib/utils";
 
-const toneClassName: Record<HistoryItem["tone"], string> = {
+const toneClassName: Record<RealHistoryItem["tone"], string> = {
   green: "bg-[#ccff00] text-[#0a0a0a]",
   purple: "bg-[#3B33BD] text-white",
   blue: "bg-[#2d2eff] text-white",

@@ -4,6 +4,8 @@ export type ProfileStat = {
   sub: string;
 };
 
+export type ProfileUsername = { username: string; owner_address: string; address: string | null; addresses: Record<string, string> };
+
 export type ProfileActionRow = {
   icon: string;
   label: string;

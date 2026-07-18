@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
 import {
   profileActionRows,
-  profileStats,
 } from "@/modules/profile/constants/profile.constants";
 import { ProfileActionList } from "@/modules/profile/components/ProfileActionList";
 import { ProfileEip7702Sheet } from "@/modules/profile/components/ProfileEip7702Sheet";
@@ -50,7 +49,8 @@ export default function ProfileView() {
       <ProfileHeroCard
         email={profile.profileEmail}
         ownerAddress={profile.ownerAddress}
-        stats={profileStats}
+        stats={[]}
+        username={profile.username}
       />
 
       <ProfileUpgradeSection

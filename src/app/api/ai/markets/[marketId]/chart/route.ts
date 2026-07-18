@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ marketId: string }> },
 ) {
   const backendUrl = process.env.MOM3_BACKEND_URL || process.env.NEXT_PUBLIC_MOM3_BACKEND_URL;
@@ -11,8 +11,9 @@ export async function GET(
 
   try {
     const { marketId } = await params;
+    const range = new URL(request.url).searchParams.get("range");
     const response = await fetch(
-      `${backendUrl}/api/ai/markets/${encodeURIComponent(marketId)}/chart`,
+      `${backendUrl}/api/markets/${encodeURIComponent(marketId)}/history${range ? `?range=${encodeURIComponent(range)}` : ""}`,
       { cache: "no-store" },
     );
     const payload = await response.json();

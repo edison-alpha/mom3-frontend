@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-/** Proxy for the complete yield-market catalog on Particle-supported chains. */
+/** Public FE proxy. The backend is the only market data source. */
 export async function GET(request: Request) {
   const searchParams = new URL(request.url).searchParams;
   const chainId = searchParams.get("chain_id") || searchParams.get("chainId") || undefined;
@@ -24,46 +24,6 @@ export async function GET(request: Request) {
     if (limitPerProtocol) databaseParams.set("limit_per_protocol", limitPerProtocol);
     const response = await fetch(`${backendUrl}/api/markets?${databaseParams.toString()}`, { cache: "no-store" });
     const payload = await response.json();
-
-    // Keep the AgentKit path available only for a missing PostgreSQL route.
-    // Other failures must remain visible to the UI as errors.
-    if (response.status === 404) {
-      const legacyResponse = await fetch(`${backendUrl}/api/ai/markets?${params.toString()}`, { cache: "no-store" });
-      const legacyPayload = await legacyResponse.json().catch(() => ({}));
-      return NextResponse.json(legacyPayload, { status: legacyResponse.status });
-    }
-
-    // Keep the frontend compatible with an older backend process that only
-    // exposes /api/yield-forecast. This can happen while the local service is
-    // running from a previous checkout or before it has been restarted.
-    if (response.status === 404) {
-      const forecastResponse = await fetch(`${backendUrl}/api/ai/forecast?${params.toString()}`, {
-        cache: "no-store",
-      });
-      const forecastPayload = await forecastResponse.json();
-      if (forecastResponse.ok && Array.isArray(forecastPayload.forecasts)) {
-        return NextResponse.json({
-          timestamp: forecastPayload.timestamp ?? null,
-          chain_id: forecastPayload.chain_id ?? chainId,
-          markets: forecastPayload.forecasts.map((forecast: Record<string, unknown>) => ({
-            pool_id: `forecast:${forecast.chain_id ?? "unknown"}:${forecast.protocol ?? "unknown"}`,
-            protocol: forecast.protocol ?? "unknown",
-            symbol: "Yield market",
-            chain: forecast.chain ?? "Unknown",
-            chain_id: forecast.chain_id ?? 0,
-            apy: Number(forecast.current_apy ?? 0),
-            apy_base: Number(forecast.current_apy ?? 0),
-            apy_reward: 0,
-            tvl: 0,
-            stablecoin: false,
-            exposure: null,
-            impermanent_loss: null,
-            source: "defillama-forecast",
-            trend: forecast.trend ?? "stable",
-          })),
-        });
-      }
-    }
 
     return NextResponse.json(payload, { status: response.status });
   } catch (error) {

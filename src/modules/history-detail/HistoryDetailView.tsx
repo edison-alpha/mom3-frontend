@@ -1,6 +1,7 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
+import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import * as React from "react";
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
@@ -28,6 +29,7 @@ function mapStoredActivity(raw: any): HistoryItem {
     tone: raw.tone === "green" || raw.tone === "purple" ? raw.tone : "blue",
     transactionHash: raw.transactionHash || null,
     tokenSymbol: amount.symbol || "",
+    explorerUrl: raw.explorerUrl || `https://universalx.app/activity/details?id=${encodeURIComponent(String(raw.transactionId))}`,
   };
 }
 
@@ -39,28 +41,22 @@ const toneClassName: Record<HistoryItem["tone"], string> = {
 
 export default function HistoryDetailView({ item, activityId }: { item?: HistoryItem; activityId?: string }) {
   const { accountInfo } = useUniversalAccount();
-  const [liveItem, setLiveItem] = React.useState<HistoryItem | null>(item || null);
-  const [isLoading, setIsLoading] = React.useState(!item && Boolean(activityId));
-  const [error, setError] = React.useState<string | null>(null);
-
-  React.useEffect(() => {
-    if (item || !activityId) return;
-    const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
-    if (!account) {
-      setIsLoading(false);
-      setError("Connect your wallet to view this activity.");
-      return;
-    }
-    void fetch(`/api/history/${encodeURIComponent(activityId)}?account=${encodeURIComponent(account)}`, { cache: "no-store" })
-      .then(async (response) => {
-        const payload = await response.json().catch(() => ({}));
-        if (!response.ok) throw new Error(payload.error || "Activity not found.");
-        setLiveItem(mapStoredActivity(payload.data));
-      })
-      .catch((cause) => setError(cause instanceof Error ? cause.message : "Activity unavailable."))
-      .finally(() => setIsLoading(false));
-  }, [accountInfo.evmSmartAccount, accountInfo.ownerAddress, activityId, item]);
-
+  const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount || accountInfo.ownerAddress;
+  const detailQuery = useQuery({
+    queryKey: ["history", "detail", activityId || null, account || null],
+    enabled: !item && Boolean(activityId && account),
+    queryFn: async () => {
+      if (!activityId || !account) throw new Error("Connect your wallet to view this activity.");
+      const response = await fetch(`/api/history/${encodeURIComponent(activityId)}?account=${encodeURIComponent(account)}`, { cache: "no-store" });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Activity not found.");
+      return mapStoredActivity(payload.data);
+    },
+    staleTime: 60_000,
+  });
+  const liveItem = item || detailQuery.data || null;
+  const isLoading = !item && detailQuery.isPending && Boolean(activityId && account);
+  const error = !account && !item ? "Connect your wallet to view this activity." : detailQuery.error instanceof Error ? detailQuery.error.message : null;
   if (isLoading) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><div className="mt-6 animate-pulse rounded-[28px] bg-[#1C1C1E] p-6"><div className="mx-auto h-16 w-16 rounded-full bg-white/10" /><div className="mx-auto mt-5 h-7 w-40 rounded bg-white/10" /><div className="mt-6 h-48 rounded-2xl bg-white/10" /></div></MobileShell>;
   if (error || !liveItem) return <MobileShell><MobilePageHeader title="Detail" backHref="/history" backLabel="Back to history" /><section className="mt-6 rounded-[24px] border border-red-400/20 bg-red-500/10 p-5 text-center" role="alert"><p className="text-sm font-black text-red-50">Could not load this activity</p><p className="mt-2 text-xs text-red-100/80">{error || "Activity not found."}</p></section></MobileShell>;
 
@@ -125,7 +121,7 @@ export default function HistoryDetailView({ item, activityId }: { item?: History
               </span>
             </motion.div>
           ))}
-          {resolvedItem.transactionHash ? <a href={`https://etherscan.io/tx/${resolvedItem.transactionHash}`} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View transaction</span><span className="font-black text-[#ccff00]">{resolvedItem.transactionHash.slice(0, 8)}…</span></a> : null}
+          {resolvedItem.explorerUrl ? <a href={resolvedItem.explorerUrl} target="_blank" rel="noreferrer" className="flex min-h-14 items-center justify-between gap-4 border-t border-white/5 px-4 py-3 text-sm focus-visible:ring-2 focus-visible:ring-[#ccff00]"><span className="text-[#9A9AA2]">View on Particle Explorer</span><span className="font-black text-[#ccff00]">Open ↗</span></a> : null}
         </motion.section>
     </MobileShell>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import { AppIcon } from "@/components/ui/app-icon";
-import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import * as React from "react";
 
@@ -15,7 +14,6 @@ export function RecipientSearch({
   showRecentLabel,
   onQueryChange,
   onSearchSubmit,
-  onScanOpen,
   onSelectRecipient,
 }: {
   query: string;
@@ -24,7 +22,6 @@ export function RecipientSearch({
   showRecentLabel: boolean;
   onQueryChange: (value: string) => void;
   onSearchSubmit: () => void;
-  onScanOpen: () => void;
   onSelectRecipient: (recipient: Recipient) => void;
 }) {
   return (
@@ -51,16 +48,6 @@ export function RecipientSearch({
           aria-invalid={error ? "true" : undefined}
           aria-describedby={error ? "recipient-search-error" : undefined}
           className="min-w-0 flex-1 bg-transparent text-sm text-white placeholder:text-[#8E8E93] focus:outline-none"
-        />
-        <Button
-          type="button"
-          onClick={onScanOpen}
-          color="plain"
-          size="icon"
-          rounded="lg"
-          startIcon="lucide:scan-line"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[#3B33BD] transition-colors hover:bg-white/5 focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
-          aria-label="Scan address"
         />
       </div>
       {error ? (

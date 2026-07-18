@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { AmountInput } from "@/modules/send/components/AmountInput";
 import { RecipientHeader } from "@/modules/send/components/RecipientHeader";
 import { RecipientSearch } from "@/modules/send/components/RecipientSearch";
-import { ScanModal } from "@/modules/send/components/ScanModal";
 import { TokenList } from "@/modules/send/components/TokenList";
 import { useSendState } from "@/modules/send/hooks/useSendState";
 
@@ -183,16 +182,9 @@ export default function SendView() {
             state.setError(null);
           }}
           onSearchSubmit={state.handleSearchSubmit}
-          onScanOpen={() => state.setScanOpen(true)}
           onSelectRecipient={state.selectRecipient}
         />
       )}
-
-      <ScanModal
-        open={state.scanOpen}
-        onClose={() => state.setScanOpen(false)}
-        onScan={state.handleScan}
-      />
     </MobileShell>
   );
 }

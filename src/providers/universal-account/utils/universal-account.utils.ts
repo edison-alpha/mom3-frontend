@@ -1,4 +1,5 @@
 import {
+  SUPPORTED_TOKEN_TYPE,
   UNIVERSAL_ACCOUNT_VERSION,
   UniversalAccount,
 } from "@particle-network/universal-account-sdk";
@@ -31,9 +32,13 @@ export function createUniversalAccount(ownerAddress: string) {
     },
     tradeConfig: {
       slippageBps: 100,
-      // Keep Primary Asset selection automatic. Particle documents
-      // usePrimaryTokens for swap input restriction; applying it globally to
-      // transfers can make an ETH-only user fail simply because USDT is absent.
+      usePrimaryTokens: [
+        SUPPORTED_TOKEN_TYPE.ETH,
+        SUPPORTED_TOKEN_TYPE.USDT,
+        SUPPORTED_TOKEN_TYPE.USDC,
+        SUPPORTED_TOKEN_TYPE.BNB,
+        SUPPORTED_TOKEN_TYPE.SOL,
+      ],
     },
   });
 }
@@ -59,7 +64,7 @@ export async function loadUniversalAccountSnapshot(
   })).filter((deployment) => deployment.chainId > 0);
 
   const targetChain = deployments.find(
-    (deployment: { chainId?: number }) => deployment.chainId === DEFAULT_CHAIN_ID,
+    (deployment: { chainId?: number | string }) => Number(deployment.chainId) === DEFAULT_CHAIN_ID,
   );
 
   return {

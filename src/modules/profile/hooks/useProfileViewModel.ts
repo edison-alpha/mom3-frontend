@@ -15,6 +15,7 @@ import type {
   ProfileIdentityRow,
   UniversalAccountRow,
 } from "@/modules/profile/types/profile.types";
+import { getMyUsername } from "@/modules/username/utils/username.api";
 
 function nativeGasToken(chainId: number) {
   if (chainId === 56) return "BNB";
@@ -34,7 +35,11 @@ function delegationErrorMessage(error: unknown, chainId: number) {
   const chain = chainNameFromId(chainId);
 
   if (/insufficient funds|have 0 want/i.test(message)) {
-    return `Add a small amount of ${nativeGasToken(chainId)} on ${chain} to pay the EIP-7702 delegation gas, then try again.`;
+    return `Add a small amount of ${nativeGasToken(chainId)} to the owner wallet on ${chain} to pay EIP-7702 delegation gas, then try again.`;
+  }
+
+  if (/does not provide an EIP-7702 deployment|did not return EIP-7702 authorization|not supported by universal account version/i.test(message)) {
+    return `${chain} is available in Particle, but EIP-7702 delegation is not deployed for this chain in the current Particle account configuration.`;
   }
 
   return `EIP-7702 could not be enabled on ${chain}. Check your network and try again.`;
@@ -59,12 +64,18 @@ export function useProfileViewModel() {
   const [eip7702Open, setEip7702Open] = React.useState(false);
   const [delegatingChainId, setDelegatingChainId] = React.useState<number | null>(null);
   const [delegationError, setDelegationError] = React.useState<string | null>(null);
+  const [username, setUsername] = React.useState<string | null>(null);
 
   useEffect(() => {
     if (!isMagicLoading && !session?.ownerAddress) {
       router.replace("/login");
     }
   }, [isMagicLoading, router, session?.ownerAddress]);
+
+  useEffect(() => {
+    if (!session?.ownerAddress) return;
+    void getMyUsername(session.ownerAddress).then((identity) => setUsername(identity?.username || null)).catch(() => setUsername(null));
+  }, [session?.ownerAddress]);
 
   const delegateMutation = useMutation({
     mutationFn: async (chainId: number) => {
@@ -107,6 +118,9 @@ export function useProfileViewModel() {
 
   const ownerAddress = accountInfo.ownerAddress || session?.ownerAddress || "";
   const isAnyChainDelegated = eip7702Deployments.some((deployment) => deployment.isDelegated);
+  const isDefaultChainDelegated = eip7702Deployments.some(
+    (deployment) => deployment.chainId === DEFAULT_CHAIN_ID && deployment.isDelegated,
+  );
 
   const identityRows: ProfileIdentityRow[] = [
     {
@@ -177,7 +191,7 @@ export function useProfileViewModel() {
     isUpgradeDisabled:
       isMagicLoading ||
       !universalAccount ||
-      isDelegated ||
+      isDefaultChainDelegated ||
       delegateMutation.isPending,
     isUpgradePending: delegateMutation.isPending,
     logout,
@@ -191,6 +205,7 @@ export function useProfileViewModel() {
     openUniversalAccountSheet,
     ownerAddress,
     profileEmail: session?.email || null,
+    username,
     setUniversalAccountOpen,
     onEip7702OpenChange: handleEip7702OpenChange,
     universalAccountError,

@@ -6,11 +6,7 @@ import * as React from "react";
 
 import { CHAIN_ID } from "@particle-network/universal-account-sdk";
 
-import {
-  addressBook,
-  recentRecipients,
-  scannedRecipient,
-} from "@/modules/send/constants/send.constants";
+import { getRecentRecipients, saveRecentRecipient } from "@/modules/send/api/recent-recipients.api";
 import type { Recipient, SendPreview, SendStatus, TokenRow } from "@/modules/send/types/send.types";
 import {
   findPreferredToken,
@@ -28,6 +24,7 @@ import {
 } from "@/modules/send/utils/send.utils";
 import { prepareSponsoredTransaction } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 import { syncHistory } from "@/modules/history/api/history.api";
+import { resolveUsername } from "@/modules/username/utils/username.api";
 
 export function useConfirmPaymentState() {
   const searchParams = useSearchParams();
@@ -80,11 +77,23 @@ export function useConfirmPaymentState() {
   const [recipient, setRecipient] = React.useState<Recipient | null>(null);
 
   React.useEffect(() => {
-    const resolved = resolveRecipient(to);
-    if (resolved) {
-      setRecipient(resolved);
+    let cancelled = false;
+    if (to.trim().startsWith("@") && selectedToken) {
+      void resolveUsername(to.trim(), selectedToken.chainId).then((identity) => {
+        if (!cancelled && identity.address) setRecipient({ id: identity.username, handle: identity.username, name: "mom3 user", address: identity.address, network: selectedToken.chainName, status: "Verified", color: "from-[#3B33BD] to-[#7E78EA]" });
+      }).catch(() => { if (!cancelled) setError("Username was not found on the selected chain."); });
     }
-  }, [to]);
+    void getRecentRecipients(accountInfo.ownerAddress)
+      .catch(() => [])
+      .then((recentRecipients) => {
+        if (cancelled) return;
+        const resolved = resolveRecipient(to, recentRecipients);
+        if (resolved) setRecipient(resolved);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [accountInfo.ownerAddress, selectedToken, to]);
 
   const prepareTransaction = React.useCallback(async () => {
     if (!universalAccount || !recipient || !selectedToken) return;
@@ -195,6 +204,7 @@ export function useConfirmPaymentState() {
       const transactionForSubmit = structuredClone(sendPreview.transaction);
       const result = await signAndSend(transactionForSubmit);
       setTransactionId(result.transactionId ?? sendPreview.transaction.transactionId);
+      void saveRecentRecipient(accountInfo.ownerAddress, sendPreview.recipient, sendPreview.token.chainId);
       const account = accountInfo.evmSmartAccount || accountInfo.ownerAddress;
       if (account && universalAccount) {
         void universalAccount.getTransactions(1, 50).then((response: any) => {

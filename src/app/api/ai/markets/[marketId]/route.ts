@@ -12,10 +12,7 @@ export async function GET(
   }
 
   try {
-    let response = await fetch(`${backendUrl}/api/markets/${encodeURIComponent(marketId)}`, { cache: "no-store" });
-    if (!response.ok) {
-      response = await fetch(`${backendUrl}/api/ai/markets/${encodeURIComponent(marketId)}`, { cache: "no-store" });
-    }
+    const response = await fetch(`${backendUrl}/api/markets/${encodeURIComponent(marketId)}`, { cache: "no-store" });
     const payload = await response.json().catch(() => ({}));
     return NextResponse.json(payload, { status: response.status });
   } catch (error) {

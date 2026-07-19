@@ -50,6 +50,7 @@ export type StoredHistoryTransaction = {
   network: string;
   protocol?: string | null;
   recipientUsername?: string | null;
+  senderUsername?: string | null;
   amount: { value: number; symbol: string; usd: number; direction: "in" | "out" | "neutral" };
   transactionHash?: string | null;
   explorerUrl?: string | null;

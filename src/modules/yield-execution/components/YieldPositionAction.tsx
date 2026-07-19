@@ -76,7 +76,9 @@ function amountAfterKey(current: string, key: AmountKeypadKey) {
 function executionDecimals(symbol: string) {
   if (/^sol$/i.test(symbol)) return 9;
   if (/^(usdc|usdt)$/i.test(symbol)) return 6;
-  return 6;
+  // Native EVM assets such as ETH/BNB and standard ERC-20 assets use
+  // 18 decimals unless the market metadata provides a more specific value.
+  return 18;
 }
 
 function formatMaxAmount(value: number, symbol: string) {

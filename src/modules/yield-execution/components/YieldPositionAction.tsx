@@ -73,6 +73,19 @@ function amountAfterKey(current: string, key: AmountKeypadKey) {
   return `${current}${key}`;
 }
 
+function executionDecimals(symbol: string) {
+  if (/^sol$/i.test(symbol)) return 9;
+  if (/^(usdc|usdt)$/i.test(symbol)) return 6;
+  return 6;
+}
+
+function formatMaxAmount(value: number, symbol: string) {
+  const decimals = executionDecimals(symbol);
+  const scale = 10 ** decimals;
+  const exactMax = Math.floor(value * scale + Number.EPSILON * scale) / scale;
+  return exactMax.toFixed(decimals).replace(/\.?0+$/, "");
+}
+
 export function YieldPositionAction({
   chainId,
   marketId,
@@ -185,7 +198,7 @@ export function YieldPositionAction({
   }
 
   if (!mode) {
-    if (position.isLoading) {
+    if (position.isLoading || position.isFetching) {
       return <YieldPositionCardSkeleton protocol={protocol} />;
     }
 
@@ -246,7 +259,15 @@ export function YieldPositionAction({
   }
 
   function setAmountPercentage(percent: (typeof AMOUNT_PERCENTAGES)[number]) {
-    const nextAmount = Math.floor((maxAmount * percent / 100) * 1_000_000) / 1_000_000;
+    if (percent === 100) {
+      setAmount(maxAmount > 0 ? formatMaxAmount(maxAmount, assetSymbol) : "");
+      active.reset();
+      return;
+    }
+
+    const decimals = executionDecimals(assetSymbol);
+    const scale = 10 ** decimals;
+    const nextAmount = Math.floor((maxAmount * percent / 100) * scale) / scale;
     setAmount(nextAmount > 0 ? String(nextAmount) : "");
     active.reset();
   }

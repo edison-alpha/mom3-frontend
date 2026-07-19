@@ -20,6 +20,10 @@ export function useYieldPosition(marketId?: string, account?: string | null, cha
       if (!response.ok) throw new Error(payload.detail || payload.error || "Position data is unavailable.");
       return payload as YieldPosition;
     },
+    retry: 3,
+    retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 5_000),
+    refetchOnMount: "always",
+    refetchOnReconnect: true,
     staleTime: 30_000,
   });
 

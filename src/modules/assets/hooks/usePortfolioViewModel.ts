@@ -19,6 +19,13 @@ function protocolIcon(project: string) {
   if (project === "aave-v3") return "simple-icons:aave";
   if (project === "compound-v3") return "simple-icons:compound";
   if (project === "morpho-blue") return "simple-icons:morpho";
+  if (project.includes("jupiter")) return "token-branded:jupiter";
+  if (project.includes("kamino")) return "token-branded:kamino";
+  if (project.includes("raydium")) return "token-branded:raydium";
+  if (project.includes("uniswap")) return "simple-icons:uniswap";
+  if (project.includes("curve")) return "token-branded:curve";
+  if (project.includes("balancer")) return "token-branded:balancer";
+  if (project.includes("lido")) return "token-branded:lido";
   return "solar:wallet-money-bold";
 }
 

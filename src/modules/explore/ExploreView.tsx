@@ -19,12 +19,12 @@ type ChainFilter = "All" | number;
 const DEFI_PROTOCOL_SLUGS = [
   "aave", "balancer", "compound", "convex", "eigenlayer", "ethena", "etherfi",
   "frax", "gmx", "lido", "liquity", "makerdao", "morpho", "pendle",
-  "rocketpool", "spark", "synthetix", "venus", "yearn",
+  "rocketpool", "spark", "synthetix", "venus", "yearn", "jupiter", "kamino",
 ] as const;
 
 const DEX_PROTOCOL_SLUGS = [
   "aerodrome", "camelot", "curve", "dydx", "pancakeswap", "sushiswap",
-  "uniswap", "velodrome",
+  "uniswap", "velodrome", "raydium",
 ] as const;
 
 const TOKEN_NAMES: Record<string, string> = {

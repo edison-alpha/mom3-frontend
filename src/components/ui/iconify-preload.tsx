@@ -32,6 +32,13 @@ const COMMON_ICON_NAMES = [
   "token-branded:base",
   "token-branded:ethena",
   "token-branded:pendle",
+  "token-branded:jupiter",
+  "token-branded:kamino",
+  "token-branded:raydium",
+  "token-branded:curve",
+  "token-branded:balancer",
+  "token-branded:lido",
+  "token-branded:defi",
 ];
 
 export function IconifyPreload() {

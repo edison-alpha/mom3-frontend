@@ -40,8 +40,16 @@ function protocolIcon(protocol: string) {
   if (value.includes("aave")) return "token-branded:aave";
   if (value.includes("compound")) return "simple-icons:compound";
   if (value.includes("morpho")) return "simple-icons:morpho";
+  if (value.includes("jupiter")) return "token-branded:jupiter";
+  if (value.includes("kamino")) return "token-branded:kamino";
+  if (value.includes("raydium")) return "token-branded:raydium";
+  if (value.includes("uniswap")) return "simple-icons:uniswap";
+  if (value.includes("curve")) return "token-branded:curve";
+  if (value.includes("balancer")) return "token-branded:balancer";
+  if (value.includes("lido")) return "token-branded:lido";
   if (value.includes("pendle")) return "token-branded:pendle";
-  return "solar:graph-up-bold";
+  if (value.includes("ethena")) return "token-branded:ethena";
+  return "token-branded:defi";
 }
 
 function chainIcon(chainId: number) {

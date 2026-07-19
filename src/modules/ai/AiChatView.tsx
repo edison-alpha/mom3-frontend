@@ -13,6 +13,7 @@ import type { AiStrategy } from "./types/ai.types";
 import { StrategyModeCard } from "@/modules/dashboard/components/StrategyModeCard";
 import { portfolioModes } from "@/modules/dashboard/constants/dashboard";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
+import { chainNameFromId } from "@/lib/chain";
 
 type RiskTolerance = "conservative" | "moderate" | "aggressive";
 type AllocationPlan = {
@@ -72,7 +73,7 @@ export default function AiChatView() {
           balance: Number(entry.amount || 0),
           amount_in_usd: Number(entry.amountInUSD || 0),
           chain_id: Number(entry.token?.chainId || 0),
-          chain: String(entry.token?.chainName || entry.token?.chainId || "Unknown chain"),
+          chain: chainNameFromId(Number(entry.token?.chainId || 0)),
           token_address: String(entry.token?.address || ""),
         })),
       );

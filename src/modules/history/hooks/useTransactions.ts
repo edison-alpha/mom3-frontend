@@ -113,7 +113,7 @@ function summarizeTransaction(raw: any, account = ""): RealHistoryItem {
 
   return {
     id,
-    title: action === "supply" ? `Supplied to ${raw?.protocol || "yield market"}` : action === "withdraw" ? `Withdrawn from ${raw?.protocol || "yield market"}` : isReceive ? "Deposit received" : isSend ? "Sent asset" : isConvert ? "Asset converted" : "Transaction",
+    title: action === "supply" ? `Supplied to ${raw?.protocol || "yield market"}` : action === "withdraw" ? `Withdrawn from ${raw?.protocol || "yield market"}` : isReceive ? (raw?.senderUsername ? `Received from ${raw.senderUsername}` : "Deposit received") : isSend ? "Sent asset" : isConvert ? "Asset converted" : "Transaction",
     description: symbol ? `${symbol} · ${network}` : network,
     amount,
     time: relativeTime(raw?.createdAt || raw?.timestamp || raw?.time),
@@ -121,7 +121,7 @@ function summarizeTransaction(raw: any, account = ""): RealHistoryItem {
     network,
     reference: refShort,
     note: isReceive
-      ? "Funds are available in your universal balance."
+      ? raw?.senderUsername ? `Funds were received from ${raw.senderUsername}.` : "Funds are available in your universal balance."
       : "Your transfer was processed successfully.",
     icon: presentation.icon,
     tone: presentation.tone,

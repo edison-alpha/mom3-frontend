@@ -54,7 +54,13 @@ export default function ClaimUsernameView() {
     setError(null);
     try {
       const address = accountInfo.evmSmartAccount || session.ownerAddress;
-      await claimMutation.mutateAsync({ username: handle, ownerAddress: session.ownerAddress, chainId: DEFAULT_CHAIN_ID, address, solanaAddress: accountInfo.solanaSmartAccount || undefined });
+      await claimMutation.mutateAsync({
+        username: handle.trim().replace(/^@/, '').toLowerCase(),
+        ownerAddress: session.ownerAddress,
+        chainId: DEFAULT_CHAIN_ID,
+        address,
+        solanaAddress: accountInfo.solanaSmartAccount || undefined,
+      });
       setStep(3);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Unable to claim username.');

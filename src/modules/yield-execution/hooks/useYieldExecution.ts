@@ -67,6 +67,9 @@ function getErrorDetails(cause: unknown, depth = 0): string {
 function getYieldExecutionError(cause: unknown, action: YieldAction, phase: "prepare" | "submit") {
   const details = getErrorDetails(cause);
 
+  if (/insufficient primary token balance|code=-32653/i.test(details)) {
+    return "Your Universal Account does not have enough primary-token balance to pay this transaction fee. Add SOL or another supported primary asset, then review this transaction again.";
+  }
   if (/insufficient lamports|insufficient funds for rent|insufficient.*rent/i.test(details)) {
     return "This Solana operation needs lamports for rent/account creation in addition to transaction gas. Review again so Particle can source the SOL reserve from your Universal Account; add SOL only if the Universal Account has no available SOL route.";
   }
@@ -128,6 +131,7 @@ export function useYieldExecution(action: YieldAction) {
   const [transactionId, setTransactionId] = React.useState<string | null>(null);
   const [intent, setIntent] = React.useState<AiExecutionIntent | null>(null);
   const [conversionTransaction, setConversionTransaction] = React.useState<ITransaction | null>(null);
+  const executeInFlightRef = React.useRef(false);
 
   const prepare = React.useCallback(async (marketId: string, amount: string, chainId: number) => {
     const userAddress = chainId === 101 ? accountInfo.solanaSmartAccount : accountInfo.evmSmartAccount;
@@ -251,11 +255,13 @@ export function useYieldExecution(action: YieldAction) {
   }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, primaryAssets, universalAccount]);
 
   const execute = React.useCallback(async () => {
-    if (!transaction) return null;
+    if (!transaction || executeInFlightRef.current) return null;
+    executeInFlightRef.current = true;
     if (isTransactionQuoteExpired(transaction)) {
       setError("This Particle quote has expired. Review the transaction again to refresh route and fees.");
       setTransaction(null);
       setStatus("error");
+      executeInFlightRef.current = false;
       return null;
     }
     setStatus("signing");
@@ -317,6 +323,8 @@ export function useYieldExecution(action: YieldAction) {
       setError(getYieldExecutionError(cause, action, "submit"));
       setStatus("error");
       return null;
+    } finally {
+      executeInFlightRef.current = false;
     }
   }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, conversionTransaction, intent, prepare, refreshAccount, signAndSend, transaction, universalAccount]);
 

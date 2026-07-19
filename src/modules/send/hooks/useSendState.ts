@@ -82,7 +82,7 @@ export function useSendState(
   /* â”€â”€ Derived token rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
   const tokenRows = React.useMemo(
-    () => normalizePrimaryAssetTokens(primaryAssets, true),
+    () => normalizePrimaryAssetTokens(primaryAssets).filter((token) => token.balance > 0),
     [primaryAssets],
   );
 

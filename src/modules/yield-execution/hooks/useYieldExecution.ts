@@ -1,6 +1,11 @@
 "use client";
 
-import { SUPPORTED_TOKEN_TYPE } from "@particle-network/universal-account-sdk";
+import {
+  CHAIN_ID,
+  SUPPORTED_TOKEN_TYPE,
+  type IAssetsResponse,
+  type ITransaction,
+} from "@particle-network/universal-account-sdk";
 import * as React from "react";
 
 import type { AiExecutionIntent } from "@/modules/ai/types/ai.types";
@@ -8,6 +13,8 @@ import { isTransactionQuoteExpired } from "@/modules/send/utils/send.utils";
 import type { YieldAction } from "@/modules/yield-execution/types/yield-execution.types";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { syncHistory } from "@/modules/history/api/history.api";
+import { parseDecimalish } from "@/lib/format";
+import { getActiveFeeQuote } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 
 function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
   switch (symbol.trim().toUpperCase()) {
@@ -58,8 +65,30 @@ function getYieldExecutionError(cause: unknown, action: YieldAction, phase: "pre
   return details || `We couldn't ${phase} this ${action}.`;
 }
 
+function getSolanaBalance(primaryAssets: IAssetsResponse | null) {
+  const solAsset = primaryAssets?.assets.find(
+    (asset) => String(asset.tokenType).toLowerCase() === SUPPORTED_TOKEN_TYPE.SOL,
+  );
+  return (solAsset?.chainAggregation ?? [])
+    .filter((entry) => Number(entry.token.chainId) === CHAIN_ID.SOLANA_MAINNET)
+    .reduce((total, entry) => total + Number(entry.amount || 0), 0);
+}
+
+function getSolanaRentTopUp(transaction: ITransaction, primaryAssets: IAssetsResponse | null) {
+  const rent = parseDecimalish(
+    getActiveFeeQuote(transaction)?.fees.totals.solanaRentFee,
+    9,
+  );
+  const available = getSolanaBalance(primaryAssets);
+  const topUp = rent - available;
+
+  // Particle expects human-readable token amounts. Ignore sub-lamport dust so
+  // this only adds SOL when the quote reports a real account-rent shortfall.
+  return topUp > 0.000000001 ? topUp.toFixed(9).replace(/0+$/, "").replace(/\.$/, "") : null;
+}
+
 export function useYieldExecution(action: YieldAction) {
-  const { accountInfo, universalAccount, signAndSend, refreshAccount } = useUniversalAccount();
+  const { accountInfo, primaryAssets, universalAccount, signAndSend, refreshAccount } = useUniversalAccount();
   const [status, setStatus] = React.useState<ExecutionStatus>("idle");
   const [error, setError] = React.useState<string | null>(null);
   const [transaction, setTransaction] = React.useState<any>(null);
@@ -112,13 +141,32 @@ export function useYieldExecution(action: YieldAction) {
         );
       }
 
-      const particleTransaction = await universalAccount.createUniversalTransaction({
+      const expectTokens = action === "supply"
+        ? [{ type: expectedTokenType, amount: validated.amount }]
+        : [];
+      let particleTransaction = await universalAccount.createUniversalTransaction({
         chainId,
-          expectTokens: action === "supply"
-          ? [{ type: expectedTokenType, amount: validated.amount }]
-          : [],
+        expectTokens,
         transactions: validated.transactions,
       });
+
+      // A direct send only needs transaction gas, which Particle can source
+      // from any primary asset. Kamino's first supply can additionally create
+      // Solana accounts. When Particle includes that rent in its quote, source
+      // only the missing SOL from the same Universal Balance before submitting.
+      if (action === "supply" && chainId === CHAIN_ID.SOLANA_MAINNET) {
+        const rentTopUp = getSolanaRentTopUp(particleTransaction, primaryAssets);
+        if (rentTopUp) {
+          particleTransaction = await universalAccount.createUniversalTransaction({
+            chainId,
+            expectTokens: [
+              ...expectTokens,
+              { type: SUPPORTED_TOKEN_TYPE.SOL, amount: rentTopUp },
+            ],
+            transactions: validated.transactions,
+          });
+        }
+      }
       const nextTransaction = structuredClone(particleTransaction);
       setIntent(validated);
       setTransaction(nextTransaction);
@@ -129,7 +177,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("error");
       return null;
     }
-  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, universalAccount]);
+  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, primaryAssets, universalAccount]);
 
   const execute = React.useCallback(async () => {
     if (!transaction) return null;

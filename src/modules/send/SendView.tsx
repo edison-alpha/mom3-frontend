@@ -114,7 +114,7 @@ export default function SendView() {
             <div className="flex flex-1 flex-col">
               <div className="mb-3 flex items-center justify-between">
                 <h2 className="text-xs font-black uppercase text-[#77777f]">Select coin</h2>
-                <span className="text-xs font-semibold text-[#9A9AA2]">{state.tokenRows.length} routes</span>
+                <span className="text-xs font-semibold text-[#9A9AA2]">{state.tokenRows.length} assets</span>
               </div>
               <div className="flex-1 overflow-y-auto pb-4">
                 <TokenList

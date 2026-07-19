@@ -3,6 +3,7 @@
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { CHAIN_ID } from "@particle-network/universal-account-sdk";
 
@@ -22,7 +23,7 @@ import {
   normalizePrimaryAssetTokens,
 } from "@/modules/send/utils/send.utils";
 import { syncHistory } from "@/modules/history/api/history.api";
-import { resolveUsername } from "@/modules/username/utils/username.api";
+import { getMyUsername, resolveUsername } from "@/modules/username/utils/username.api";
 import { formatUsername } from "@/lib/username";
 
 const BSC_MAINNET_CHAIN_ID = 56;
@@ -56,6 +57,14 @@ export function useConfirmPaymentState() {
   const submitInFlightRef = React.useRef(false);
   const prepareInFlightRef = React.useRef(false);
   const prepareRequestRef = React.useRef(0);
+  const myUsernameQuery = useQuery({
+    queryKey: ["username", "owner", accountInfo.ownerAddress || null],
+    queryFn: () => getMyUsername(accountInfo.ownerAddress as string),
+    enabled: Boolean(accountInfo.ownerAddress),
+    staleTime: 300_000,
+    retry: false,
+  });
+  const hasUsername = Boolean(myUsernameQuery.data?.username);
 
   const tokenRows = React.useMemo(
     () => normalizePrimaryAssetTokens(primaryAssets),
@@ -111,7 +120,7 @@ export function useConfirmPaymentState() {
   }, [accountInfo.ownerAddress, selectedToken?.chainId, to]);
 
   const prepareTransaction = React.useCallback(async () => {
-    if (!universalAccount || !recipient || !selectedToken) return;
+    if (!hasUsername || !universalAccount || !recipient || !selectedToken) return;
     // The confirm page auto-prepares on mount. React may replay effects in
     // development, but a Particle quote is still a remote single-use request.
     if (prepareInFlightRef.current) return;
@@ -173,6 +182,7 @@ export function useConfirmPaymentState() {
     }
   }, [
     universalAccount,
+    hasUsername,
     recipient,
     selectedToken,
     amount,
@@ -186,6 +196,7 @@ export function useConfirmPaymentState() {
   }, [recipient, selectedToken, sendPreview, sendStatus, prepareTransaction]);
 
   const handleConfirmSend = async () => {
+    if (!hasUsername) return;
     // Particle transaction records are single-use. Prevent a double click or
     // a second render event from submitting the same transactionId twice.
     if (submitInFlightRef.current) return;
@@ -280,6 +291,7 @@ export function useConfirmPaymentState() {
   const handleSuccessBack = () => router.push("/dashboard");
 
   const handleRetry = async () => {
+    if (!hasUsername) return;
     setError(null);
     setNotice(null);
     // Every re-entry gets a fresh balance and a fresh single-use quote.
@@ -288,7 +300,7 @@ export function useConfirmPaymentState() {
     await prepareTransaction();
   };
 
-  const isReady = Boolean(recipient && selectedToken && !isResolvingRecipient && !isLoading && !amountValidationMessage);
+  const isReady = Boolean(hasUsername && recipient && selectedToken && !isResolvingRecipient && !isLoading && !amountValidationMessage);
   const isSigning = sendStatus === "signing";
   const isPreparing = sendStatus === "preparing" || sendStatus === "delegating";
 
@@ -306,6 +318,8 @@ export function useConfirmPaymentState() {
     notice,
     accountError,
     isLoading,
+    hasUsername,
+    isUsernameLoading: myUsernameQuery.isPending,
     isReady,
     isSigning,
     isPreparing,

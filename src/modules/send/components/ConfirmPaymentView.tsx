@@ -2,6 +2,7 @@
 
 import { AppIcon } from "@/components/ui/app-icon";
 import * as React from "react";
+import Link from "next/link";
 
 import { MobilePageHeader, MobileShell } from "@/components/ui/mobile-shell";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,30 @@ export default function ConfirmPaymentView() {
           onRetry={state.handleRetry}
           onBack={state.handleBack}
         />
+      </MobileShell>
+    );
+  }
+
+  if (state.isUsernameLoading || !state.hasUsername) {
+    return (
+      <MobileShell>
+        <MobilePageHeader title="Send" leading={<Button type="button" onClick={state.handleBack} color="dark" size="icon" rounded="full" startIcon="lucide:chevron-left" aria-label="Back to send" />} />
+        {state.isUsernameLoading ? (
+          <section className="mt-6 rounded-[28px] bg-[#111217] p-5" aria-busy="true" aria-label="Checking username">
+            <SkeletonText className="h-5 w-44" />
+            <SkeletonText className="mt-3 h-4 w-full" />
+            <Skeleton className="mt-5 h-14 w-full rounded-full" />
+          </section>
+        ) : (
+          <section className="mt-6 rounded-[28px] border border-[#8F89FF]/25 bg-[#111217] p-5 text-center" role="alert">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#3B33BD]/25 text-[#8F89FF]">
+              <AppIcon icon="lucide:at-sign" aria-hidden="true" width={28} height={28} />
+            </span>
+            <h2 className="mt-4 text-lg font-black text-white">Claim your username first</h2>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-[#A7A7B7]">You need a Mom3 username before you can send assets.</p>
+            <Link href="/claim-username" className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#3B33BD] px-5 text-base font-black text-[#ccff00] focus-visible:ring-2 focus-visible:ring-[#8F89FF]">Claim username <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={18} height={18} /></Link>
+          </section>
+        )}
       </MobileShell>
     );
   }

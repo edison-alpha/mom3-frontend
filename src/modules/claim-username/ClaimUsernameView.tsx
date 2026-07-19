@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -24,6 +24,7 @@ export default function ClaimUsernameView() {
   const [step, setStep] = useState(1);
   const [handle, setHandle] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const claimCompletedRef = useRef(false);
   const claimMutation = useClaimUsername();
   const ownerAddress = session?.ownerAddress || "";
   const usernameQuery = useQuery({
@@ -34,7 +35,7 @@ export default function ClaimUsernameView() {
   });
 
   useEffect(() => {
-    if (usernameQuery.data?.username) router.replace("/dashboard");
+    if (usernameQuery.data?.username && !claimCompletedRef.current) router.replace("/dashboard");
   }, [router, usernameQuery.data?.username]);
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function ClaimUsernameView() {
   const handleConfirm = useCallback(async () => {
   if (!session?.ownerAddress || usernameQuery.data?.username) return;
     setError(null);
+    claimCompletedRef.current = true;
     try {
       const address = accountInfo.evmSmartAccount || session.ownerAddress;
       await claimMutation.mutateAsync({
@@ -63,6 +65,7 @@ export default function ClaimUsernameView() {
       });
       setStep(3);
     } catch (cause) {
+      claimCompletedRef.current = false;
       setError(cause instanceof Error ? cause.message : 'Unable to claim username.');
     }
   }, [accountInfo.evmSmartAccount, claimMutation, handle, session?.ownerAddress]);
@@ -83,7 +86,7 @@ export default function ClaimUsernameView() {
     }
   }, [handle]);
 
-  if (!ownerAddress || usernameQuery.isPending || usernameQuery.data?.username) return null;
+  if (!ownerAddress || usernameQuery.isPending || (usernameQuery.data?.username && !claimCompletedRef.current)) return null;
 
   return (
       <MobileShell>

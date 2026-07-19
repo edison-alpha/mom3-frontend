@@ -12,8 +12,16 @@ import { StrategyResponse } from "./components/StrategyResponse";
 import type { AiStrategy } from "./types/ai.types";
 import { StrategyModeCard } from "@/modules/dashboard/components/StrategyModeCard";
 import { portfolioModes } from "@/modules/dashboard/constants/dashboard";
+import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 
 type RiskTolerance = "conservative" | "moderate" | "aggressive";
+type AllocationPlan = {
+  wallet_value_usd: number;
+  reserve_pct: number;
+  deployable_usd: number;
+  reasoning: string;
+  plans: Array<{ market_id: string; protocol: string; chain_id: number; asset: string; allocation_pct: number; amount_usd: number }>;
+};
 
 function SearchingStrategyOverlay() {
   return (
@@ -53,7 +61,35 @@ function SearchingStrategyOverlay() {
 }
 
 export default function AiChatView() {
+  const { accountInfo, primaryAssets } = useUniversalAccount();
   const [riskTolerance, setRiskTolerance] = React.useState<RiskTolerance>("moderate");
+  const allocationMutation = useMutation<AllocationPlan, Error, void>({
+    mutationKey: ["ai", "allocation-plan"],
+    mutationFn: async () => {
+      const walletAssets = (primaryAssets?.assets ?? []).flatMap((asset) =>
+        (asset.chainAggregation ?? []).map((entry) => ({
+          symbol: String(asset.tokenType || "UNKNOWN").toUpperCase(),
+          balance: Number(entry.amount || 0),
+          amount_in_usd: Number(entry.amountInUSD || 0),
+          chain_id: Number(entry.token?.chainId || 0),
+          chain: String(entry.token?.chainName || entry.token?.chainId || "Unknown chain"),
+          token_address: String(entry.token?.address || ""),
+        })),
+      );
+      const response = await fetch("/api/ai/allocation-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          risk_tolerance: riskTolerance,
+          user_address: accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount,
+          wallet_assets: walletAssets,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.detail || payload.error || "Unable to allocate your balance.");
+      return payload as AllocationPlan;
+    },
+  });
   const strategyMutation = useMutation<AiStrategy, Error, RiskTolerance>({
     mutationKey: ["ai", "strategy"],
     mutationFn: async (risk) => {
@@ -130,6 +166,35 @@ export default function AiChatView() {
               startIcon="lucide:refresh-cw"
               onClick={() => void searchStrategies()}
             />
+          </div>
+          <div className="mb-4 rounded-[22px] border border-[#ccff00]/20 bg-[#ccff00]/[0.06] p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-white">Auto allocation</p>
+                <p className="mt-1 text-xs text-[#A7A7B7]">Use your live Universal Account balance.</p>
+              </div>
+              <Button
+                type="button"
+                color="primary"
+                rounded="full"
+                label={allocationMutation.isPending ? "Allocating..." : "Optimize balance"}
+                disabled={allocationMutation.isPending || !primaryAssets}
+                onClick={() => allocationMutation.mutate()}
+              />
+            </div>
+            {allocationMutation.error ? <p className="mt-3 text-xs font-bold text-[#FF7B7B]" role="alert">{allocationMutation.error.message}</p> : null}
+            {allocationMutation.data ? (
+              <div className="mt-4 space-y-2 border-t border-white/10 pt-3">
+                <p className="text-xs font-bold text-[#A7A7B7]">Deploying ${allocationMutation.data.deployable_usd.toFixed(2)} · {allocationMutation.data.reserve_pct}% reserve</p>
+                {allocationMutation.data.plans.map((plan) => (
+                  <div key={`${plan.market_id}-${plan.chain_id}`} className="flex items-center justify-between gap-3 rounded-xl bg-black/20 px-3 py-2 text-xs">
+                    <span className="min-w-0 truncate font-bold text-white">{plan.protocol} · {plan.asset}</span>
+                    <span className="shrink-0 font-black text-[#ccff00]">${plan.amount_usd.toFixed(2)}</span>
+                  </div>
+                ))}
+                {!allocationMutation.data.plans.length ? <p className="text-xs text-[#A7A7B7]">No executable allocation is available for the current balance.</p> : null}
+              </div>
+            ) : null}
           </div>
           <StrategyResponse strategy={strategy} />
         </section>

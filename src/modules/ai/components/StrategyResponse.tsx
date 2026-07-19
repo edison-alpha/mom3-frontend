@@ -129,8 +129,14 @@ function OpportunityCard({ opportunity }: { opportunity: StrategyOpportunity }) 
   const riskClass = risk === "Low" ? "text-[#5EE6B0]" : risk === "Medium" ? "text-[#FFD166]" : "text-[#FF7B7B]";
   return (
     <Link
-      href="/agent"
-      aria-label={`Optimize ${cleanProtocol(opportunity.protocol)} with mom3 agent`}
+      href={`/ai/strategy?${new URLSearchParams({
+        marketId: opportunity.market_id || "",
+        protocol: opportunity.protocol,
+        chainId: String(opportunity.chain_id),
+        pool: opportunity.pool,
+        ...(opportunity.pool_id ? { poolId: opportunity.pool_id } : {}),
+      }).toString()}`}
+      aria-label={`View ${cleanProtocol(opportunity.protocol)} strategy details`}
       className="block rounded-[24px] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
     >
     <article className="rounded-[24px] border border-white/10 bg-[#111217] p-4 shadow-[0_18px_50px_-34px_rgba(59,51,189,0.95)] motion-safe:transition-transform motion-safe:duration-150 motion-safe:hover:-translate-y-0.5">

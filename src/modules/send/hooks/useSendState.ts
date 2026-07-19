@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { clearRecentRecipients, getRecentRecipients, saveRecentRecipient } from "@/modules/send/api/recent-recipients.api";
-import { searchUsernames } from "@/modules/username/utils/username.api";
+import { getMyUsername, searchUsernames } from "@/modules/username/utils/username.api";
 import { formatUsername } from "@/lib/username";
 import { DEFAULT_CHAIN_ID } from "@/providers/shared/constants/chain.constants";
 import type { Recipient, TokenRow } from "@/modules/send/types/send.types";
@@ -48,6 +48,13 @@ export function useSendState(
     queryFn: () => getRecentRecipients(accountInfo.ownerAddress as string),
     enabled: Boolean(accountInfo.ownerAddress),
     staleTime: 300_000,
+  });
+  const myUsernameQuery = useQuery({
+    queryKey: ["username", "owner", accountInfo.ownerAddress || null],
+    queryFn: () => getMyUsername(accountInfo.ownerAddress as string),
+    enabled: Boolean(accountInfo.ownerAddress),
+    staleTime: 300_000,
+    retry: false,
   });
   const saveRecipientMutation = useMutation({
     mutationKey: ["recipients", "save"],
@@ -242,6 +249,7 @@ export function useSendState(
   };
 
   const canSend = Boolean(
+    myUsernameQuery.data?.username &&
     selectedRecipient &&
       selectedToken &&
       universalAccount &&
@@ -256,6 +264,8 @@ export function useSendState(
     isLoading,
     accountError,
     refreshAccount,
+    hasUsername: Boolean(myUsernameQuery.data?.username),
+    isUsernameLoading: myUsernameQuery.isPending,
     // state
     query,
     setQuery,

@@ -30,7 +30,7 @@ export default function SendView() {
 
   const handleSend = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!state.canSend || !state.selectedRecipient || !state.selectedToken) return;
+    if (!state.hasUsername || !state.canSend || !state.selectedRecipient || !state.selectedToken) return;
 
     const params = new URLSearchParams();
     params.set(
@@ -106,7 +106,31 @@ export default function SendView() {
         }
       />
 
-      {state.selectedRecipient ? (
+      {state.isUsernameLoading ? (
+        <section className="mt-6 rounded-[28px] bg-[#111217] p-5" aria-busy="true" aria-label="Checking username">
+          <div className="h-5 w-44 animate-pulse rounded bg-white/10" />
+          <div className="mt-3 h-4 w-full animate-pulse rounded bg-white/10" />
+          <div className="mt-2 h-4 w-3/4 animate-pulse rounded bg-white/10" />
+          <div className="mt-5 h-14 w-full animate-pulse rounded-full bg-white/10" />
+        </section>
+      ) : !state.hasUsername ? (
+        <section className="mt-6 rounded-[28px] border border-[#8F89FF]/25 bg-[#111217] p-5 text-center" role="alert">
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[#3B33BD]/25 text-[#8F89FF]">
+            <AppIcon icon="lucide:at-sign" aria-hidden="true" width={28} height={28} />
+          </span>
+          <h2 className="mt-4 text-lg font-black text-white">Claim your username first</h2>
+          <p className="mt-2 text-sm font-medium leading-relaxed text-[#A7A7B7]">
+            You need a Mom3 username before you can send assets. This helps recipients identify who sent the funds.
+          </p>
+          <Link
+            href="/claim-username"
+            className="mt-5 flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-[#3B33BD] px-5 text-base font-black text-[#ccff00] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#8F89FF]"
+          >
+            Claim username
+            <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={18} height={18} />
+          </Link>
+        </section>
+      ) : state.selectedRecipient ? (
         <section className="mt-5 flex flex-1 flex-col">
           {state.step !== "token" ? <RecipientHeader recipient={state.selectedRecipient} /> : null}
 

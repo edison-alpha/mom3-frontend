@@ -22,6 +22,10 @@ function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
 
 type ExecutionStatus = "idle" | "preparing" | "signing" | "success" | "error";
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+}
+
 export function useYieldExecution(action: YieldAction) {
   const { accountInfo, universalAccount, signAndSend, refreshAccount } = useUniversalAccount();
   const [status, setStatus] = React.useState<ExecutionStatus>("idle");
@@ -115,10 +119,32 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("success");
       const account = accountInfo.evmSmartAccount || accountInfo.solanaSmartAccount;
       if (account && universalAccount) {
-        void universalAccount.getTransactions(1, 50).then((response: any) => {
-          const transactions = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : [];
-          return syncHistory(account, transactions);
-        }).catch(() => undefined);
+        void (async () => {
+          // Particle can expose the transaction a few seconds after submit.
+          // Seed history immediately with the validated execution action so
+          // supply/withdraw is never classified as a generic transaction.
+          await syncHistory(account, [{
+            transactionId: id,
+            id,
+            action,
+            type: action,
+            protocol: intent?.protocol || "Yield",
+            chainId: intent?.chain_id,
+            status: "pending",
+            amount: Number(intent?.amount || 0),
+            targetToken: { symbol: intent?.asset?.symbol || "" },
+          }]);
+
+          for (let attempt = 0; attempt < 6; attempt += 1) {
+            await wait(2_000);
+            const response = await universalAccount.getTransactions(1, 50);
+            const transactions = Array.isArray(response?.data) ? response.data : Array.isArray(response) ? response : [];
+            if (transactions.some((item: any) => String(item?.transactionId || item?.id || item?.hash) === String(id))) {
+              await syncHistory(account, transactions);
+              return;
+            }
+          }
+        })().catch(() => undefined);
       }
       void refreshAccount();
       return id;
@@ -130,7 +156,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("error");
       return null;
     }
-  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, refreshAccount, signAndSend, transaction, universalAccount]);
+  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, intent, refreshAccount, signAndSend, transaction, universalAccount]);
 
   const reset = React.useCallback(() => {
     setStatus("idle");

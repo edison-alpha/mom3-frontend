@@ -2,8 +2,8 @@ import type { Metadata, Viewport } from "next";
 import AiChatView from "@/modules/ai/AiChatView";
 
 export const metadata: Metadata = {
-  title: "AI Rebalancing | Oni",
-  description: "AI assistant for mom3 portfolio rebalancing.",
+  title: "Smart Strategies",
+  description: "AI assistant for mom3 Smart Strategies.",
 };
 
 export const viewport: Viewport = {

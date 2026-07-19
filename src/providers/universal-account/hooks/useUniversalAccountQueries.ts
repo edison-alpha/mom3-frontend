@@ -111,10 +111,14 @@ export function useEnsureDelegatedMutation(
       await magic.evm.switchChain(chainId);
 
       const [auth] = (await universalAccount.getEIP7702Auth([chainId])) as Eip7702Auth[];
+      const authorizationChainId = Number(auth?.chainId);
       const authNonce = Number(auth?.nonce);
 
       if (
-        Number(auth?.chainId) !== chainId ||
+        // EIP-7702 uses chainId 0 for an authorization valid on every EVM
+        // chain. Particle returns this for the current Universal Account,
+        // including BSC, so sign the exact chainId from the authorization.
+        (authorizationChainId !== 0 && authorizationChainId !== chainId) ||
         !auth?.address ||
         !Number.isSafeInteger(authNonce) ||
         authNonce < 0
@@ -129,7 +133,7 @@ export function useEnsureDelegatedMutation(
       // the original nonce because a relayer submits that outer transaction.
       const authorization = await signEip7702Auth(
         auth.address,
-        chainId,
+        authorizationChainId,
         authNonce + 1,
       );
 

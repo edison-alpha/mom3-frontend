@@ -44,12 +44,20 @@ function getErrorDetails(cause: unknown, depth = 0): string {
 
   const value = cause as {
     message?: unknown;
+    code?: unknown;
+    error?: unknown;
+    reason?: unknown;
+    details?: unknown;
     data?: unknown;
     extraData?: unknown;
     cause?: unknown;
   };
   return [
     typeof value.message === "string" ? value.message : "",
+    typeof value.code === "string" || typeof value.code === "number" ? `code=${String(value.code)}` : "",
+    typeof value.reason === "string" ? value.reason : "",
+    typeof value.error === "string" ? value.error : "",
+    typeof value.details === "string" ? value.details : "",
     getErrorDetails(value.data, depth + 1),
     getErrorDetails(value.extraData, depth + 1),
     getErrorDetails(value.cause, depth + 1),
@@ -66,7 +74,8 @@ function getYieldExecutionError(cause: unknown, action: YieldAction, phase: "pre
     return `Your Universal Account is not delegated on this chain. Complete delegation, then review the ${action} again.`;
   }
 
-  return details || `We couldn't ${phase} this ${action}.`;
+  if (details) return `Particle ${phase} error: ${details}`;
+  return `We couldn't ${phase} this ${action}.`;
 }
 
 function getSolanaBalance(primaryAssets: IAssetsResponse | null) {

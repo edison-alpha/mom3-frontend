@@ -6,6 +6,17 @@ import type { TokenRow } from "@/modules/send/types/send.types";
 import { analyzePortfolio } from "@/modules/assets/api/portfolio.api";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
 
+function isSolanaAccount(account: string) {
+  return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(account);
+}
+
+function assetsForAccount(account: string, tokens: TokenRow[]) {
+  const solana = isSolanaAccount(account);
+  return tokens.filter((token) => solana
+    ? token.chainId === 101
+    : token.chainId !== 101);
+}
+
 function assetFingerprint(tokens: TokenRow[]) {
   return tokens
     .map((token) => `${token.id}:${token.balance}:${token.amountInUSD}`)
@@ -29,7 +40,7 @@ export function usePortfolioIntelligence(accounts: string[], tokens: TokenRow[])
     queryFn: async () => {
       const responses = await Promise.all(accounts.filter(Boolean).map((account) => analyzePortfolio({
           user_address: account,
-          wallet_assets: tokens.map((token) => ({
+          wallet_assets: assetsForAccount(account, tokens).map((token) => ({
             id: token.id,
             symbol: token.symbol,
             name: token.name,
@@ -41,7 +52,16 @@ export function usePortfolioIntelligence(accounts: string[], tokens: TokenRow[])
           })),
         })));
       const first = responses[0];
-      const positions = responses.flatMap((response) => response.positions ?? []);
+      const positions = Array.from(
+        new Map(
+          responses
+            .flatMap((response) => response.positions ?? [])
+            .map((position) => [
+              `${position.project}:${position.market_id}:${position.chain_id}`,
+              position,
+            ] as const),
+        ).values(),
+      );
       const totalValue = responses.reduce((sum, response) => sum + (response.summary?.total_value ?? 0), 0);
       const walletValue = responses.reduce((sum, response) => sum + (response.summary?.wallet_value ?? 0), 0);
       const positionValue = responses.reduce((sum, response) => sum + (response.summary?.position_value ?? 0), 0);

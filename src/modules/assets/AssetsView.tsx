@@ -121,10 +121,10 @@ export default function AssetsView() {
 
   const cta = activeTab === "positions"
     ? portfolio.positions.length > 0
-      ? { label: "Optimize with AI", href: "/ai/strategy", icon: "lucide:arrow-right" }
+      ? { label: "Optimize with AI", href: "/agent", icon: "lucide:arrow-right" }
       : { label: "Explore Yield", href: "/explore", icon: "lucide:search" }
     : activeTab === "summary"
-      ? { label: "Open AI Strategy", href: "/ai/strategy", icon: "solar:stars-bold" }
+      ? { label: "Open mom3 /agent", href: "/agent", icon: "solar:stars-bold" }
       : { label: "Add Assets", href: "/deposit", icon: "lucide:plus" };
   const targetHealthScore = Number.isFinite(portfolio.summary.healthScore)
     ? Math.max(0, Math.min(100, portfolio.summary.healthScore))

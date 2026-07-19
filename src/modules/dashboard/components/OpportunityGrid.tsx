@@ -8,7 +8,7 @@ export function OpportunityGrid() {
   return (
     <section className="mt-4 grid grid-cols-2 gap-2.5">
       {opportunityCards.map((card) => (
-        <Link href={card.title === "AI Yield Strategy" ? "/ai/strategy" : "/explore"} key={card.title} className="block min-h-0 rounded-[22px] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black">
+        <Link href={card.title === "AI Yield Strategy" ? "/agent" : "/explore"} key={card.title} className="block min-h-0 rounded-[22px] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black">
         <motion.div
           key={card.title}
           whileTap={{ scale: 0.97 }}

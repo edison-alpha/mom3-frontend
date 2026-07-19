@@ -195,12 +195,14 @@ export function useYieldExecution(action: YieldAction) {
       const particleExpectTokens = solanaReserveTopUp
         ? [...expectTokens, { type: SUPPORTED_TOKEN_TYPE.SOL, amount: solanaReserveTopUp }]
         : expectTokens;
-      // Solana lending markets need the target asset on Solana before the
-      // Kamino instructions can run. Convert the missing amount through the
-      // same Universal Account first; this is intentionally a separate
-      // Particle transaction because convert quotes cannot be embedded in
-      // Kamino's instruction list.
-      if (action === "supply" && chainId === CHAIN_ID.SOLANA_MAINNET) {
+      // The lending instruction consumes the asset on the target chain. If
+      // the Universal Account only holds that primary asset on another chain
+      // (or holds a different primary asset), bridge/convert the shortfall
+      // first. Particle quotes cannot be embedded in the protocol call, so
+      // this remains a separate transaction followed by a fresh preparation.
+      // This applies to EVM and Solana markets; the old Solana-only guard made
+      // cross-chain EVM allocation fail with an insufficient-balance error.
+      if (action === "supply") {
         const missing = Number(validated.amount) - getPrimaryBalance(primaryAssets, expectedTokenType, chainId);
         if (missing > 0.000000001) {
           const convert = await universalAccount.createConvertTransaction({

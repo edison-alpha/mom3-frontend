@@ -12,7 +12,6 @@ import { EarnSection } from "./components/EarnSection";
 import { OpportunityGrid } from "./components/OpportunityGrid";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { useDashboardViewModel } from "./hooks/useDashboardViewModel";
-import { PositionShareCard } from "./components/PositionShareCard";
 
 export default function DashboardView() {
   const { isLoading: isMagicLoading, session } = useMagic();
@@ -61,15 +60,6 @@ export default function DashboardView() {
             onToggleCurrencyMenu={handleToggleCurrencyMenu}
           />
         </motion.div>
-
-        {performanceHasRealData ? (
-          <PositionShareCard
-            balance={balanceDisplay}
-            profit={pnlDisplay}
-            percent={pnlPercent}
-            currency={currency}
-          />
-        ) : null}
 
         <motion.div
           variants={fadeUp}

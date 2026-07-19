@@ -53,10 +53,10 @@ export function PwaInstallBanner() {
     <aside className="sticky top-0 z-[100] flex min-h-14 items-center justify-between gap-3 bg-[#111217] px-4 py-2.5 shadow-[0_8px_24px_-18px_rgba(0,0,0,0.9)]" aria-label="Install mom3">
       <div className="flex min-w-0 items-center gap-2.5">
         <Download className="h-4 w-4 shrink-0 text-[#ccff00]" aria-hidden="true" />
-        <p className="truncate text-xs font-bold text-white">Add mom3 to your home screen</p>
+        <p className="truncate text-xs font-medium text-white">Add mom3 to your home screen</p>
       </div>
       <div className="flex shrink-0 items-center gap-2">
-        <button type="button" onClick={() => void install()} className="min-h-10 rounded-full bg-[#ccff00] px-4 text-xs font-black text-black transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]">
+        <button type="button" onClick={() => void install()} className="min-h-10 rounded-full bg-[#ccff00] px-4 text-xs font-semibold text-black transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]">
           Add to home screen
         </button>
         <button type="button" onClick={() => setDismissed(true)} className="flex h-10 w-10 items-center justify-center rounded-full text-white/60 hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-[#ccff00]" aria-label="Dismiss install banner">

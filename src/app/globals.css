@@ -20,7 +20,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 100;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Ultralight.otf")
     format("opentype");
 }
@@ -28,7 +28,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 200;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Thin.otf")
     format("opentype");
 }
@@ -36,7 +36,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 300;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Light.otf")
     format("opentype");
 }
@@ -44,7 +44,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 400;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Regular.otf")
     format("opentype");
 }
@@ -52,7 +52,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 500;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Medium.otf")
     format("opentype");
 }
@@ -60,7 +60,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 600;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Semibold.otf")
     format("opentype");
 }
@@ -68,7 +68,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 700;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Bold.otf")
     format("opentype");
 }
@@ -76,7 +76,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 800;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Heavy.otf")
     format("opentype");
 }
@@ -84,7 +84,7 @@ body {
   font-family: "SF Pro Rounded";
   font-style: normal;
   font-weight: 900;
-  font-display: optional;
+  font-display: swap;
   src: url("https://cdn.jsdelivr.net/gh/sahibjotsaggu/San-Francisco-Pro-Fonts@master/SF-Pro-Rounded-Black.otf")
     format("opentype");
 }

@@ -21,7 +21,6 @@ import { useParticleTrade } from "./hooks/useParticleTrade";
 import { convertNetworks, getDepositAssetsForChain } from "@/modules/deposit/constants/deposit.constants";
 
 const targetNetworks = convertNetworks
-  .filter((network) => [8453, 42161, 101].includes(network.chainId))
   .map((network) => ({ chainId: network.chainId, label: network.shortName, icon: network.icon }));
 
 export default function ConvertView() {
@@ -30,7 +29,6 @@ export default function ConvertView() {
   const transactionStatus = useUniversalTransactionStatus(trade.transactionId);
   const [amount, setAmount] = React.useState("");
   const [targetChainId, setTargetChainId] = React.useState<number>(targetNetworks[0]?.chainId ?? 101);
-  const [isNetworkMenuOpen, setIsNetworkMenuOpen] = React.useState(false);
   const [targetTokenType, setTargetTokenType] = React.useState<SUPPORTED_TOKEN_TYPE>(SUPPORTED_TOKEN_TYPE.USDC);
   const numericAmount = Number(amount);
   const amountIsValid = Number.isFinite(numericAmount) && numericAmount > 0;
@@ -133,53 +131,28 @@ export default function ConvertView() {
         <fieldset className="space-y-2">
           <Typography as="legend" variant="label" color="muted">Receive on</Typography>
           <div className="relative">
-            <button
-              type="button"
-              aria-haspopup="listbox"
-              aria-expanded={isNetworkMenuOpen}
+            <select
               aria-label="Receive network"
-              onClick={() => setIsNetworkMenuOpen((open) => !open)}
-              className="flex h-12 w-full items-center gap-3 rounded-2xl bg-[#1C1C1E] px-4 text-left text-sm font-bold text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
+              value={targetChainId}
+              onChange={(event) => {
+                setTargetChainId(Number(event.target.value));
+                trade.reset();
+              }}
+              className="h-12 w-full appearance-none rounded-2xl bg-[#1C1C1E] px-4 pr-11 text-sm font-bold text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
             >
-              <AppIcon icon={selectedNetwork.icon} width={20} height={20} aria-hidden="true" />
-              <span className="min-w-0 flex-1 truncate">{selectedNetwork.label}</span>
-              <AppIcon
-                icon="lucide:chevron-down"
-                width={18}
-                height={18}
-                aria-hidden="true"
-                className={`text-[#A7A7B7] transition-transform ${isNetworkMenuOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-            {isNetworkMenuOpen ? (
-              <div
-                role="listbox"
-                aria-label="Receive network options"
-                className="absolute inset-x-0 top-[calc(100%+0.5rem)] z-20 overflow-hidden rounded-2xl border border-white/10 bg-[#1C1C1E] p-1.5 shadow-2xl"
-              >
-                {targetNetworks.map((network) => {
-                  const isSelected = network.chainId === targetChainId;
-                  return (
-                    <button
-                      key={network.chainId}
-                      type="button"
-                      role="option"
-                      aria-selected={isSelected}
-                      onClick={() => {
-                        setTargetChainId(network.chainId);
-                        setIsNetworkMenuOpen(false);
-                        trade.reset();
-                      }}
-                      className={`flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-sm font-bold transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD] ${isSelected ? "bg-[#ccff00] text-[#16162a]" : "text-white hover:bg-white/[0.08]"}`}
-                    >
-                      <AppIcon icon={network.icon} width={20} height={20} aria-hidden="true" />
-                      <span className="flex-1">{network.label}</span>
-                      {isSelected ? <AppIcon icon="lucide:check" width={17} height={17} aria-hidden="true" /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+              {targetNetworks.map((network) => (
+                <option key={network.chainId} value={network.chainId}>
+                  {network.label}
+                </option>
+              ))}
+            </select>
+            <AppIcon
+              icon="lucide:chevron-down"
+              width={18}
+              height={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#A7A7B7]"
+            />
           </div>
         </fieldset>
 

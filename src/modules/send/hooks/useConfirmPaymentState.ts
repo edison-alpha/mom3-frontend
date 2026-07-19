@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 
-import { CHAIN_ID } from "@particle-network/universal-account-sdk";
+import { CHAIN_ID, SUPPORTED_TOKEN_TYPE, type ITransaction } from "@particle-network/universal-account-sdk";
 
 import { getRecentRecipients, saveRecentRecipient } from "@/modules/send/api/recent-recipients.api";
 import type { Recipient, SendPreview, SendStatus, TokenRow } from "@/modules/send/types/send.types";
@@ -27,6 +27,17 @@ import { getMyUsername, resolveUsername } from "@/modules/username/utils/usernam
 import { formatUsername } from "@/lib/username";
 
 const BSC_MAINNET_CHAIN_ID = 56;
+
+function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
+  switch (symbol.trim().toUpperCase()) {
+    case "ETH": return SUPPORTED_TOKEN_TYPE.ETH;
+    case "USDT": return SUPPORTED_TOKEN_TYPE.USDT;
+    case "USDC": return SUPPORTED_TOKEN_TYPE.USDC;
+    case "BNB": return SUPPORTED_TOKEN_TYPE.BNB;
+    case "SOL": return SUPPORTED_TOKEN_TYPE.SOL;
+    default: return null;
+  }
+}
 
 export function useConfirmPaymentState() {
   const searchParams = useSearchParams();
@@ -51,6 +62,7 @@ export function useConfirmPaymentState() {
 
   const [sendStatus, setSendStatus] = React.useState<SendStatus>("idle");
   const [sendPreview, setSendPreview] = React.useState<SendPreview | null>(null);
+  const [conversionTransaction, setConversionTransaction] = React.useState<ITransaction | null>(null);
   const [transactionId, setTransactionId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -149,6 +161,24 @@ export function useConfirmPaymentState() {
     setSendStatus("preparing");
 
     try {
+      const expectedToken = particleTokenType(requestToken.symbol);
+      const missing = Number(requestAmount) - Number(requestToken.balance || 0);
+      if (missing > 0.000000001 && expectedToken) {
+        const convert = await universalAccount.createConvertTransaction({
+          expectToken: { type: expectedToken, amount: missing.toString() },
+          chainId: requestToken.chainId,
+        });
+        if (requestId !== prepareRequestRef.current) return;
+        setConversionTransaction(structuredClone(convert));
+        setSendPreview({
+          transaction: structuredClone(convert),
+          amount: requestAmount,
+          token: requestToken,
+          recipient: requestRecipient,
+        });
+        setNotice(`Convert ${requestToken.symbol} to ${requestToken.chainName} before sending.`);
+        return;
+      }
       const particleTransaction = await universalAccount.createTransferTransaction({
         token: {
           chainId: requestToken.chainId,
@@ -208,6 +238,7 @@ export function useConfirmPaymentState() {
 
     if (isTransactionQuoteExpired(sendPreview.transaction)) {
       setSendPreview(null);
+      setConversionTransaction(null);
       await prepareTransaction();
       setNotice("The quote expired. Review the refreshed transaction details and confirm again.");
       return;
@@ -219,6 +250,15 @@ export function useConfirmPaymentState() {
     let isBscDelegationStep = false;
 
     try {
+      if (conversionTransaction) {
+        setSendStatus("signing");
+        await signAndSend(structuredClone(conversionTransaction));
+        setConversionTransaction(null);
+        setSendPreview(null);
+        await refreshAccount();
+        setNotice("Conversion submitted. Review the refreshed transfer details to continue.");
+        return;
+      }
       // The upgrade is a real Type-4 wallet transaction, so only request it
       // after the user presses Confirm Payment. A newly delegated BSC wallet
       // must receive a fresh quote before its transfer can be signed.
@@ -296,6 +336,7 @@ export function useConfirmPaymentState() {
     setNotice(null);
     // Every re-entry gets a fresh balance and a fresh single-use quote.
     setSendPreview(null);
+    setConversionTransaction(null);
     await refreshAccount();
     await prepareTransaction();
   };

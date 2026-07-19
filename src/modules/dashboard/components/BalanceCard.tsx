@@ -103,7 +103,9 @@ export function BalanceCard({
               : "text-white/70",
           )}
         >
-          <span>
+          <span className={cn(
+            pnlValue > 0 ? "text-[#ccff00]" : pnlValue < 0 ? "text-red-300" : "text-white/70",
+          )}>
             {!mounted || balanceHidden || isBalanceLoading
               ? "****"
               : performanceHasRealData ? `${pnlValue >= 0 ? "+" : "-"}${pnlDisplay}` : "—"}
@@ -111,6 +113,7 @@ export function BalanceCard({
           <span
             className={cn(
               "rounded-md px-1.5 py-0.5",
+              pnlPercent > 0 ? "text-[#ccff00]" : pnlPercent < 0 ? "text-red-300" : "text-white/70",
               !mounted || balanceHidden || isBalanceLoading
                 ? "bg-black/10"
                 : "bg-white/10",

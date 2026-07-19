@@ -56,7 +56,12 @@ export function usePortfolioViewModel() {
     [primaryAssets],
   );
   const preferences = usePortfolioPreferences(tokens);
-  const intelligence = usePortfolioIntelligence(accountInfo.evmSmartAccount, tokens);
+  const intelligence = usePortfolioIntelligence(
+    [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount].filter(
+      (account): account is string => Boolean(account),
+    ),
+    tokens,
+  );
   const walletTotal = Number(primaryAssets?.totalAmountInUSD ?? 0) || 0;
 
   const allAssets = React.useMemo<PortfolioAsset[]>(() => tokens.map((token) => ({

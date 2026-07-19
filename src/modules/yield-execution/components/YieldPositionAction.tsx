@@ -15,10 +15,11 @@ import {
 } from "@/modules/send/utils/send.utils";
 import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/providers/universal-account/services/gas-fee.service";
 import { useYieldExecution } from "@/modules/yield-execution/hooks/useYieldExecution";
-import { useYieldPosition } from "@/modules/yield-execution/hooks/useYieldPosition";
+import { useYieldPosition, yieldPositionQueryKeys } from "@/modules/yield-execution/hooks/useYieldPosition";
 import type { YieldAction } from "@/modules/yield-execution/types/yield-execution.types";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
 import { useUniversalTransactionStatus } from "@/providers/universal-account/hooks/useUniversalTransactionStatus";
+import { useQueryClient } from "@tanstack/react-query";
 import { truncateAddress } from "@/utils/address.utils";
 
 type Props = {
@@ -29,6 +30,7 @@ type Props = {
   assetSymbol: string;
   universalAssetBalance: number;
   onRefresh: () => Promise<unknown>;
+  onClose?: () => void;
 };
 
 function YieldPositionCardSkeleton({ protocol }: { protocol: string }) {
@@ -79,9 +81,11 @@ export function YieldPositionAction({
   assetSymbol,
   universalAssetBalance,
   onRefresh,
+  onClose,
 }: Props) {
   const reduceMotion = useReducedMotion();
   const { accountInfo } = useUniversalAccount();
+  const queryClient = useQueryClient();
   const positionAccount = chainId === 101
     ? accountInfo.solanaSmartAccount
     : accountInfo.evmSmartAccount;
@@ -90,10 +94,8 @@ export function YieldPositionAction({
   const withdraw = useYieldExecution("withdraw");
   const resetSupply = supply.reset;
   const resetWithdraw = withdraw.reset;
-  const refreshPosition = position.refresh;
   const [mode, setMode] = React.useState<YieldAction | null>(null);
   const [amount, setAmount] = React.useState("");
-  const refreshedTransactionRef = React.useRef<string | null>(null);
   const transactionId = supply.transactionId || withdraw.transactionId;
   const receiptMode: YieldAction = supply.transactionId ? "supply" : "withdraw";
   const transactionStatus = useUniversalTransactionStatus(transactionId);
@@ -108,36 +110,32 @@ export function YieldPositionAction({
     ? Math.max(0, suppliedBalance - numericAmount)
     : suppliedBalance + numericAmount;
 
-  const resetFlow = React.useCallback(() => {
+  const refreshDetailData = React.useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: yieldPositionQueryKeys.position(marketId, positionAccount, chainId),
+        refetchType: "active",
+      }),
+      onRefresh(),
+    ]);
+  }, [chainId, marketId, onRefresh, positionAccount, queryClient]);
+
+  const handleReset = React.useCallback(() => {
     resetSupply();
     resetWithdraw();
     setAmount("");
     setMode(null);
   }, [resetSupply, resetWithdraw]);
 
-  React.useEffect(() => {
-    if (
-      transactionStatus.state !== "completed" ||
-      !transactionId ||
-      refreshedTransactionRef.current === transactionId
-    ) return;
-    refreshedTransactionRef.current = transactionId;
-    void Promise.all([refreshPosition(), onRefresh()]);
-  }, [onRefresh, refreshPosition, transactionId, transactionStatus.state]);
+  const handleClose = React.useCallback(() => {
+    handleReset();
+    onClose?.();
+  }, [handleReset, onClose]);
 
-  React.useEffect(() => {
-    if (!mode) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !active.isSigning) resetFlow();
-    };
-    window.addEventListener("keydown", closeOnEscape);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", closeOnEscape);
-    };
-  }, [active.isSigning, mode, resetFlow]);
+  const handleReceiptClose = React.useCallback(async () => {
+    await refreshDetailData();
+    handleClose();
+  }, [handleClose, refreshDetailData]);
 
   const transition = reduceMotion ? { duration: 0 } : { type: "spring" as const, damping: 30, stiffness: 280 };
 
@@ -151,7 +149,7 @@ export function YieldPositionAction({
         <div className="mx-auto flex min-h-full w-full max-w-md flex-col px-5 pt-4 pb-[calc(24px+env(safe-area-inset-bottom))]">
           <div className="flex h-12 items-center justify-between">
             <span className="text-sm font-black text-white">Transaction receipt</span>
-            <Button type="button" color="dark" size="icon" rounded="full" startIcon="solar:close-circle-bold" aria-label="Close receipt" onClick={() => { void Promise.all([refreshPosition(), onRefresh()]); resetFlow(); }} />
+            <Button type="button" color="dark" size="icon" rounded="full" startIcon="solar:close-circle-bold" aria-label="Close receipt" onClick={() => { void handleReceiptClose(); }} />
           </div>
           <div className="flex flex-col items-center text-center">
             <span className={`mt-8 flex h-20 w-20 items-center justify-center rounded-full ring-1 ${failed ? "bg-red-500/15 text-red-300 ring-red-400/30" : completed ? "bg-[#ccff00]/15 text-[#ccff00] ring-[#ccff00]/30" : "bg-violet-500/15 text-violet-300 ring-violet-400/30"}`}>
@@ -180,7 +178,7 @@ export function YieldPositionAction({
               View transaction details <AppIcon icon="lucide:external-link" aria-hidden="true" width={16} height={16} />
             </a>
           </div>
-          <div className="mt-auto pt-6"><Button type="button" color={failed ? "danger" : "warning"} size="lg" rounded="full" fullWidth label="Back to market" startIcon="lucide:arrow-left" onClick={() => { void Promise.all([refreshPosition(), onRefresh()]); resetFlow(); }} /></div>
+          <div className="mt-auto pt-6"><Button type="button" color={failed ? "danger" : "warning"} size="lg" rounded="full" fullWidth label="Back to market" startIcon="lucide:arrow-left" onClick={() => { void handleReceiptClose(); }} /></div>
         </div>
       </motion.section>
     );
@@ -202,7 +200,7 @@ export function YieldPositionAction({
         {position.error ? (
           <div className="mt-2 flex items-center justify-between gap-3 rounded-xl bg-red-500/10 px-3 py-2" role="alert">
             <p className="text-xs font-semibold text-red-100">Position unavailable. You can still supply.</p>
-            <button type="button" className="min-h-10 rounded-full px-3 text-xs font-black text-red-100 focus-visible:ring-2 focus-visible:ring-red-300" onClick={() => void position.refresh()}>Retry</button>
+            <button type="button" className="min-h-10 rounded-full px-3 text-xs font-black text-red-100 focus-visible:ring-2 focus-visible:ring-red-300" onClick={() => void refreshDetailData()}>Retry</button>
           </div>
         ) : null}
         <div className={cn("mt-3 grid gap-3", hasPosition ? "grid-cols-2" : "grid-cols-1")}>
@@ -233,8 +231,13 @@ export function YieldPositionAction({
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (!validAmount) return;
-    if (transaction) await active.execute();
-    else await active.prepare(marketId, amount, chainId);
+    if (transaction) {
+      const submittedId = await active.execute();
+      if (!submittedId) await refreshDetailData();
+    } else {
+      const prepared = await active.prepare(marketId, amount, chainId);
+      if (!prepared) await refreshDetailData();
+    }
   }
 
   function pressAmountKey(key: AmountKeypadKey) {
@@ -265,7 +268,7 @@ export function YieldPositionAction({
       <form onSubmit={submit} className="mx-auto flex min-h-full w-full max-w-md flex-col px-5 pt-4 pb-[calc(24px+env(safe-area-inset-bottom))]">
         <div className="relative flex min-h-16 items-center justify-center px-14">
           <Typography id="yield-action-title" as="h2" variant="h2" align="center">{screenTitle}</Typography>
-          <Button type="button" color="transparent" size="icon" rounded="full" startIcon="lucide:arrow-left" aria-label="Close action" className="absolute left-0 text-white" onClick={resetFlow} />
+          <Button type="button" color="transparent" size="icon" rounded="full" startIcon="lucide:arrow-left" aria-label="Close action" className="absolute left-0 text-white" onClick={handleClose} />
         </div>
 
         <div className="mt-2 flex justify-center">

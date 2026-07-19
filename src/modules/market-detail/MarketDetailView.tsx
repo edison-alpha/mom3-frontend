@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ import { MarketDetailSkeleton } from "@/modules/market-detail/components/MarketD
 import { normalizePrimaryAssetTokens } from "@/modules/send/utils/send.utils";
 import { YieldPositionAction } from "@/modules/yield-execution/components/YieldPositionAction";
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
+import { universalAccountQueryKeys } from "@/providers/universal-account/constants/universal-account.constants";
 
 export default function MarketDetailView({
   market,
@@ -27,7 +29,8 @@ export default function MarketDetailView({
 }) {
   const [range, setRange] = React.useState<TimeRange>("1W");
   const [chartMetric, setChartMetric] = React.useState<"apy" | "tvl">("apy");
-  const { primaryAssets, accountInfo, refreshAccount } = useUniversalAccount();
+  const { primaryAssets, accountInfo } = useUniversalAccount();
+  const queryClient = useQueryClient();
   const chainId = market.chainId || DEFAULT_AAVE_CHAIN_ID;
   const catalogDetail = useYieldMarketDetail(market, executionMarketId);
   const isAaveUsdcMarket = market.protocol.toLowerCase().includes("aave")
@@ -82,10 +85,10 @@ export default function MarketDetailView({
 
   async function refreshAll() {
     await Promise.all([
-      // Refresh Particle balances as well as market metadata. The detail
-      // action receives universalAssetBalance from primaryAssets, so without
-      // this call the balance remains stale after supply/withdraw completes.
-      refreshAccount(),
+      queryClient.invalidateQueries({
+        queryKey: universalAccountQueryKeys.snapshot(accountInfo.ownerAddress),
+        refetchType: "active",
+      }),
       catalogDetail.refresh(),
       isOnchainAaveMarket ? aaveMarket.refresh() : Promise.resolve(null),
     ]);

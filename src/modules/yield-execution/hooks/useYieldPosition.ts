@@ -4,9 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 
 import type { YieldPosition } from "@/modules/yield-execution/types/yield-execution.types";
 
+export const yieldPositionQueryKeys = {
+  position: (marketId?: string, account?: string | null, chainId?: number) =>
+    ["yield-position", marketId || null, account || null, chainId || null] as const,
+};
+
 export function useYieldPosition(marketId?: string, account?: string | null, chainId?: number) {
   const query = useQuery<YieldPosition>({
-    queryKey: ["yield-position", marketId || null, account || null, chainId || null],
+    queryKey: yieldPositionQueryKeys.position(marketId, account, chainId),
     enabled: Boolean(marketId && account && chainId),
     queryFn: async () => {
       const params = new URLSearchParams({ account: account as string });

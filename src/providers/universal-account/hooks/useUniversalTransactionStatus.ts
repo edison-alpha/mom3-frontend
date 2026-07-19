@@ -1,6 +1,6 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UA_TRANSACTION_STATUS } from "@particle-network/universal-account-sdk";
 
 import { useUniversalAccount } from "@/providers/universal-account/components/UniversalAccountProvider";
@@ -56,7 +56,8 @@ export function getUniversalTransactionState(
 }
 
 export function useUniversalTransactionStatus(transactionId?: string | null) {
-  const { universalAccount } = useUniversalAccount();
+  const { universalAccount, accountInfo } = useUniversalAccount();
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: universalAccountQueryKeys.transaction(transactionId ?? undefined),
@@ -70,7 +71,24 @@ export function useUniversalTransactionStatus(transactionId?: string | null) {
       const state = getUniversalTransactionState(
         currentQuery.state.data as ParticleTransactionStatus | null | undefined,
       );
-      return state === "completed" || state === "refunded" || state === "failed" ? false : 3_000;
+      const terminal = state === "completed" || state === "refunded" || state === "failed";
+      if (terminal) {
+        // Query polling is the source of truth for the terminal transaction
+        // state. Invalidate dependent data here so consumers update without
+        // a component effect.
+        void Promise.all([
+          queryClient.invalidateQueries({
+            queryKey: ["yield-position"],
+            refetchType: "active",
+          }),
+          queryClient.invalidateQueries({
+            queryKey: universalAccountQueryKeys.snapshot(accountInfo.ownerAddress),
+            refetchType: "active",
+          }),
+        ]);
+        return false;
+      }
+      return 3_000;
     },
     refetchOnWindowFocus: "always",
     refetchOnReconnect: "always",

@@ -1,4 +1,6 @@
 import {
+  PREFER_TOKEN_TYPE,
+  SUPPORTED_TOKEN_TYPE,
   UNIVERSAL_ACCOUNT_VERSION,
   UniversalAccount,
 } from "@particle-network/universal-account-sdk";
@@ -34,10 +36,17 @@ export function createUniversalAccount(ownerAddress: string) {
     },
     tradeConfig: {
       slippageBps: 100,
-      // Let Particle select from the complete Primary Asset set returned by
-      // the configured Universal Account. Hard-coding token types here would
-      // prevent newly supported Particle assets from funding transfers and
-      // universal contract calls.
+      // Keep Universal Gas on the same Primary Asset set used by the Solana
+      // yield flow. USD assets are preferred for fees, while SOL remains the
+      // native fallback for rent/account creation.
+      usePrimaryTokens: [
+        SUPPORTED_TOKEN_TYPE.USDC,
+        SUPPORTED_TOKEN_TYPE.USDT,
+        SUPPORTED_TOKEN_TYPE.SOL,
+        SUPPORTED_TOKEN_TYPE.ETH,
+        SUPPORTED_TOKEN_TYPE.BNB,
+      ],
+      preferTokenType: PREFER_TOKEN_TYPE.USD,
     },
   });
 }

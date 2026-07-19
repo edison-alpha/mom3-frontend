@@ -28,6 +28,10 @@ function particleTokenType(symbol: string): SUPPORTED_TOKEN_TYPE | null {
 }
 
 type ExecutionStatus = "idle" | "preparing" | "signing" | "success" | "error";
+// Kamino creates user-owned Solana accounts during the first supply. Particle
+// can source this reserve across chains, but its quote does not always expose
+// the account-rent amount before those accounts exist.
+const KAMINO_SOLANA_SETUP_RESERVE = 0.03;
 
 function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -75,15 +79,16 @@ function getSolanaBalance(primaryAssets: IAssetsResponse | null) {
 }
 
 function getSolanaRentTopUp(transaction: ITransaction, primaryAssets: IAssetsResponse | null) {
-  const rent = parseDecimalish(
+  const quotedRent = parseDecimalish(
     getActiveFeeQuote(transaction)?.fees.totals.solanaRentFee,
     9,
   );
   const available = getSolanaBalance(primaryAssets);
-  const topUp = rent - available;
+  const requiredReserve = Math.max(quotedRent, KAMINO_SOLANA_SETUP_RESERVE);
+  const topUp = requiredReserve - available;
 
-  // Particle expects human-readable token amounts. Ignore sub-lamport dust so
-  // this only adds SOL when the quote reports a real account-rent shortfall.
+  // Particle expects human-readable token amounts. The initial Kamino reserve
+  // covers account rent even when Particle has not reported it in feeQuotes.
   return topUp > 0.000000001 ? topUp.toFixed(9).replace(/0+$/, "").replace(/\.$/, "") : null;
 }
 

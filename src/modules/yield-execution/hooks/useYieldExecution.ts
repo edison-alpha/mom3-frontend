@@ -26,6 +26,38 @@ function wait(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 }
 
+function getErrorDetails(cause: unknown, depth = 0): string {
+  if (depth > 2 || cause == null) return "";
+  if (typeof cause === "string") return cause;
+  if (typeof cause !== "object") return String(cause);
+
+  const value = cause as {
+    message?: unknown;
+    data?: unknown;
+    extraData?: unknown;
+    cause?: unknown;
+  };
+  return [
+    typeof value.message === "string" ? value.message : "",
+    getErrorDetails(value.data, depth + 1),
+    getErrorDetails(value.extraData, depth + 1),
+    getErrorDetails(value.cause, depth + 1),
+  ].filter(Boolean).join(" ");
+}
+
+function getYieldExecutionError(cause: unknown, action: YieldAction, phase: "prepare" | "submit") {
+  const details = getErrorDetails(cause);
+
+  if (/insufficient lamports|insufficient funds for rent|insufficient.*rent/i.test(details)) {
+    return "Kamino needs more SOL in your Universal Solana address to create the required position account. Add SOL, then review a new transaction quote. Cross-chain fee coverage cannot pay Solana account rent.";
+  }
+  if (/delegat|eip.?7702|universal account/i.test(details)) {
+    return `Your Universal Account is not delegated on this chain. Complete delegation, then review the ${action} again.`;
+  }
+
+  return details || `We couldn't ${phase} this ${action}.`;
+}
+
 export function useYieldExecution(action: YieldAction) {
   const { accountInfo, universalAccount, signAndSend, refreshAccount } = useUniversalAccount();
   const [status, setStatus] = React.useState<ExecutionStatus>("idle");
@@ -93,10 +125,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("idle");
       return nextTransaction;
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : `We couldn't prepare this ${action}.`;
-      setError(/delegat|eip.?7702|universal account/i.test(message)
-        ? "Your Universal Account is not delegated on this chain. Complete delegation, then review the supply again."
-        : message);
+      setError(getYieldExecutionError(cause, action, "prepare"));
       setStatus("error");
       return null;
     }
@@ -152,7 +181,7 @@ export function useYieldExecution(action: YieldAction) {
       // Particle quotes are single-use and must never be re-submitted after a
       // failed signing/submission attempt. Force a fresh quote on re-entry.
       setTransaction(null);
-      setError(cause instanceof Error ? cause.message : `We couldn't submit this ${action}.`);
+      setError(getYieldExecutionError(cause, action, "submit"));
       setStatus("error");
       return null;
     }

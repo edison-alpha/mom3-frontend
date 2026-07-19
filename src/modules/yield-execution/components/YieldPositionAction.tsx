@@ -348,7 +348,20 @@ export function YieldPositionAction({
               })}
             </div>
 
-            {active.error ? <p className="mt-2 text-center text-xs font-semibold text-red-200" role="alert">{active.error}</p> : null}
+            {active.error ? (
+              <div className="mt-2 text-center" role="alert">
+                <p className="text-xs font-semibold leading-relaxed text-red-200">{active.error}</p>
+                {chainId === 101 && /Kamino needs more SOL/i.test(active.error) ? (
+                  <Link
+                    href="/deposit?chainId=101&asset=SOL"
+                    className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-full border border-[#ccff00]/30 bg-[#ccff00]/10 px-4 text-xs font-black text-[#ccff00] focus-visible:ring-2 focus-visible:ring-[#ccff00]"
+                  >
+                    Add SOL to Universal Account
+                    <AppIcon icon="lucide:arrow-right" aria-hidden="true" width={15} height={15} />
+                  </Link>
+                ) : null}
+              </div>
+            ) : null}
             <Button type="submit" color="primary" size="lg" rounded="full" fullWidth className="mt-3" label={`Review ${actionLabel.toLowerCase()}`} startIcon="lucide:arrow-right" isLoading={active.isPreparing} isDisabled={!validAmount || active.isPreparing} aria-busy={active.isPreparing} />
           </div>
         ) : null}

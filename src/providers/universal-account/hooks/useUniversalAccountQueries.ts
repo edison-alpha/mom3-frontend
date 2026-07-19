@@ -115,9 +115,10 @@ export function useEnsureDelegatedMutation(
       const authNonce = Number(auth?.nonce);
 
       if (
-        // EIP-7702 uses chainId 0 for an authorization valid on every EVM
-        // chain. Particle returns this for the current Universal Account,
-        // including BSC, so sign the exact chainId from the authorization.
+        // EIP-7702 uses chainId 0 for a chain-agnostic authorization.
+        // Particle returns that wildcard for this UA, but Magic can only sign
+        // a concrete network authorization, so use the requested target chain
+        // after accepting 0 as a valid response.
         (authorizationChainId !== 0 && authorizationChainId !== chainId) ||
         !auth?.address ||
         !Number.isSafeInteger(authNonce) ||
@@ -133,7 +134,7 @@ export function useEnsureDelegatedMutation(
       // the original nonce because a relayer submits that outer transaction.
       const authorization = await signEip7702Auth(
         auth.address,
-        authorizationChainId,
+        chainId,
         authNonce + 1,
       );
 

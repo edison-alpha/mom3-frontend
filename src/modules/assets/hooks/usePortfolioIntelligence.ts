@@ -13,20 +13,21 @@ function assetFingerprint(tokens: TokenRow[]) {
     .join("|");
 }
 
-export function usePortfolioIntelligence(account: string, tokens: TokenRow[]) {
+export function usePortfolioIntelligence(accounts: string[], tokens: TokenRow[]) {
   const { marketRevision } = useRealtime();
   const fingerprint = assetFingerprint(tokens);
+  const accountKey = accounts.filter(Boolean).join(",");
 
   return useQuery({
-    queryKey: ["portfolio-intelligence", account, fingerprint, marketRevision],
-    enabled: Boolean(account),
+    queryKey: ["portfolio-intelligence", accountKey, fingerprint, marketRevision],
+    enabled: accounts.length > 0,
     staleTime: 20_000,
     retry: 2,
     // Market revisions should refresh analysis in the background. Keep the
     // last complete response visible so the health gauge never flashes to 0.
     placeholderData: (previousData) => previousData,
     queryFn: async () => {
-      return analyzePortfolio({
+      const responses = await Promise.all(accounts.filter(Boolean).map((account) => analyzePortfolio({
           user_address: account,
           wallet_assets: tokens.map((token) => ({
             id: token.id,
@@ -38,7 +39,32 @@ export function usePortfolioIntelligence(account: string, tokens: TokenRow[]) {
             chain_id: token.chainId,
             token_address: token.tokenAddress,
           })),
-        });
+        })));
+      const first = responses[0];
+      const positions = responses.flatMap((response) => response.positions ?? []);
+      const totalValue = responses.reduce((sum, response) => sum + (response.summary?.total_value ?? 0), 0);
+      const walletValue = responses.reduce((sum, response) => sum + (response.summary?.wallet_value ?? 0), 0);
+      const positionValue = responses.reduce((sum, response) => sum + (response.summary?.position_value ?? 0), 0);
+      return {
+        ...first,
+        account: accountKey,
+        positions,
+        summary: {
+          ...first.summary,
+          total_value: totalValue,
+          wallet_value: walletValue,
+          position_value: positionValue,
+          protocol_count: new Set(positions.map((position) => position.project)).size,
+          asset_count: new Set(positions.map((position) => position.asset)).size,
+          chain_count: new Set(positions.map((position) => position.chain_id)).size,
+        },
+        coverage: {
+          ...first.coverage,
+          scanned_markets: responses.reduce((sum, response) => sum + (response.coverage?.scanned_markets ?? 0), 0),
+          successful_market_reads: responses.reduce((sum, response) => sum + (response.coverage?.successful_market_reads ?? 0), 0),
+          failed_market_reads: responses.reduce((sum, response) => sum + (response.coverage?.failed_market_reads ?? 0), 0),
+        },
+      };
     },
   });
 }

@@ -78,6 +78,15 @@ function getSolanaBalance(primaryAssets: IAssetsResponse | null) {
     .reduce((total, entry) => total + Number(entry.amount || 0), 0);
 }
 
+function getPrimaryBalance(primaryAssets: IAssetsResponse | null, tokenType: SUPPORTED_TOKEN_TYPE, chainId: number) {
+  const asset = primaryAssets?.assets.find(
+    (entry) => String(entry.tokenType).toLowerCase() === String(tokenType).toLowerCase(),
+  );
+  return (asset?.chainAggregation ?? [])
+    .filter((entry) => Number(entry.token.chainId) === chainId)
+    .reduce((total, entry) => total + Number(entry.amount || 0), 0);
+}
+
 function getSolanaRentTopUp(transaction: ITransaction, primaryAssets: IAssetsResponse | null) {
   const quotedRent = parseDecimalish(
     getActiveFeeQuote(transaction)?.fees.totals.solanaRentFee,
@@ -99,6 +108,7 @@ export function useYieldExecution(action: YieldAction) {
   const [transaction, setTransaction] = React.useState<any>(null);
   const [transactionId, setTransactionId] = React.useState<string | null>(null);
   const [intent, setIntent] = React.useState<AiExecutionIntent | null>(null);
+  const [conversionTransaction, setConversionTransaction] = React.useState<ITransaction | null>(null);
 
   const prepare = React.useCallback(async (marketId: string, amount: string, chainId: number) => {
     const userAddress = chainId === 101 ? accountInfo.solanaSmartAccount : accountInfo.evmSmartAccount;
@@ -112,6 +122,7 @@ export function useYieldExecution(action: YieldAction) {
     setTransaction(null);
     setTransactionId(null);
     setIntent(null);
+    setConversionTransaction(null);
 
     try {
       const response = await fetch("/api/ai/execution-intent", {
@@ -149,6 +160,21 @@ export function useYieldExecution(action: YieldAction) {
       const expectTokens = action === "supply"
         ? [{ type: expectedTokenType, amount: validated.amount }]
         : [];
+      // Solana lending markets need the target asset on Solana before the
+      // Kamino instructions can run. Convert the missing amount through the
+      // same Universal Account first; this is intentionally a separate
+      // Particle transaction because convert quotes cannot be embedded in
+      // Kamino's instruction list.
+      if (action === "supply" && chainId === CHAIN_ID.SOLANA_MAINNET) {
+        const missing = Number(validated.amount) - getPrimaryBalance(primaryAssets, expectedTokenType, chainId);
+        if (missing > 0.000000001) {
+          const convert = await universalAccount.createConvertTransaction({
+            expectToken: { type: expectedTokenType, amount: missing.toString() },
+            chainId,
+          });
+          setConversionTransaction(structuredClone(convert));
+        }
+      }
       let particleTransaction = await universalAccount.createUniversalTransaction({
         chainId,
         expectTokens,
@@ -195,6 +221,20 @@ export function useYieldExecution(action: YieldAction) {
     setStatus("signing");
     setError(null);
     try {
+      if (conversionTransaction) {
+        await signAndSend(structuredClone(conversionTransaction));
+        setConversionTransaction(null);
+        await refreshAccount();
+        await wait(1_500);
+        const refreshed = await prepare(intent?.market_id || "", intent?.amount || "", intent?.chain_id || 101);
+        if (!refreshed) return null;
+        const result = await signAndSend(refreshed);
+        const id = result.transactionId ?? refreshed.transactionId ?? null;
+        setTransactionId(id);
+        setStatus("success");
+        void refreshAccount();
+        return id;
+      }
       const result = await signAndSend(transaction);
       const id = result.transactionId ?? transaction.transactionId ?? null;
       setTransactionId(id);
@@ -238,7 +278,7 @@ export function useYieldExecution(action: YieldAction) {
       setStatus("error");
       return null;
     }
-  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, intent, refreshAccount, signAndSend, transaction, universalAccount]);
+  }, [accountInfo.evmSmartAccount, accountInfo.solanaSmartAccount, action, conversionTransaction, intent, prepare, refreshAccount, signAndSend, transaction, universalAccount]);
 
   const reset = React.useCallback(() => {
     setStatus("idle");
@@ -246,6 +286,7 @@ export function useYieldExecution(action: YieldAction) {
     setTransaction(null);
     setTransactionId(null);
     setIntent(null);
+    setConversionTransaction(null);
   }, []);
 
   return {

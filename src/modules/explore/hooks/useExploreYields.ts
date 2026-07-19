@@ -72,7 +72,7 @@ export function useExploreYields(selectedProtocol?: string) {
 
   const marketQuery = useQuery({
     queryKey: ["markets", "explore", selectedProtocol || "all", marketRevision],
-    queryFn: () => getMarkets({ limit: 10, protocol: selectedProtocol, executionOnly: true, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined }),
+    queryFn: () => getMarkets({ limit: 10, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
@@ -88,10 +88,10 @@ export function useExploreYields(selectedProtocol?: string) {
     [mapMarkets, marketQuery.data],
   );
   const pools = React.useMemo(
-    () => [...basePools, ...(extraMarkets[pageKey] || [])].filter((pool) => pool.executionEnabled).filter((pool, index, list) => list.findIndex((item) => item.id === pool.id) === index),
+    () => [...basePools, ...(extraMarkets[pageKey] || [])].filter((pool, index, list) => list.findIndex((item) => item.id === pool.id) === index),
     [basePools, extraMarkets, pageKey],
   );
-  const topYieldPools = React.useMemo(() => mapMarkets((topQuery.data?.markets || []) as YieldMarketEntry[]).filter((pool) => pool.executionEnabled), [mapMarkets, topQuery.data]);
+  const topYieldPools = React.useMemo(() => mapMarkets((topQuery.data?.markets || []) as YieldMarketEntry[]), [mapMarkets, topQuery.data]);
 
   const loadMoreProtocol = React.useCallback(async (protocolId: string) => {
     if (loadingMoreProtocol || !hasMoreByProtocol[protocolId]) return;
@@ -101,7 +101,7 @@ export function useExploreYields(selectedProtocol?: string) {
       const page = Math.floor(current / 10) + 1;
       const response = await queryClient.fetchQuery({
         queryKey: ["markets", "explore-page", protocolId, page, marketRevision],
-        queryFn: () => getMarkets({ protocol: protocolId, page, limit: 10, executionOnly: true }),
+        queryFn: () => getMarkets({ protocol: protocolId, page, limit: 10 }),
         staleTime: 60_000,
       });
       const nextMarkets = mapMarkets((response.markets || []) as YieldMarketEntry[]);

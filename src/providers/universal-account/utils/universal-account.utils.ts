@@ -55,17 +55,22 @@ export async function loadUniversalAccountSnapshot(
 
   const deployments = Array.isArray(rawDeployments) ? rawDeployments : [];
   const eip7702Deployments = (deployments as Array<{
-    chainId?: number;
+    chainId?: number | string;
+    chain_id?: number | string;
     delegationAddress?: string;
+    delegation_address?: string;
     isDelegated?: boolean;
   }>).map((deployment) => ({
-    chainId: Number(deployment.chainId || 0),
-    delegationAddress: String(deployment.delegationAddress || "0x"),
+    chainId: Number(deployment.chainId ?? deployment.chain_id ?? 0),
+    delegationAddress: String(
+      deployment.delegationAddress ?? deployment.delegation_address ?? "0x",
+    ),
     isDelegated: deployment.isDelegated === true,
   })).filter((deployment) => deployment.chainId > 0);
 
   const targetChain = deployments.find(
-    (deployment: { chainId?: number | string }) => Number(deployment.chainId) === DEFAULT_CHAIN_ID,
+    (deployment: { chainId?: number | string; chain_id?: number | string }) =>
+      Number(deployment.chainId ?? deployment.chain_id) === DEFAULT_CHAIN_ID,
   );
 
   return {

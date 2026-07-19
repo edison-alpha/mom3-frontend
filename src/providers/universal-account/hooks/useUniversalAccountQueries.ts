@@ -14,7 +14,8 @@ import {
 import { isTransactionQuoteExpired } from "@/modules/send/utils/send.utils";
 
 type Eip7702Deployment = {
-  chainId?: number;
+  chainId?: number | string;
+  chain_id?: number | string;
   isDelegated?: boolean;
 };
 
@@ -39,11 +40,15 @@ async function isDelegatedOnChain(
   const deployments = Array.isArray(rawDeployments)
     ? (rawDeployments as Eip7702Deployment[])
     : [];
-  const deployment = deployments.find((item) => Number(item.chainId) === chainId);
-  if (!deployment) {
-    throw new Error(`Particle does not provide an EIP-7702 deployment for chain ${chainId}.`);
-  }
-  return deployment.isDelegated === true;
+  const deployment = deployments.find(
+    (item) => Number(item.chainId ?? item.chain_id) === chainId,
+  );
+
+  // Particle may omit a chain until the first delegation/status refresh. That
+  // does not mean the chain is unsupported: getEIP7702Auth below is the
+  // authoritative capability check and provides the address/nonce needed for
+  // the upgrade transaction.
+  return deployment?.isDelegated === true;
 }
 
 export function useUniversalAccountInstanceQuery(ownerAddress?: string) {

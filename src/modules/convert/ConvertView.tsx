@@ -21,7 +21,7 @@ import { useParticleTrade } from "./hooks/useParticleTrade";
 import { convertNetworks, getDepositAssetsForChain } from "@/modules/deposit/constants/deposit.constants";
 
 const targetNetworks = convertNetworks
-  .filter((network) => [8453, 42161, 101].includes(network.chainId))
+  .filter((network) => [1, 56, 8453, 42161, 101].includes(network.chainId))
   .map((network) => ({ chainId: network.chainId, label: network.shortName, icon: network.icon }));
 
 export default function ConvertView() {

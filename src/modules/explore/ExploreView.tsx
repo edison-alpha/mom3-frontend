@@ -153,6 +153,7 @@ const EXPLORE_PROTOCOLS = [
   { id: "compound-v3", name: "Compound V3" },
   { id: "morpho-blue", name: "Morpho" },
   { id: "kamino-lend", name: "Kamino" },
+  { id: "jupiter-lend", name: "Jupiter Lend" },
 ] as const;
 
 function matchesMarket(item: MarketItem, query: string) {

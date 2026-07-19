@@ -68,7 +68,7 @@ function getYieldExecutionError(cause: unknown, action: YieldAction, phase: "pre
   const details = getErrorDetails(cause);
 
   if (/insufficient lamports|insufficient funds for rent|insufficient.*rent/i.test(details)) {
-    return "Kamino needs more SOL in your Universal Solana address to create the required position account. Add SOL, then review a new transaction quote. Cross-chain fee coverage cannot pay Solana account rent.";
+    return "This Solana operation needs lamports for rent/account creation in addition to transaction gas. Review again so Particle can source the SOL reserve from your Universal Account; add SOL only if the Universal Account has no available SOL route.";
   }
   if (/delegat|eip.?7702|universal account/i.test(details)) {
     return `Your Universal Account is not delegated on this chain. Complete delegation, then review the ${action} again.`;
@@ -96,14 +96,24 @@ function getPrimaryBalance(primaryAssets: IAssetsResponse | null, tokenType: SUP
     .reduce((total, entry) => total + Number(entry.amount || 0), 0);
 }
 
-function getSolanaRentTopUp(transaction: ITransaction, primaryAssets: IAssetsResponse | null) {
+function getSolanaReserveTopUp(primaryAssets: IAssetsResponse | null) {
+  const available = getSolanaBalance(primaryAssets);
+  const topUp = KAMINO_SOLANA_SETUP_RESERVE - available;
+  return topUp > 0.000000001 ? topUp.toFixed(9).replace(/0+$/, "").replace(/\.$/, "") : null;
+}
+
+function getSolanaRentTopUp(
+  transaction: ITransaction,
+  primaryAssets: IAssetsResponse | null,
+  alreadyRequested = 0,
+) {
   const quotedRent = parseDecimalish(
     getActiveFeeQuote(transaction)?.fees.totals.solanaRentFee,
     9,
   );
   const available = getSolanaBalance(primaryAssets);
   const requiredReserve = Math.max(quotedRent, KAMINO_SOLANA_SETUP_RESERVE);
-  const topUp = requiredReserve - available;
+  const topUp = requiredReserve - available - alreadyRequested;
 
   // Particle expects human-readable token amounts. The initial Kamino reserve
   // covers account rent even when Particle has not reported it in feeQuotes.
@@ -169,6 +179,18 @@ export function useYieldExecution(action: YieldAction) {
       const expectTokens = action === "supply"
         ? [{ type: expectedTokenType, amount: validated.amount }]
         : [];
+      // Solana rent is not transaction gas. The first Particle simulation must
+      // know that SOL is also an expected output before it can build a quote;
+      // adding it only after createUniversalTransaction() has failed is too
+      // late for first-time ATA/Kamino account creation.
+      const solanaReserveTopUp = action === "supply"
+        && chainId === CHAIN_ID.SOLANA_MAINNET
+        && expectedTokenType !== SUPPORTED_TOKEN_TYPE.SOL
+        ? getSolanaReserveTopUp(primaryAssets)
+        : null;
+      const particleExpectTokens = solanaReserveTopUp
+        ? [...expectTokens, { type: SUPPORTED_TOKEN_TYPE.SOL, amount: solanaReserveTopUp }]
+        : expectTokens;
       // Solana lending markets need the target asset on Solana before the
       // Kamino instructions can run. Convert the missing amount through the
       // same Universal Account first; this is intentionally a separate
@@ -186,7 +208,7 @@ export function useYieldExecution(action: YieldAction) {
       }
       let particleTransaction = await universalAccount.createUniversalTransaction({
         chainId,
-        expectTokens,
+        expectTokens: particleExpectTokens,
         transactions: validated.transactions,
       });
 
@@ -195,13 +217,22 @@ export function useYieldExecution(action: YieldAction) {
       // Solana accounts. When Particle includes that rent in its quote, source
       // only the missing SOL from the same Universal Balance before submitting.
       if (action === "supply" && chainId === CHAIN_ID.SOLANA_MAINNET) {
-        const rentTopUp = getSolanaRentTopUp(particleTransaction, primaryAssets);
+        const rentTopUp = getSolanaRentTopUp(
+          particleTransaction,
+          primaryAssets,
+          Number(solanaReserveTopUp || 0),
+        );
         if (rentTopUp) {
           particleTransaction = await universalAccount.createUniversalTransaction({
             chainId,
             expectTokens: [
               ...expectTokens,
-              { type: SUPPORTED_TOKEN_TYPE.SOL, amount: rentTopUp },
+              {
+                type: SUPPORTED_TOKEN_TYPE.SOL,
+                amount: (Number(solanaReserveTopUp || 0) + Number(rentTopUp)).toFixed(9)
+                  .replace(/0+$/, "")
+                  .replace(/\.$/, ""),
+              },
             ],
             transactions: validated.transactions,
           });

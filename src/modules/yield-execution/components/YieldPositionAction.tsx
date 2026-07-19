@@ -157,6 +157,11 @@ export function YieldPositionAction({
     const completed = transactionStatus.state === "completed";
     const refunded = transactionStatus.state === "refunded";
     const status = completed ? "Completed" : refunded ? "Refunded" : failed ? "Failed" : transactionStatus.state === "confirming" ? "Confirming" : "Submitted";
+    const progressItems = [
+      { label: "Request submitted", done: true },
+      { label: "Network confirmation", done: completed || refunded || failed || transactionStatus.state === "confirming" },
+      { label: `${receiptMode === "supply" ? "Supply" : "Withdrawal"} confirmed`, done: completed },
+    ];
     return (
       <motion.section initial={{ y: reduceMotion ? 0 : "100%" }} animate={{ y: 0 }} transition={transition} className="fixed inset-0 z-[70] overflow-y-auto bg-black" role="status" aria-label={`${receiptMode} transaction receipt`}>
         <div className="mx-auto flex min-h-full w-full max-w-md flex-col px-5 pt-4 pb-[calc(24px+env(safe-area-inset-bottom))]">
@@ -172,9 +177,19 @@ export function YieldPositionAction({
               {failed ? "Transaction failed" : completed ? `${receiptMode === "supply" ? "Supply" : "Withdrawal"} complete` : `${receiptMode === "supply" ? "Supply" : "Withdrawal"} submitted`}
             </Typography>
             <Typography variant="body-sm" color="muted" align="center" className="mt-1.5">
-              {failed ? "No confirmed position change was recorded." : refunded ? "The transaction was refunded. No position change was recorded." : completed ? "Your on-chain position has been updated." : "Particle is confirming your transaction."}
+              {failed ? "No position change was recorded. You can safely try again." : refunded ? "The transaction was refunded. No position change was recorded." : completed ? "Your on-chain position is ready." : "Keep this screen open while the network confirms your request."}
             </Typography>
           </div>
+          <ol aria-label="Transaction progress" className="mt-5 grid grid-cols-3 gap-2">
+            {progressItems.map((item, index) => (
+              <li key={item.label} className="flex flex-col items-center gap-2 text-center">
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-black ring-1 ${item.done ? "bg-[#ccff00]/15 text-[#ccff00] ring-[#ccff00]/40" : "bg-white/[0.06] text-[#77777F] ring-white/10"}`}>
+                  {item.done ? "✓" : index + 1}
+                </span>
+                <span className={`text-[10px] font-bold leading-tight ${item.done ? "text-white" : "text-[#77777F]"}`}>{item.label}</span>
+              </li>
+            ))}
+          </ol>
           <div className="mt-5 rounded-[20px] bg-[#111217] p-4">
             <div className="text-center">
               <p className="text-xs font-bold text-[#9A9AA2]">{receiptMode === "supply" ? "Amount supplied" : "Amount withdrawn"}</p>
@@ -191,7 +206,7 @@ export function YieldPositionAction({
               View transaction details <AppIcon icon="lucide:external-link" aria-hidden="true" width={16} height={16} />
             </a>
           </div>
-          <div className="mt-auto pt-6"><Button type="button" color={failed ? "danger" : "warning"} size="lg" rounded="full" fullWidth label="Back to market" startIcon="lucide:arrow-left" onClick={() => { void handleReceiptClose(); }} /></div>
+          <div className="mt-auto pt-6"><Button type="button" color={failed ? "danger" : "warning"} size="lg" rounded="full" fullWidth label={failed ? "Try again later" : "Back to market"} startIcon="lucide:arrow-left" onClick={() => { void handleReceiptClose(); }} /></div>
         </div>
       </motion.section>
     );

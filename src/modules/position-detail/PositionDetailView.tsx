@@ -216,7 +216,7 @@ export default function PositionDetailView({ chainId }: { chainId?: number }) {
 
           <div className="mt-4 grid grid-cols-2 gap-3">
             <Link
-              href="/ai/strategy"
+              href="/agent"
               className="flex h-12 items-center justify-center rounded-full bg-[#ccff00] text-sm font-black text-[#3B33BD] transition-transform active:scale-95 focus-visible:ring-2 focus-visible:ring-[#ccff00]/70"
             >
               Rebalance

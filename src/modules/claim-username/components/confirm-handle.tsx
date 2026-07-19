@@ -40,7 +40,7 @@ export default function ConfirmHandle({
         <p className="text-[#9A9AA2] text-xs mt-2 leading-relaxed">
           This will be your unique identity on mom3.
           <br />
-          You won't be able to change it later.
+          Choose carefully — you won't be able to change it later.
         </p>
       </div>
 
@@ -56,7 +56,7 @@ export default function ConfirmHandle({
         </div>
         <div className="flex items-center justify-between p-3 border-b border-[#2A2A3E]">
           <span className="text-sm text-[#9A9AA2]">On-chain transaction</span>
-          <span className="text-sm font-semibold text-[#ccff00]">free</span>
+          <span className="text-sm font-semibold text-[#ccff00]">Free</span>
         </div>
       </div>
 
@@ -88,8 +88,8 @@ export default function ConfirmHandle({
         </div>
         <p className="text-sm text-[#9A9AA2] leading-relaxed">
           By continuing, you agree to mom3's{' '}
-          <span className="text-[#ccff00] font-semibold">Terms of Service</span> and{' '}
-          <span className="text-[#ccff00] font-semibold">Privacy Policy</span>.
+          <a href="/terms" className="text-[#ccff00] font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ccff00]">Terms of Service</a> and{' '}
+          <a href="/privacy" className="text-[#ccff00] font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ccff00]">Privacy Policy</a>.
         </p>
       </div>
 
@@ -101,14 +101,14 @@ export default function ConfirmHandle({
         disabled={isClaiming}
         className="mt-auto w-full py-4 bg-[#3B33BD] text-[#ccff00] rounded-2xl text-lg font-bold mb-3 shadow-[0_0_20px_rgba(59,51,189,0.3)] disabled:cursor-wait disabled:opacity-60"
       >
-        {isClaiming ? "Claiming..." : "Confirm & Claim"}
+        {isClaiming ? "Claiming your handle…" : "Confirm & claim"}
       </motion.button>
       <motion.button
         whileTap={{ scale: 0.97 }}
         onClick={onBack}
         className="w-full py-3 text-[#9A9AA2] text-sm font-semibold mb-2"
       >
-        Cancel
+        Go back
       </motion.button>
     </motion.div>
   );

@@ -1,5 +1,4 @@
 import {
-  SUPPORTED_TOKEN_TYPE,
   UNIVERSAL_ACCOUNT_VERSION,
   UniversalAccount,
 } from "@particle-network/universal-account-sdk";
@@ -35,13 +34,10 @@ export function createUniversalAccount(ownerAddress: string) {
     },
     tradeConfig: {
       slippageBps: 100,
-      usePrimaryTokens: [
-        SUPPORTED_TOKEN_TYPE.ETH,
-        SUPPORTED_TOKEN_TYPE.USDT,
-        SUPPORTED_TOKEN_TYPE.USDC,
-        SUPPORTED_TOKEN_TYPE.BNB,
-        SUPPORTED_TOKEN_TYPE.SOL,
-      ],
+      // Let Particle select from the complete Primary Asset set returned by
+      // the configured Universal Account. Hard-coding token types here would
+      // prevent newly supported Particle assets from funding transfers and
+      // universal contract calls.
     },
   });
 }

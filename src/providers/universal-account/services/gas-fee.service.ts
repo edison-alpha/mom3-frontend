@@ -1,7 +1,7 @@
 import type { ITokenWithUSD, ITransaction } from "@particle-network/universal-account-sdk";
 
 import { chainNameFromId } from "@/lib/chain";
-import { formatTokenBalance, formatUsdValue, parseDecimalish, parseUsdDecimalish } from "@/lib/format";
+import { formatTokenBalance, formatUsdValue, parseTokenAmount, parseUsdDecimalish } from "@/lib/format";
 import { getActiveFeeQuote } from "@/providers/universal-account/utils/gas-sponsorship.utils";
 
 export type FeeBreakdownRow = { label: string; value: string; originalValue?: string };
@@ -13,10 +13,7 @@ function formatFeeToken(item: ITokenWithUSD) {
     : symbol === "SOL"
       ? 9
       : item.token.realDecimals ?? item.token.decimals ?? 18;
-  const numericAmount = typeof item.amount === "number" ? item.amount : null;
-  const amount = numericAmount !== null && Number.isInteger(numericAmount) && Math.abs(numericAmount) >= 10 ** decimals
-    ? numericAmount / 10 ** decimals
-    : parseDecimalish(item.amount, decimals);
+  const amount = parseTokenAmount(item.amount, decimals);
   return `${formatTokenBalance(amount)} ${symbol.toUpperCase()} on ${chainNameFromId(Number(item.token.chainId))}`;
 }
 

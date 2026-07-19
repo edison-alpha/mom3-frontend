@@ -26,6 +26,39 @@ export function formatUsd(value: number): string {
 
 export type Decimalish = string | number | bigint | null | undefined;
 
+/**
+ * Convert a Particle token amount to human units.
+ *
+ * Particle can return token amounts as decimal strings, base-unit integers,
+ * bigint values, or hexadecimal quantities. Hexadecimal and integer strings
+ * are always base units; the token's own decimals decide the conversion.
+ */
+export function parseTokenAmount(value: Decimalish, decimals: number): number {
+  if (value === null || value === undefined || value === "") return 0;
+  const safeDecimals = Number.isInteger(decimals) && decimals >= 0 ? decimals : 18;
+
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) return 0;
+    return Number.isInteger(value) && Math.abs(value) >= 10 ** safeDecimals
+      ? value / 10 ** safeDecimals
+      : value;
+  }
+
+  if (typeof value === "bigint") {
+    try { return Number(formatUnits(value, safeDecimals)); } catch { return 0; }
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return 0;
+
+  if (/^0x[0-9a-fA-F]+$/.test(trimmed) || /^-?\d+$/.test(trimmed)) {
+    try { return Number(formatUnits(BigInt(trimmed), safeDecimals)); } catch { return 0; }
+  }
+
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 export function parseDecimalish(value: Decimalish, decimals = 18) {
   if (value === null || value === undefined || value === "") return 0;
 

@@ -14,7 +14,7 @@ import {
   formatTokenBalance,
   formatUsd,
   formatUsdValue,
-  parseDecimalish,
+  parseTokenAmount,
   parseUsdDecimalish,
 } from "@/lib/format";
 import { chainNameFromId, tokenIcon } from "@/lib/chain";
@@ -65,7 +65,7 @@ export function normalizePrimaryAssetTokens(
         id: `${chainId}-${tokenAddress.toLowerCase()}-${tokenSymbol}`,
         symbol: tokenSymbol,
         name: String(entry.token.name || tokenSymbol),
-        balance: parseDecimalish(
+        balance: parseTokenAmount(
           entry.amount,
           Number(entry.token.realDecimals ?? entry.token.decimals ?? 18),
         ),
@@ -162,12 +162,8 @@ export function formatTokenChange(item: ITokenWithUSD) {
       ? 9
       : item.token.realDecimals ?? item.token.decimals ?? 18;
   // Particle may return numeric token amounts in base units. Numeric values
-  // are otherwise treated as already-normalized by parseDecimalish, which
   // makes values such as 117491000000 leak into the payment preview.
-  const numericAmount = typeof item.amount === "number" ? item.amount : null;
-  const amount = numericAmount !== null && Number.isInteger(numericAmount) && Math.abs(numericAmount) >= 10 ** decimals
-    ? numericAmount / 10 ** decimals
-    : parseDecimalish(item.amount, decimals);
+  const amount = parseTokenAmount(item.amount, decimals);
   const chain = chainNameFromId(Number(item.token.chainId));
   return `${formatTokenBalance(amount)} ${symbol.toUpperCase()} on ${chain}`;
 }

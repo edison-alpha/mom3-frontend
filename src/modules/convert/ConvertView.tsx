@@ -130,33 +130,29 @@ export default function ConvertView() {
 
         <fieldset className="space-y-2">
           <Typography as="legend" variant="label" color="muted">Receive on</Typography>
-          <div
-            className="w-full min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Receive network options"
-          >
-            <div className="flex w-max min-w-max gap-2">
-            {targetNetworks.map((network) => {
-              const isSelected = network.chainId === targetChainId;
-
-              return (
-                <Button
-                  key={network.chainId}
-                  type="button"
-                  variant={isSelected ? "lime" : "dark"}
-                  size="lg"
-                  rounded="lg"
-                  aria-pressed={isSelected}
-                  startIcon={<AppIcon icon={network.icon} width={18} height={18} aria-hidden="true" />}
-                  label={network.label}
-                  className="w-auto shrink-0 px-3"
-                  onClick={() => {
-                    setTargetChainId(network.chainId);
-                    trade.reset();
-                  }}
-                />
-              );
-            })}
-            </div>
+          <div className="relative">
+            <select
+              aria-label="Receive network"
+              value={targetChainId}
+              onChange={(event) => {
+                setTargetChainId(Number(event.target.value));
+                trade.reset();
+              }}
+              className="h-12 w-full appearance-none rounded-2xl bg-[#1C1C1E] px-4 pr-11 text-sm font-bold text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
+            >
+              {targetNetworks.map((network) => (
+                <option key={network.chainId} value={network.chainId}>
+                  {network.label}
+                </option>
+              ))}
+            </select>
+            <AppIcon
+              icon="lucide:chevron-down"
+              width={18}
+              height={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#A7A7B7]"
+            />
           </div>
         </fieldset>
 

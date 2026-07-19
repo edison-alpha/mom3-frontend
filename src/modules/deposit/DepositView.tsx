@@ -118,30 +118,26 @@ export default function DepositView() {
           <Typography as="legend" variant="label" color="muted">
             Deposit network
           </Typography>
-          <div
-            className="-mx-5 w-[calc(100%+2.5rem)] min-w-0 touch-pan-x overflow-x-auto overscroll-x-contain px-5 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            aria-label="Deposit network options"
-          >
-            <div className="flex w-max min-w-max gap-2">
-            {depositNetworks.map((network) => {
-              const isSelected = network.chainId === selectedChainId;
-
-              return (
-                <Button
-                  key={network.chainId}
-                  type="button"
-                  variant={isSelected ? "lime" : "dark"}
-                  size="lg"
-                  rounded="full"
-                  aria-pressed={isSelected}
-                  startIcon={<AppIcon icon={network.icon} width={20} height={20} aria-hidden="true" />}
-                  label={network.shortName}
-                  className="shrink-0"
-                  onClick={() => setSelectedChainId(network.chainId)}
-                />
-              );
-            })}
-            </div>
+          <div className="relative">
+            <select
+              aria-label="Deposit network"
+              value={selectedChainId}
+              onChange={(event) => setSelectedChainId(Number(event.target.value))}
+              className="h-12 w-full appearance-none rounded-2xl bg-[#1C1C1E] px-4 pr-11 text-sm font-bold text-white outline-none transition-colors focus-visible:ring-2 focus-visible:ring-[#3B33BD]"
+            >
+              {depositNetworks.map((network) => (
+                <option key={network.chainId} value={network.chainId}>
+                  {network.shortName}
+                </option>
+              ))}
+            </select>
+            <AppIcon
+              icon="lucide:chevron-down"
+              width={18}
+              height={18}
+              aria-hidden="true"
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#A7A7B7]"
+            />
           </div>
         </fieldset>
 

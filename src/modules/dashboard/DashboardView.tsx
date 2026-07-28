@@ -10,11 +10,14 @@ import { BalanceCard } from "./components/BalanceCard";
 import { DashboardHeader } from "./components/DashboardHeader";
 import { EarnSection } from "./components/EarnSection";
 import { OpportunityGrid } from "./components/OpportunityGrid";
+import { RecommendedMarketsSection } from "./components/RecommendedMarketsSection";
 import { DashboardSkeleton } from "./components/DashboardSkeleton";
 import { useDashboardViewModel } from "./hooks/useDashboardViewModel";
+import { useExploreYields } from "@/modules/explore/hooks/useExploreYields";
 
 export default function DashboardView() {
   const { isLoading: isMagicLoading, session } = useMagic();
+  const { topYieldPools, isTopLoading, topError, refreshTopYields } = useExploreYields(undefined, { includeCatalog: false });
   const {
     balanceDisplay,
     balanceHidden,
@@ -98,6 +101,20 @@ export default function DashboardView() {
           transition={{ duration: 0.5, delay: 0.32, ease: "easeOut" }}
         >
           <EarnSection balanceLabel={balanceDisplay || String(balanceValue)} />
+        </motion.div>
+
+        <motion.div
+          variants={fadeUp}
+          initial="hidden"
+          animate="show"
+          transition={{ duration: 0.5, delay: 0.4, ease: "easeOut" }}
+        >
+          <RecommendedMarketsSection
+            markets={topYieldPools}
+            isLoading={isTopLoading}
+            error={topError}
+            onRetry={() => { void refreshTopYields(); }}
+          />
         </motion.div>
         <div className="flex-1" />
     </MobileShell>

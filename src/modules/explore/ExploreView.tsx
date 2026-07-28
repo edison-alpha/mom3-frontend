@@ -12,6 +12,7 @@ import { MobileBottomBar, MobilePageHeader, MobileShell } from "@/components/ui/
 import { cn } from "@/lib/utils";
 import { ExploreFeatureCardsSkeleton, ExploreMarketSectionsSkeleton } from "@/modules/explore/components/ExploreSkeleton";
 import { useExploreYields, type ExploreYieldPool } from "@/modules/explore/hooks/useExploreYields";
+import { marketDetailHref } from "@/modules/explore/utils/market-detail-url";
 
 type MarketItem = ExploreYieldPool;
 type ChainFilter = "All" | number;
@@ -164,35 +165,6 @@ function matchesMarket(item: MarketItem, query: string) {
     item.primary.toLowerCase().includes(normalized) ||
     item.chain.toLowerCase().includes(normalized)
   );
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
-function marketDetailHref(item: MarketItem) {
-  const params = new URLSearchParams({
-    asset: item.asset,
-    protocol: item.protocol,
-    chain: item.chain,
-    chainId: String(item.chainId),
-    apy: String(item.apy),
-    tvl: item.tvl,
-    utilization: item.utilization,
-    risk: item.risk,
-    category: item.category,
-    description: item.description,
-    icon: item.icon,
-    color: item.color,
-    change1d: String(item.apyChange1d ?? 0),
-    change7d: String(item.apyChange7d ?? 0),
-    change30d: String(item.apyChange30d ?? 0),
-  });
-  if (item.marketId) params.set("marketId", item.marketId);
-  return `/explore/${slugify(item.id)}?${params.toString()}`;
 }
 
 function MarketList({

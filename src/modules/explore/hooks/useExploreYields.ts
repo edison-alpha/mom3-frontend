@@ -39,7 +39,8 @@ function rankingScore(apy: number, tvl: number, risk: number, opportunity?: numb
   return apy * Math.max(0.25, 1 - Math.min(Math.max(risk, 0), 10) / 15) + (tvl > 0 ? Math.min(Math.log10(tvl) / 10, 1) : 0);
 }
 
-export function useExploreYields(selectedProtocol?: string) {
+export function useExploreYields(selectedProtocol?: string, options: { includeCatalog?: boolean } = {}) {
+  const includeCatalog = options.includeCatalog ?? true;
   const { marketRevision } = useRealtime();
   const [hasMoreByProtocol, setHasMoreByProtocol] = React.useState<Record<string, boolean>>({});
   const [loadingMoreProtocol, setLoadingMoreProtocol] = React.useState<string | null>(null);
@@ -75,6 +76,7 @@ export function useExploreYields(selectedProtocol?: string) {
     queryFn: () => getMarkets({ limit: 10, protocol: selectedProtocol, limitPerProtocol: selectedProtocol === "all" ? 10 : undefined }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
+    enabled: includeCatalog,
   });
   const topQuery = useQuery({
     queryKey: ["markets", "top-yields", marketRevision],
@@ -123,11 +125,12 @@ export function useExploreYields(selectedProtocol?: string) {
   const chains = Array.from(new Set(pools.map((p) => p.chainId))).filter(Boolean);
   return {
     pools, yieldPools, riskPools, chains, topYieldPools,
-    isLoading: marketQuery.isPending,
-    error: marketQuery.error instanceof Error ? marketQuery.error.message : null,
+    isLoading: includeCatalog && marketQuery.isPending,
+    error: includeCatalog && marketQuery.error instanceof Error ? marketQuery.error.message : null,
     topError: topQuery.error instanceof Error ? topQuery.error.message : null,
     isTopLoading: topQuery.isPending,
     isFetching: marketQuery.isFetching || topQuery.isFetching,
+    refreshTopYields: topQuery.refetch,
     hasMoreByProtocol, loadingMoreProtocol, loadMoreProtocol,
   };
 }

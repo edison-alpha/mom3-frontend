@@ -173,3 +173,11 @@ git push origin mom3-dev-test
 ```
 
 Setelah perubahan terverifikasi, buat pull request dari `mom3-dev-test` ke `main`.
+
+## Production operations
+
+Gunakan [docs/PRODUCTION_READINESS.md](docs/PRODUCTION_READINESS.md) sebagai
+runbook release: architecture/data-flow diagrams, environment boundaries,
+build/deploy checklist, wallet safety gates, realtime checks, monitoring,
+rollback, dan security acceptance criteria. Kontrak route BFF ada di
+[docs/endpoints.md](docs/endpoints.md).

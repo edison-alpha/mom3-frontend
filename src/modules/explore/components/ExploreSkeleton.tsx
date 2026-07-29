@@ -76,9 +76,9 @@ export function ExploreMarketSectionsSkeleton() {
 
 export function ExploreFeatureCardsSkeleton() {
   return (
-    <div className="flex gap-3 overflow-hidden pb-3" role="status" aria-label="Loading top markets">
+    <div className="flex gap-3 overflow-hidden pb-3" role="status" aria-label="Loading recommended markets">
       {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="min-w-[82%] min-h-[188px] rounded-[24px] bg-[#1C1C1E] p-4">
+        <div key={index} className="min-h-[210px] min-w-[82%] rounded-[24px] bg-[#1C1C1E] p-4">
           <div className="flex items-start justify-between">
             <SkeletonCircle className="h-12 w-12" />
             <SkeletonCircle className="h-10 w-10" />
@@ -88,7 +88,7 @@ export function ExploreFeatureCardsSkeleton() {
           <SkeletonText className="mt-2 h-3 w-32" />
         </div>
       ))}
-      <span className="sr-only">Loading top 10 yield markets</span>
+      <span className="sr-only">Loading recommended markets</span>
     </div>
   );
 }

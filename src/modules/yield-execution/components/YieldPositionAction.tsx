@@ -8,12 +8,12 @@ import { AppIcon } from "@/components/ui/app-icon";
 import { Button } from "@/components/ui/button";
 import { Skeleton, SkeletonText } from "@/components/ui/skeleton";
 import { Typography } from "@/components/ui/typography";
-import { formatTokenBalance, formatUsd } from "@/lib/format";
+import { formatTokenBalance, formatUsd, parseUsdDecimalish } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import {
   getFundingRows,
 } from "@/modules/send/utils/send.utils";
-import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel } from "@/providers/universal-account/services/gas-fee.service";
+import { getFeeBreakdownRows, getFeeTokenRows, getTotalFeeLabel, getTransactionFeeQuote } from "@/providers/universal-account/services/gas-fee.service";
 import { useYieldExecution } from "@/modules/yield-execution/hooks/useYieldExecution";
 import { useYieldPosition, yieldPositionQueryKeys } from "@/modules/yield-execution/hooks/useYieldPosition";
 import type { YieldAction } from "@/modules/yield-execution/types/yield-execution.types";
@@ -28,6 +28,7 @@ type Props = {
   protocol: string;
   network: string;
   assetSymbol: string;
+  annualPercentageYield: number | null;
   universalAssetBalance: number;
   onRefresh: () => Promise<unknown>;
   onClose?: () => void;
@@ -94,6 +95,7 @@ export function YieldPositionAction({
   protocol,
   network,
   assetSymbol,
+  annualPercentageYield,
   universalAssetBalance,
   onRefresh,
   onClose,
@@ -118,12 +120,27 @@ export function YieldPositionAction({
   const transaction = active.transaction;
   const suppliedBalance = position.data?.supplied_balance ?? 0;
   const hasPosition = suppliedBalance > 0;
+  const isStablecoinAsset = /usdc|usdt|dai|usde/i.test(assetSymbol);
+  const positionYieldEstimate = hasPosition && annualPercentageYield !== null
+    ? {
+      amount: suppliedBalance * annualPercentageYield / 100,
+      apy: annualPercentageYield,
+    }
+    : null;
   const maxAmount = mode === "withdraw" ? suppliedBalance : universalAssetBalance;
   const numericAmount = Number(amount || 0);
   const validAmount = numericAmount > 0 && numericAmount <= maxAmount;
   const estimatedPosition = mode === "withdraw"
     ? Math.max(0, suppliedBalance - numericAmount)
     : suppliedBalance + numericAmount;
+  const estimatedYearlyReturn = mode === "supply" && annualPercentageYield !== null
+    ? numericAmount * annualPercentageYield / 100
+    : null;
+  const estimatedDailyReturn = estimatedYearlyReturn === null ? null : estimatedYearlyReturn / 365;
+  const quotedFeeUsd = parseUsdDecimalish(getTransactionFeeQuote(transaction)?.fees.totals.feeTokenAmountInUSD);
+  const breakEvenDays = quotedFeeUsd > 0 && estimatedDailyReturn !== null && estimatedDailyReturn > 0
+    ? Math.ceil(quotedFeeUsd / estimatedDailyReturn)
+    : null;
 
   const refreshDetailData = React.useCallback(async () => {
     await Promise.all([
@@ -237,6 +254,19 @@ export function YieldPositionAction({
           <Button type="button" color="primary" size="lg" rounded="full" fullWidth label="Supply" startIcon="solar:upload-minimalistic-bold" onClick={() => setMode("supply")} />
           {hasPosition ? <Button type="button" color="dark" size="lg" rounded="full" fullWidth label="Withdraw" startIcon="solar:download-minimalistic-bold" onClick={() => setMode("withdraw")} /> : null}
         </div>
+        {positionYieldEstimate !== null ? (
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-[18px] border border-[#ccff00]/15 bg-[#ccff00]/[0.06] px-3.5 py-3" aria-live="polite">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#A7A7B7]">Estimated yearly yield</p>
+              <p className="mt-1 text-xs font-medium text-[#C8C8CE]">At the current {positionYieldEstimate.apy.toFixed(2)}% APY</p>
+            </div>
+            <p className="shrink-0 font-mono text-base font-black tabular-nums text-[#ccff00]">
+              {isStablecoinAsset
+                ? formatUsd(positionYieldEstimate.amount)
+                : `${formatTokenBalance(positionYieldEstimate.amount)} ${assetSymbol}`}
+            </p>
+          </div>
+        ) : null}
         {universalAssetBalance <= 0 ? (
           <Link
             href={`/deposit?chainId=${chainId}&asset=${encodeURIComponent(assetSymbol)}`}
@@ -252,7 +282,7 @@ export function YieldPositionAction({
 
   const actionLabel = mode === "supply" ? "Supply" : "Withdraw";
   const screenTitle = mode === "supply" ? "Supply" : "Withdrawal";
-  const showUsdEstimate = /usdc|usdt|dai|usde/i.test(assetSymbol);
+  const showUsdEstimate = isStablecoinAsset;
   const feeRows = getFeeBreakdownRows(transaction);
   const fundingRows = getFundingRows(transaction);
   const feeTokenRows = getFeeTokenRows(transaction);
@@ -341,6 +371,41 @@ export function YieldPositionAction({
           </div>
           {showUsdEstimate ? <p className="mt-3 font-mono text-xl font-black tabular-nums text-[#8A9094]">≈{formatUsd(numericAmount)}</p> : null}
         </div>
+
+        {mode === "supply" ? (
+          <section className="mt-5 rounded-[22px] border border-white/10 bg-[#111217] p-3.5" aria-live="polite" aria-labelledby="potential-return-title">
+            <h3 id="potential-return-title" className="text-sm font-black text-white">See your potential return</h3>
+            <dl className="mt-3 grid grid-cols-3 divide-x divide-white/[0.08]">
+              <div className="min-w-0 pr-2.5">
+                <dt className="text-[10px] font-medium leading-snug text-[#A7A7B7]">Estimated yearly return</dt>
+                <dd className="mt-1 truncate font-mono text-sm font-black tabular-nums text-[#ccff00]">
+                  {estimatedYearlyReturn === null
+                    ? "Unavailable"
+                    : showUsdEstimate
+                      ? formatUsd(estimatedYearlyReturn)
+                      : `${formatTokenBalance(estimatedYearlyReturn)} ${assetSymbol}`}
+                </dd>
+              </div>
+              <div className="min-w-0 px-2.5">
+                <dt className="text-[10px] font-medium leading-snug text-[#A7A7B7]">Estimated fee</dt>
+                <dd className="mt-1 truncate font-mono text-sm font-black tabular-nums text-white">
+                  {transaction ? getTotalFeeLabel(transaction) : "On review"}
+                </dd>
+              </div>
+              <div className="min-w-0 pl-2.5">
+                <dt className="text-[10px] font-medium leading-snug text-[#A7A7B7]">Break-even</dt>
+                <dd className="mt-1 text-sm font-black text-white">
+                  {breakEvenDays === null ? "On review" : `${breakEvenDays} day${breakEvenDays === 1 ? "" : "s"}`}
+                </dd>
+              </div>
+            </dl>
+            <p className="mt-3 text-center text-[10px] font-medium text-[#A7A7B7]">
+              {annualPercentageYield === null
+                ? "Return will appear when live APY is available."
+                : `Estimate assumes ${annualPercentageYield.toFixed(2)}% APY remains unchanged.`}
+            </p>
+          </section>
+        ) : null}
 
         {!transaction ? (
           <div className="mt-auto pt-8">

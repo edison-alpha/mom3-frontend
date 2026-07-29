@@ -5,7 +5,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { chainNameFromId } from "@/lib/chain";
 import { formatUsdValue } from "@/lib/format";
 import { useRealtime } from "@/providers/realtime/components/RealtimeProvider";
-import { getMarkets, getTopYields } from "@/modules/markets/api/markets.api";
+import { getMarkets } from "@/modules/markets/api/markets.api";
 
 export type ExploreYieldPool = {
   id: string; asset: string; protocol: string; protocolId?: string; primary: string; secondary: string;
@@ -79,8 +79,8 @@ export function useExploreYields(selectedProtocol?: string, options: { includeCa
     enabled: includeCatalog,
   });
   const topQuery = useQuery({
-    queryKey: ["markets", "top-yields", marketRevision],
-    queryFn: () => getTopYields({ limit: 10 }),
+    queryKey: ["markets", "recommended-executable", marketRevision],
+    queryFn: () => getMarkets({ limit: 5, executionOnly: true }),
     placeholderData: keepPreviousData,
     staleTime: 60_000,
   });
@@ -93,7 +93,12 @@ export function useExploreYields(selectedProtocol?: string, options: { includeCa
     () => [...basePools, ...(extraMarkets[pageKey] || [])].filter((pool, index, list) => list.findIndex((item) => item.id === pool.id) === index),
     [basePools, extraMarkets, pageKey],
   );
-  const topYieldPools = React.useMemo(() => mapMarkets((topQuery.data?.markets || []) as YieldMarketEntry[]), [mapMarkets, topQuery.data]);
+  const topYieldPools = React.useMemo(
+    () => mapMarkets((topQuery.data?.markets || []) as YieldMarketEntry[])
+      .filter((market) => market.executionEnabled && Boolean(market.marketId))
+      .slice(0, 5),
+    [mapMarkets, topQuery.data],
+  );
 
   const loadMoreProtocol = React.useCallback(async (protocolId: string) => {
     if (loadingMoreProtocol || !hasMoreByProtocol[protocolId]) return;

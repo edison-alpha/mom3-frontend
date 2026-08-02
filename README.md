@@ -181,3 +181,5 @@ runbook release: architecture/data-flow diagrams, environment boundaries,
 build/deploy checklist, wallet safety gates, realtime checks, monitoring,
 rollback, dan security acceptance criteria. Kontrak route BFF ada di
 [docs/endpoints.md](docs/endpoints.md).
+
+For a product-level user guide, see [docs/APP_GUIDE.md](docs/APP_GUIDE.md).

@@ -25,6 +25,7 @@ export default function ClaimUsernameView() {
   const [handle, setHandle] = useState('');
   const [error, setError] = useState<string | null>(null);
   const claimCompletedRef = useRef(false);
+  const initializedHandleOwnerRef = useRef<string | null>(null);
   const claimMutation = useClaimUsername();
   const ownerAddress = session?.ownerAddress || "";
   const usernameQuery = useQuery({
@@ -39,8 +40,11 @@ export default function ClaimUsernameView() {
   }, [router, usernameQuery.data?.username]);
 
   useEffect(() => {
-    if (!handle && ownerAddress) setHandle(ownerAddress.replace(/^0x/i, "").slice(0, 4).toLowerCase());
-  }, [handle, ownerAddress]);
+    if (!ownerAddress || initializedHandleOwnerRef.current === ownerAddress) return;
+
+    initializedHandleOwnerRef.current = ownerAddress;
+    setHandle(ownerAddress.replace(/^0x/i, "").slice(0, 4).toLowerCase());
+  }, [ownerAddress]);
 
   const handleBack = useCallback(() => {
     if (step > 1) setStep(step - 1);

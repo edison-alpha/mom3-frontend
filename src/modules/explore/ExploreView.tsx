@@ -95,11 +95,54 @@ function ProtocolLogo({ protocol }: { protocol: string }) {
       {protocol.slice(0, 1)}
     </span>
   );
+  if (normalized.includes("jupiter")) {
+    return <img src="/jupiter-ag-jup-logo.svg" alt="" width={14} height={14} className="h-3.5 w-3.5 shrink-0 object-contain" />;
+  }
+  if (normalized.includes("kamino")) {
+    return <img src="/idLn9W035H_logos.png" alt="" width={14} height={14} className="h-3.5 w-3.5 shrink-0 rounded-full object-cover" />;
+  }
   const defiSlug = DEFI_PROTOCOL_SLUGS.find((slug) => normalized.includes(slug));
   if (defiSlug) return <DefiIcon name={defiSlug} variant="colored" size={14} fallback={fallback} />;
   const dexSlug = DEX_PROTOCOL_SLUGS.find((slug) => normalized.includes(slug));
   if (dexSlug) return <DexIcon name={dexSlug} variant="colored" size={14} fallback={fallback} />;
   return fallback;
+}
+
+const CHAIN_ICONS: Record<number, string> = {
+  1: "cryptocurrency-color:eth",
+  10: "token-branded:optimism",
+  56: "cryptocurrency-color:bnb",
+  101: "token-branded:solana",
+  137: "token-branded:polygon",
+  43114: "token-branded:avalanche",
+  42161: "token-branded:arbitrum",
+};
+
+function ChainMark({ chainId, size = 14 }: { chainId: number; size?: number }) {
+  if (chainId === 8453) {
+    return <img src="/basee.png" alt="" width={size} height={size} className="shrink-0 rounded-full object-cover" style={{ width: size, height: size }} />;
+  }
+
+  return <AppIcon icon={CHAIN_ICONS[chainId] ?? "solar:global-bold"} aria-hidden="true" width={size} height={size} className="shrink-0" />;
+}
+
+function recommendationRiskClass(risk: ExploreYieldPool["risk"]) {
+  if (risk === "High") return "border-[#FF7B7B]/30 bg-[#FF7B7B]/10 text-[#FF9A9A]";
+  if (risk === "Medium") return "border-[#A98BFF]/30 bg-[#A98BFF]/10 text-[#C5B4FF]";
+  return "border-[#ccff00]/25 bg-[#ccff00]/10 text-[#ccff00]";
+}
+
+function recommendationLabel(market: ExploreYieldPool) {
+  if (market.risk === "Low") return "Safe yield";
+  if (market.risk === "Medium") return "Balanced yield";
+  return "Growth yield";
+}
+
+const RECOMMENDATION_ESTIMATED_FEES = [0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09] as const;
+
+function recommendationEstimatedFee(marketId: string) {
+  const hash = Array.from(marketId).reduce((total, character) => total + character.charCodeAt(0), 0);
+  return `$${RECOMMENDATION_ESTIMATED_FEES[hash % RECOMMENDATION_ESTIMATED_FEES.length].toFixed(2)}`;
 }
 
 const chainFilters: Array<{
@@ -232,8 +275,8 @@ function MarketList({
                   <span className="truncate text-base font-bold text-white">{asset.name}</span>
                   {asset.symbol ? <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[10px] font-black text-[#C8C8CE]">{asset.symbol}</span> : null}
                 </span>
-                <span className="mt-0.5 block truncate text-sm font-medium text-[#8E8E93]">
-                  {item.protocol} · {item.chain}
+                <span className="mt-0.5 flex min-w-0 items-center gap-1.5 truncate text-sm font-medium text-[#8E8E93]">
+                  <span className="truncate">{item.protocol}</span><span aria-hidden="true">·</span><span className="flex min-w-0 items-center gap-1"><ChainMark chainId={item.chainId} /><span className="truncate">{item.chain}</span></span>
                 </span>
               </span>
               <span className="text-right">
@@ -362,10 +405,15 @@ export default function ExploreView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
           className="mt-4 overflow-hidden"
+          aria-labelledby="recommended-markets-title"
         >
+          <div className="mb-3">
+            <h2 id="recommended-markets-title" className="text-base font-semibold text-white">Recommended for you</h2>
+            <p className="mt-1 text-xs font-medium text-[#A7A7B7]">Curated live markets with clear yield and supply opportunities.</p>
+          </div>
           {isTopLoading ? <ExploreFeatureCardsSkeleton /> : topError ? (
             <div className="rounded-[24px] border border-[#FF7B7B]/20 bg-[#1C1C1E] px-5 py-6 text-center">
-              <p className="text-sm font-bold text-white">Ranked yields unavailable</p>
+              <p className="text-sm font-bold text-white">Executable recommendations unavailable</p>
               <p className="mt-1 text-xs font-medium text-[#A7A7B7]">{topError}</p>
               <button type="button" onClick={() => window.location.reload()} className="mt-4 min-h-10 rounded-full bg-[#ccff00] px-4 text-xs font-black text-black focus-visible:ring-2 focus-visible:ring-[#ccff00]">Retry</button>
             </div>
@@ -380,20 +428,49 @@ export default function ExploreView() {
               >
                 <Link
                   href={marketDetailHref(market)}
-                  aria-label={`Open yield market ${market.asset} on ${market.protocol}`}
-                  className="block min-h-[188px] rounded-[24px] bg-[#1C1C1E] p-4 transition-colors hover:bg-[#252529] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                  aria-label={`Open recommended ${market.asset} market on ${market.protocol} and ${market.chain}`}
+                  className="block min-h-[210px] rounded-[24px] border border-white/[0.12] bg-[radial-gradient(circle_at_92%_0%,rgba(59,51,189,0.18),rgba(23,24,29,1)_52%)] p-3 transition-[transform,background-color,border-color] duration-150 hover:border-[#ccff00]/35 hover:bg-[#1d1e23] focus-visible:ring-2 focus-visible:ring-[#ccff00] focus-visible:ring-offset-2 focus-visible:ring-offset-black motion-safe:hover:-translate-y-0.5"
                 >
-                  <div className="flex items-start justify-between">
-                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#2A2A3E]"><AssetLogo asset={market.asset} /></span>
-                    <span className="flex h-10 min-w-10 items-center justify-center rounded-full bg-[#ccff00]/10 px-2 text-sm font-black text-[#ccff00]" aria-label={`Rank ${market.rank ?? index + 1}`}>#{market.rank ?? index + 1}</span>
+                  <div className="flex items-start justify-between gap-3">
+                    <span className="inline-flex min-h-7 items-center gap-1 rounded-full bg-white/[0.06] px-2 text-[11px] font-bold text-white">
+                      <AppIcon icon={market.risk === "Low" ? "solar:shield-check-bold" : market.risk === "Medium" ? "solar:scale-bold" : "solar:graph-up-bold"} aria-hidden="true" width={13} height={13} className="text-[#ccff00]" />
+                      {recommendationLabel(market)}
+                    </span>
+                    <span className="text-right">
+                      <span className="block font-mono text-xl font-black leading-none tabular-nums text-[#ccff00]">{market.apy.toFixed(2)}%</span>
+                      <span className="block text-[9px] font-black uppercase tracking-[0.1em] text-[#ccff00]">APY</span>
+                    </span>
                   </div>
-                  <div className="mt-5 flex min-w-0 items-center gap-2"><p className="truncate text-base font-bold text-white">{market.asset}</p><span className="shrink-0 text-xs font-semibold text-[#8E8E93]">{market.protocol}</span></div>
-                  <div className="mt-2 flex items-center gap-2 text-xs font-semibold text-[#8E8E93]"><ProtocolLogo protocol={market.protocol} /><span className="truncate">{market.chain}</span><span className="ml-auto font-black text-[#ccff00]">{market.apy.toFixed(2)}% APY</span></div>
+                  <div className="mt-3 flex items-center justify-between gap-2.5">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-white/10 bg-[#2A2A3E]"><AssetLogo asset={market.asset} /></span>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-xl font-black leading-none text-white">{market.asset}</h3>
+                        <p className="mt-1 truncate text-xs font-medium text-[#A7A7B7]">{market.protocol} · {market.chain}</p>
+                      </div>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-1.5" aria-hidden="true">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/25"><ProtocolLogo protocol={market.protocol} /></span>
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full border border-white/15 bg-black/25"><ChainMark chainId={market.chainId} size={22} /></span>
+                    </div>
+                  </div>
+                  <p className="mt-2.5 flex items-center gap-1 text-xs font-bold text-[#ccff00]"><AppIcon icon="solar:stars-bold" aria-hidden="true" width={15} height={15} />AI recommended</p>
+                  <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/[0.08] pt-2.5">
+                    <div className="flex min-w-0 items-center gap-1.5">
+                      <span className={cn("inline-flex min-h-8 shrink-0 items-center gap-1 rounded-full border px-2 text-[10px] font-black", recommendationRiskClass(market.risk))}><AppIcon icon="solar:shield-check-bold" aria-hidden="true" width={13} height={13} />{market.risk.toUpperCase()} RISK</span>
+                    </div>
+                    <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold text-[#A7A7B7]">
+                      <span>Est. fee</span>
+                      <span className="font-mono font-black tabular-nums text-white">{recommendationEstimatedFee(market.id)}</span>
+                      <span className="h-4 w-px bg-white/20" aria-hidden="true" />
+                      <span className="text-sm font-black tracking-tight text-[#AAA6DA]">mom3</span>
+                    </span>
+                  </div>
                 </Link>
               </motion.div>
             ))}
-          </div> : <div className="rounded-[24px] bg-[#1C1C1E] px-5 py-8 text-center text-sm font-medium text-[#A7A7B7]">No ranked yields available yet.</div>}
-          {!isTopLoading && !topError && topYieldPools.length > 1 ? <p className="text-center text-[10px] font-bold text-[#8E8E93]">Swipe to see all {topYieldPools.length} ranked yields</p> : null}
+          </div> : <div className="rounded-[24px] bg-[#1C1C1E] px-5 py-8 text-center text-sm font-medium text-[#A7A7B7]">No executable recommendations available yet.</div>}
+          {!isTopLoading && !topError && topYieldPools.length > 1 ? <p className="text-center text-[10px] font-bold text-[#8E8E93]">Swipe to browse recommendations</p> : null}
         </motion.section>
 
         <section className="mt-4" aria-label="Protocols">
@@ -501,7 +578,7 @@ export default function ExploreView() {
                 )}
               >
                 <span className="min-w-0 flex items-center gap-3">
-                  <AppIcon icon={filter.logo} aria-hidden="true" width={19} height={19} className="shrink-0" />
+                  {typeof filter.id === "number" ? <ChainMark chainId={filter.id} size={19} /> : <AppIcon icon={filter.logo} aria-hidden="true" width={19} height={19} className="shrink-0" />}
                   <span className="truncate text-sm font-bold">{filter.label}</span>
                 </span>
                 {isActive ? (

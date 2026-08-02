@@ -51,7 +51,20 @@ export function parseTokenAmount(value: Decimalish, decimals: number): number {
   const trimmed = value.trim();
   if (!trimmed) return 0;
 
-  if (/^0x[0-9a-fA-F]+$/.test(trimmed) || /^-?\d+$/.test(trimmed)) {
+  // Hex quantities from Particle are 18-decimal fixed point of the human
+  // amount (the token's `decimals` field), regardless of `realDecimals` —
+  // e.g. 245716 USDC arrives as 245716 * 10^18. Parse with 18 decimals.
+  if (/^0x[0-9a-fA-F]+$/.test(trimmed)) {
+    try { return Number(formatUnits(BigInt(trimmed), 18)); } catch { return 0; }
+  }
+
+  // Integer strings are ambiguous: Particle returns human units for some
+  // fields (e.g. tokenChanges) and base units for others (e.g. feeTokens).
+  // Prefer the human-unit reading when it stays plausible; otherwise treat
+  // the value as base units so raw quantities never leak into the UI.
+  if (/^-?\d+$/.test(trimmed)) {
+    const asHuman = Number(trimmed);
+    if (Number.isFinite(asHuman) && Math.abs(asHuman) < 10 ** 6) return asHuman;
     try { return Number(formatUnits(BigInt(trimmed), safeDecimals)); } catch { return 0; }
   }
 
@@ -109,7 +122,15 @@ export function parseUsdDecimalish(value: Decimalish): number {
 
   const trimmed = value.trim();
   if (!trimmed) return 0;
+  // Hex USD values are 18-decimal fixed point (e.g. 0x368d04d8a5b7200 ≈ $0.25).
   if (/^0x[0-9a-fA-F]+$/.test(trimmed)) {
+    try { return Number(formatUnits(BigInt(trimmed), 18)); } catch { return 0; }
+  }
+  // Plain integer strings are also 18-decimal fixed point when large; small
+  // values are already human-readable dollars.
+  if (/^-?\d+$/.test(trimmed)) {
+    const asHuman = Number(trimmed);
+    if (Number.isFinite(asHuman) && Math.abs(asHuman) < 10 ** 6) return asHuman;
     try { return Number(formatUnits(BigInt(trimmed), 18)); } catch { return 0; }
   }
   const parsed = Number(trimmed);
